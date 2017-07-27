@@ -17,7 +17,7 @@
 // Needs to get called once at startup ("global constructor")
 void Vaporizer::init()
 {
-  Input::init();+
+  Input::init();++
   GUI::init();
   analogWriteRange(PWM_RANGE);
   analogWriteFreq(PWM_FREQ);
