@@ -18,7 +18,6 @@
 void Vaporizer::init()
 {
   Input::init();
-  //trololol
   GUI::init();
   analogWriteRange(PWM_RANGE);
   analogWriteFreq(PWM_FREQ);
