@@ -78,7 +78,7 @@ class Vaporizer
     static void   limitFPS(uint8_t);
     static void   getFPS(void);
     static void   smooth(double &, double, unsigned long, unsigned long);
-    static void   trigger(bool &, double, float, float);
+    static bool   trigger(bool &, double, float, float);
 };
 
 
@@ -91,7 +91,9 @@ class Input : public Vaporizer
   public:
     static void init(void);
     static void monitor(void);
-    static void ISR(void);
+    static void ISR_CLK(void);
+    static void ISR_DT(void);
+    static void ISR_SW(void);
     static void execute(cmd_t);
 };
 
@@ -99,8 +101,8 @@ class Encoder : public Input
 {
   static       bool          _state_raw[3];
   static       double        _state_buffer[3];
-  static       unsigned long _time_debounceInterval;
-  static       bool          _state_raw_debounced[3];
+  static       unsigned long _time_debounceInterval[3];
+  static       bool          _state_debounced[3];
   static       int8_t        _state;
   static const int8_t        _LUT[16];
 
@@ -111,8 +113,8 @@ class Encoder : public Input
   public:
     static void   init(void);
     static void   monitor(void);
-    static void   ISR(void);
-    static void   read(void);
+    static void   ISR(PIN_ID);
+    static void   read(PIN_ID);
     static int8_t getState(void);
 };
 

@@ -64,10 +64,14 @@ void Vaporizer::smooth(double &x, double val, unsigned long sampleTime, unsigned
 }
 
 // Hysteresis (simulates Inverting Schmitt Trigger)
-void Vaporizer::trigger(bool &trigger, double val, float lim_lower, float lim_upper)
+bool Vaporizer::trigger(bool &trigger, double val, float lim_lower, float lim_upper)
 {
+  bool trigger_last = trigger;
+
   if (val >= lim_upper) { trigger = true;  } else
-  if (val <  lim_lower) { trigger = false; };
+  if (val <  lim_lower) { trigger = false; }
+
+  if (trigger_last != trigger) { return true; } else { return false; }
 }
 
 
@@ -81,9 +85,9 @@ void Input::init()
   pinMode(INPUT_PIN_SW,    INPUT);
   pinMode(INPUT_PIN_POWER, INPUT);
 
-  attachInterrupt(INPUT_PIN_CLK, ISR, CHANGE);
-  attachInterrupt(INPUT_PIN_DT,  ISR, CHANGE);
-  attachInterrupt(INPUT_PIN_SW,  ISR, CHANGE);
+  attachInterrupt(INPUT_PIN_CLK, ISR_CLK, CHANGE);
+  attachInterrupt(INPUT_PIN_DT,  ISR_DT,  CHANGE);
+  attachInterrupt(INPUT_PIN_SW,  ISR_SW,  CHANGE);
 
   Encoder::init();
 }
@@ -95,10 +99,9 @@ void Input::monitor()
 }
 
 // Needs Input::monitor() to be looped to function properly
-void Input::ISR()
-{
-  Encoder::ISR();
-}
+void Input::ISR_CLK() { Encoder::read(CLK); }
+void Input::ISR_DT()  { Encoder::read(DT);  }
+void Input::ISR_SW()  { Encoder::read(SW);  }
 
 void Input::execute(cmd_t command)
 {
@@ -132,61 +135,41 @@ void Input::execute(cmd_t command)
 
 void Encoder::init()
 {
-  for (size_t i = 0; i < 3; i++) { read(); }
+  // for (size_t i = 0; i < 3; i++) { read(); }
 }
 
 void Encoder::monitor()
 {
-  ISR();
+  // ISR();
 }
 
-void Encoder::ISR()
+void Encoder::read(PIN_ID pin)
 {
-  int8_t state_last = _state;
-  read();
-  // In case _state changed, trigger execution of encoder command
-  if (_state != state_last) { cmd_t cmd = _getCommand(_state); execute(cmd); }
-}
+  switch (pin) {
+    case CLK: _state_raw[pin] =  digitalRead(INPUT_PIN_CLK); break;
+    case DT:  _state_raw[pin] =  digitalRead(INPUT_PIN_DT ); break;
+    case SW:  _state_raw[pin] = !digitalRead(INPUT_PIN_SW ); break;
+  }
 
-void Encoder::read()
-{
-  // Order in array: { DT = 0, CLK = 1, SW = 2 }
-  _state_raw[SW]  = !digitalRead(INPUT_PIN_SW);
-  _state_raw[CLK] =  digitalRead(INPUT_PIN_CLK);
-  _state_raw[DT]  =  digitalRead(INPUT_PIN_DT);
+  _time_debounceInterval[pin] = micros() - _time_debounceInterval[pin];
+  smooth(_state_buffer[pin], _state_raw[pin], _time_debounceInterval[pin], 10000);
+  _time_debounceInterval[pin] = micros();
 
-  _debounce();
-  _refreshState();
+  bool triggered = trigger(_state_debounced[pin], _state_buffer[pin], exp(-1), 1-exp(-1));
+
+  if (triggered) {
+    //refresh state
+  }
 }
 
 void Encoder::_debounce()
 {
-  // Weighted exponential smoothing for debouncing
-  // (replaces capacitor between encoder and Inv. Schmitt Trigger)
-  _time_debounceInterval = micros() - _time_debounceInterval;
-  for (size_t i = 0; i < 3; i++) {
-    smooth(_state_buffer[i], _state_raw[i], _time_debounceInterval, 0.01);
-  }
-  _time_debounceInterval = micros();
 
-  // Hysteresis for debouncing (replaces Inv. Schmitt Trigger)
-  for (size_t i = 0; i < 3; i++) {
-    trigger(_state_raw_debounced[i], _state_buffer[i], exp(-1), 1-exp(-1));
-  }
 }
 
 void Encoder::_refreshState()
 {
-  // Save last CLK & DT values and erase everything else
-  // MÖGL. FEHLERQUELLE, WENN STATES IN ENCODER::ISR VERGL. WERDEN !!
-  _state <<= 2;
-  _state  &= 0b1100;
 
-  // Write new states to _state
-  _state  |=
-    _state_raw_debounced[SW]  << 4 |
-    _state_raw_debounced[CLK] << 1 |
-    _state_raw_debounced[DT];
 }
 
 cmd_t Encoder::_getCommand(int8_t state)

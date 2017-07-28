@@ -17,15 +17,15 @@
 
 // --- PRIVATE STATIC VAR INIT ---
 
-  unsigned long Vaporizer:: _time_lastWaitCall      = 0;
-  unsigned long Vaporizer:: _time_lastCycle         = 0;
+  unsigned long Vaporizer:: _time_lastWaitCall        = 0;
+  unsigned long Vaporizer:: _time_lastCycle           = 0;
 
-  bool          Encoder::   _state_raw[3]           = { 0, 0, 0 };
-  double        Encoder::   _state_buffer[3]        = { 0, 0, 0 };
-  bool          Encoder::   _state_raw_debounced[3] = { 0, 0, 0 };
-  int8_t        Encoder::   _state                  = 0b0;
-  int8_t const  Encoder::   _LUT[16]                = { 0, -1, 1, 0, 1, 0, 0, -1, -1, 0, 0, 1, 0, 1, -1, 0 };
-  unsigned long Encoder::   _time_debounceInterval  = 0;
+  bool          Encoder::   _state_raw[3]             = { 0, 0, 0 };
+  double        Encoder::   _state_buffer[3]          = { 0, 0, 0 };
+  unsigned long Encoder::   _time_debounceInterval[3] = { 0, 0, 0 };
+  bool          Encoder::   _state_debounced[3]       = { 0, 0, 0 };
+  int8_t        Encoder::   _state                    = 0b0;
+  int8_t const  Encoder::   _LUT[16]                  = { 0, -1, 1, 0, 1, 0, 0, -1, -1, 0, 0, 1, 0, 1, -1, 0 };
 
 
 // --- PUBLIC  STATIC VAR INIT ---
