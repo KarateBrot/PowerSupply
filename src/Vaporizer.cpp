@@ -32,7 +32,6 @@ void Vaporizer::monitor()
   limitFPS(FPS_MAX);
   getFPS();
   cycleCount++;
-
 }
 
 // Idle until time span since last call is reached
@@ -105,8 +104,8 @@ void Input::ISR_SW()  { Encoder::read(SW);  }
 
 void Input::execute(cmd_t command)
 {
-  switch (command) {
-
+  switch (command)
+  {
     case LEFT:
       Item::buffer[0].changeValue(1);
       execute(RIGHT);
@@ -126,7 +125,6 @@ void Input::execute(cmd_t command)
 
     case LONGSELECT:
       break;
-
   }
 }
 
@@ -135,17 +133,20 @@ void Input::execute(cmd_t command)
 
 void Encoder::init()
 {
-  // for (size_t i = 0; i < 3; i++) { read(); }
+  for (size_t i = 0; i < 3; i++) { read(CLK); read(DT); read(SW); }
 }
 
 void Encoder::monitor()
 {
-  // ISR();
+  read(CLK);
+  read(DT);
+  read(SW);
 }
 
 void Encoder::read(PIN_ID pin)
 {
-  switch (pin) {
+  switch (pin)
+  {
     case CLK: _state_raw[pin] =  digitalRead(INPUT_PIN_CLK); break;
     case DT:  _state_raw[pin] =  digitalRead(INPUT_PIN_DT ); break;
     case SW:  _state_raw[pin] = !digitalRead(INPUT_PIN_SW ); break;
@@ -157,19 +158,35 @@ void Encoder::read(PIN_ID pin)
 
   bool triggered = trigger(_state_debounced[pin], _state_buffer[pin], exp(-1), 1-exp(-1));
 
-  if (triggered) {
-    //refresh state
+  if (triggered) { _refreshState(pin); }
+}
+
+// void Encoder::_debounce()
+// {
+//
+// }
+
+void Encoder::_refreshState(PIN_ID pin)
+{
+  switch (pin)
+  {
+    case CLK:
+      _state &= 0b10111;
+      _state |= (_state & 0b10) << 2;
+      _state &= 0b11101;
+      _state |= _state_debounced[pin] << 1;
+      break;
+    case DT:
+      _state &= 0b11011;
+      _state |= (_state & 0b1) << 2;
+      _state &= 0b11110;
+      _state |= _state_debounced[pin];
+      break;
+    case SW:
+      _state &= 0b01111;
+      _state |= _state_debounced[pin] << 4;
+      break;
   }
-}
-
-void Encoder::_debounce()
-{
-
-}
-
-void Encoder::_refreshState()
-{
-
 }
 
 cmd_t Encoder::_getCommand(int8_t state)
@@ -186,6 +203,11 @@ cmd_t Encoder::_getCommand(int8_t state)
 int8_t Encoder::getState()
 {
   return _state;
+}
+
+int8_t Encoder::getLUT(uint8_t num)
+{
+  return _LUT[num];
 }
 
 
@@ -358,8 +380,9 @@ void Debug::draw()
   display.setCursor(0, 0);
   display.print("cycle:  "); display.println(cycleCount );
   display.print("FPS:    "); display.println(framerate  );
-  display.print("state: ");  display.println(Encoder::getState() | 0b100000, BIN);
+  display.print("state: ");  display.print  (Encoder::getState() | 0b100000, BIN);
   display.fillRect(42, 16, 6, 9, BLACK);
+  display.print(" [");  display.print(Encoder::getLUT(Encoder::getState() & 0b1111)); display.println("]");
 }
 
 

@@ -106,8 +106,8 @@ class Encoder : public Input
   static       int8_t        _state;
   static const int8_t        _LUT[16];
 
-  static void  _debounce(void);
-  static void  _refreshState(void);
+  // static void  _debounce(void);
+  static void  _refreshState(PIN_ID);
   static cmd_t _getCommand(int8_t);
 
   public:
@@ -116,6 +116,7 @@ class Encoder : public Input
     static void   ISR(PIN_ID);
     static void   read(PIN_ID);
     static int8_t getState(void);
+    static int8_t getLUT(uint8_t);
 };
 
 class PowerSwitch : public Input
