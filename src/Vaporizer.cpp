@@ -19,6 +19,7 @@ void Vaporizer::init()
 {
   Input::init();
   GUI::init();
+  Serial.begin(9600);
   analogWriteRange(PWM_RANGE);
   analogWriteFreq(PWM_FREQ);
   Wire.setClock(800000L);
@@ -98,9 +99,9 @@ void Input::monitor()
 }
 
 // Needs Input::monitor() to be looped to function properly
-void Input::ISR_CLK() { Encoder::read(CLK); }
-void Input::ISR_DT()  { Encoder::read(DT);  }
-void Input::ISR_SW()  { Encoder::read(SW);  }
+void Input::ISR_CLK() { for (size_t i = 0; i < 10; i++) { Encoder::read(CLK); }}
+void Input::ISR_DT()  { for (size_t i = 0; i < 10; i++) { Encoder::read(DT);  }}
+void Input::ISR_SW()  { for (size_t i = 0; i < 10; i++) { Encoder::read(SW);  }}
 
 void Input::execute(cmd_t command)
 {
@@ -133,7 +134,7 @@ void Input::execute(cmd_t command)
 
 void Encoder::init()
 {
-  for (size_t i = 0; i < 3; i++) { read(CLK); read(DT); read(SW); }
+  for (size_t i = 0; i < 10; i++) { read(CLK); read(DT); read(SW); }
 }
 
 void Encoder::monitor()
@@ -147,13 +148,18 @@ void Encoder::read(PIN_ID pin)
 {
   switch (pin)
   {
-    case CLK: _state_raw[pin] =  digitalRead(INPUT_PIN_CLK); break;
+    case CLK:
+      _state_raw[pin] =  digitalRead(INPUT_PIN_CLK);
+      // Serial.print(_state_raw[DT]);
+      // Serial.print(" ");
+      // Serial.println(_state_debounced[DT]);
+      break;
     case DT:  _state_raw[pin] =  digitalRead(INPUT_PIN_DT ); break;
     case SW:  _state_raw[pin] = !digitalRead(INPUT_PIN_SW ); break;
   }
 
   _time_debounceInterval[pin] = micros() - _time_debounceInterval[pin];
-  smooth(_state_buffer[pin], _state_raw[pin], _time_debounceInterval[pin], 10000);
+  smooth(_state_buffer[pin], _state_raw[pin], _time_debounceInterval[pin], 5000);
   _time_debounceInterval[pin] = micros();
 
   bool triggered = trigger(_state_debounced[pin], _state_buffer[pin], exp(-1), 1-exp(-1));
