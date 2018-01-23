@@ -19,12 +19,12 @@
   #include <Adafruit_INA219.h>                                                //
   #include <Adafruit_MCP4725.h>                                               //
   #include <Adafruit_GFX.h>                                                   //
-    #include <Fonts\FreeSans9pt7b.h>                                          //
-    #include <Fonts\FreeSans12pt7b.h>                                         //
-    #include <Fonts\FreeSansBold18pt7b.h>                                     //
+    #include <Fonts/FreeSans9pt7b.h>                                          //
+    #include <Fonts/FreeSans12pt7b.h>                                         //
+    #include <Fonts/FreeSansBold18pt7b.h>                                     //
   #include <Adafruit_SSD1306.h>                                               //
 // -------------------------------------------------------------------------- //
-  #include <Images\Splash.h>                                                  //
+  #include <Images/Splash.h>                                                  //
 // -------------------------------------------------------------------------- //
   #define   PID_P                850.0f                                       //
   #define   PID_I                100.0f                                       //
@@ -53,8 +53,6 @@
   enum magnitude_t { MICRO = -6, MILLI = -3, BASE = 0, KILO = 3, MEGA = 6 };  //
   enum material_t  { SS316L, SS316, SS304 };                                  //
 // -------------------------------------------------------------------------- //
-
-
 
 
 // =============================== VAPORIZER ================================ //
