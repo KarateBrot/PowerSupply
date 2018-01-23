@@ -106,7 +106,7 @@ class Encoder : public Input
   static       int8_t        _state;
   static const int8_t        _LUT[16];
 
-  // static void  _debounce(void);
+  // static void _debounce(void);
   static void  _refreshState(PIN_ID);
   static cmd_t _getCommand(int8_t);
 
