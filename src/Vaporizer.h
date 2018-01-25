@@ -29,12 +29,43 @@
 struct Sensor
 {
   Adafruit_INA219 INA219;
-  double voltage, current, resistance, res20, resCable;
+  double current, voltage, resistance, res20, resCable;
   float  power, temperature;
 
   Sensor(void);
 
-  void read();
+  void read(void);
+};
+
+
+
+struct DAC
+{
+  Adafruit_MCP4725 MCP4725;
+
+  DAC(void);
+};
+
+
+
+class Regulation
+{
+  Sensor sensor;
+  DAC    dac;
+};
+
+
+
+class Input
+{
+
+};
+
+
+
+class GUI
+{
+
 };
 
 
@@ -43,8 +74,7 @@ struct Sensor
 
 class Vaporizer
 {
-public:
-  Sensor sensor;
+
 };
 
 // -------------------------------- VAPORIZER ------------------------------- //

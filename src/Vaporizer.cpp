@@ -29,18 +29,33 @@ void Sensor::read()
 
   // resistance [Ω]
   resistance =
-    ( 9.0*resistance +(voltage/constrain(current, 1, 15000) -resCable) ) /10.0;
-  if (voltage > 100 && current < 10){ resistance = res20; }                     // if no heater connected
+    ( 9.0*resistance + (voltage/constrain(current, 1, 15000) - resCable) )/10.0;
+
+  if (voltage > 100 && current < 10) {                 // if no heater connected
+    resistance = res20;
+  }
 
   // power [W]
   power = (float)(power +voltage*current/1000000.0)/2.0f;
 
   // temperature [°C]
   temperature =
-    ( 95.0f*temperature + (float)( TCR_SS316L*log(resistance/res20) + 20.0 )*5.0f )/100;
+    ( 95.0f*temperature + (float)( TCR_SS316L*log(resistance/res20) + 20.0 )*5.0f )/100.0f;
 }
 
 // --------------------------------- SENSOR --------------------------------- //
+
+
+
+// =================================== DAC ================================== //
+
+DAC::DAC()
+{
+  MCP4725.begin(0x62);
+  MCP4725.setVoltage(4095, false);             // boot with minimal power output
+}
+
+// ----------------------------------- DAC ---------------------------------- //
 
 
 
