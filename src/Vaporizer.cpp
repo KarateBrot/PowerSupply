@@ -55,6 +55,7 @@ DAC::DAC()
   MCP4725.setVoltage(4095, false);             // boot with minimal power output
 }
 
+<<<<<<< HEAD
 void DAC::setOutput(float x)
 {
   if (x < 0)    { x = 0.0f; } else
@@ -65,6 +66,8 @@ void DAC::setOutput(float x)
   MCP4725.setVoltage(4095 - val, false);
 }
 
+=======
+>>>>>>> d37465f52300413dd38d7f61a453d928d4555eda
 // ----------------------------------- DAC ---------------------------------- //
 
 

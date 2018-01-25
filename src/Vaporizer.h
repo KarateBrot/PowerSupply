@@ -44,8 +44,11 @@ struct DAC
   Adafruit_MCP4725 MCP4725;
 
   DAC(void);
+<<<<<<< HEAD
 
   void setOutput(float);
+=======
+>>>>>>> d37465f52300413dd38d7f61a453d928d4555eda
 };
 
 
