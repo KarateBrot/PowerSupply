@@ -26,34 +26,52 @@
 
 
 
-struct Sensor
+class Sensor
 {
-  Adafruit_INA219 INA219;
-  double current, voltage, resistance, res20, resCable;
+  Adafruit_INA219 _INA219;
+  double          _res20, _resCable;
+
+ public:
+
+  double current, voltage, resistance;
   float  power, temperature;
 
   Sensor(void);
 
-  void read(void);
+  void read        (void);
+  void set_res20   (double);
+  void set_resCable(double);
 };
 
 
 
-struct DAC
+class DAC
 {
-  Adafruit_MCP4725 MCP4725;
+  Adafruit_MCP4725 _MCP4725;
+
+ public:
 
   DAC(void);
 
-  void setOutput(float);
+  void setOutput(uint16_t);
 };
 
 
 
-class Regulation
+class Heater
 {
+  float _p, _i, _d;
+
+ public:
+
   Sensor sensor;
   DAC    dac;
+
+  Heater(float, float, float);
+
+  void set_PID  (float, float, float);
+  void calibrate(void);
+  void regulate (void);
 };
 
 

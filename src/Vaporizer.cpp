@@ -16,56 +16,89 @@
 
 Sensor::Sensor()
 {
-  INA219.begin();
+  _INA219.begin();
 }
 
 void Sensor::read()
 {
   // current [mA]
-  current = (double)INA219.getCurrent_mA()*2.0;
+  current = (double)_INA219.getCurrent_mA()*2.0;   // R050 instead of R100 shunt
 
   // voltage [mV]
-  voltage = (double)INA219.getBusVoltage_V()*1000.0;
+  voltage = (double)_INA219.getBusVoltage_V()*1000.0;
 
   // resistance [Ω]
   resistance =
-    ( 9.0*resistance + (voltage/constrain(current, 1, 15000) - resCable) )/10.0;
+    ( 9.0*resistance + (voltage/constrain(current, 1, 15000) - _resCable) )/10.0;
 
   if (voltage > 100 && current < 10) {                 // if no heater connected
-    resistance = res20;
+    resistance = _res20;
   }
 
   // power [W]
-  power = (float)(power +voltage*current/1000000.0)/2.0f;
+  power = (float)(power + voltage*current/1000000.0)/2.0f;
 
   // temperature [°C]
   temperature =
-    ( 95.0f*temperature + (float)( TCR_SS316L*log(resistance/res20) + 20.0 )*5.0f )/100.0f;
+    ( 95.0f*temperature + (float)( TCR_SS316L*log(resistance/_res20) + 20.0 )*5.0f )/100.0f;
 }
 
-// --------------------------------- SENSOR --------------------------------- //
+// -------------------------------- SENSOR ---------------------------------- //
 
 
 
-// =================================== DAC ================================== //
+// ================================== DAC =================================== //
 
 DAC::DAC()
 {
-  MCP4725.begin(0x62);
-  MCP4725.setVoltage(4095, false);             // boot with minimal power output
+  _MCP4725.begin(0x62);
+  _MCP4725.setVoltage(4095, false);            // boot with minimal power output
 }
 
-void DAC::setOutput(float x)
+void DAC::setOutput(uint16_t val)
 {
-  if (x < 0)    { x = 0.0f; } else
-  if (x > 1.0f) { x = 1.0f; }
-
-  uint16_t val = (uint16_t)(4095.0f*x);
-
-  MCP4725.setVoltage(4095 - val, false);
+  _MCP4725.setVoltage(4095 - val, false);
 }
 
-// ----------------------------------- DAC ---------------------------------- //
+// ---------------------------------- DAC ----------------------------------- //
+
+
+
+// ================================= Heater ================================= //
+
+Heater::Heater(float p, float i, float d)
+{
+  _p = p;
+  _i = i;
+  _d = d;
+}
+
+void Heater::set_PID(float p, float i, float d)
+{
+  _p = p;
+  _i = i;
+  _d = d;
+}
+
+// Make sure heater core is at room temperature before calibration!
+void Heater::calibrate()
+{
+  for (size_t i = 0; i < 30; i++) {
+    sensor.read();
+  }
+  sensor.set_res20(sensor.resistance);
+
+  // <-- Insert PID-tuning here
+
+  // set_PID(p, i, d);
+}
+
+void Heater::regulate()
+{
+  
+}
+
+// --------------------------------- Heater --------------------------------- //
 
 
 
