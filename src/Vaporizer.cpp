@@ -45,6 +45,11 @@ void Sensor::read()
     ( 95.0f*temperature + (float)( _TCR*log(resistance/_res20) + 20.0 )*5.0f )/100.0f;
 }
 
+void Sensor::setPrecision(bool b)
+{
+  b ? _INA219.setCalibration_16V_400mA() : _INA219.setCalibration_32V_2A();
+}
+
 // -------------------------------- SENSOR ---------------------------------- //
 
 
@@ -69,20 +74,26 @@ void DAC::setOutput(uint16_t val)
 
 // ================================= Heater ================================= //
 
-Heater::Heater(float p, float i, float d)
+Heater::Heater()
 {
-  _p = p;
-  _i = i;
-  _d = d;
+  _p = PID_P;
+  _i = PID_I;
+  _d = PID_D;
 }
 
 // Make sure heater core is at room temperature before calibration!
 void Heater::calibrate()
 {
+  sensor.setPrecision(HIGH);
+  dac.setOutput(10);
+
   for (size_t i = 0; i < 30; i++) {
     sensor.read();
   }
+
+  dac.setOutput(0);
   sensor.setRes20(sensor.resistance);
+  sensor.setPrecision(LOW);
 
   // <-- Insert PID-tuning here
 

@@ -54,10 +54,11 @@ class Sensor
 
   Sensor(void);
 
-  void read       (void);
-  void setRes20   (double res) { _res20    = res; }
-  void setResCable(double res) { _resCable = res; }
-  void setTCR     (double tcr) { _TCR      = tcr; }
+  void read        (void);
+  void setPrecision(bool);
+  void setRes20    (double res) { _res20    = res; }
+  void setResCable (double res) { _resCable = res; }
+  void setTCR      (double tcr) { _TCR      = tcr; }
 };
 
 
@@ -87,7 +88,7 @@ class Heater
   DAC      dac;
   uint16_t temperature_set;
 
-  Heater(float, float, float);
+  Heater(void);
 
   void setPID   (float p, float i, float d) { _p = p; _i = i; _d = d; }
   void setPID_P (float p)                   { _p = p; }
@@ -119,10 +120,13 @@ class Vaporizer
 {
  public:
 
-   Heater heater;
+  Heater heater;
+  Input  input;
+  GUI    gui;
 };
 
 // -------------------------------- VAPORIZER ------------------------------- //
+
 
 
 #endif // VAPORIZER_H

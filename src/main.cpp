@@ -1,6 +1,7 @@
 
-
 #include <Vaporizer.h>
+
+Vaporizer vaporizer;
 
 
 
@@ -8,7 +9,7 @@
 
 void setup()
 {
-
+  
 }
 
 void loop()
