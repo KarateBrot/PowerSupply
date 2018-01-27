@@ -30,54 +30,48 @@
 
 
 
-class Service
-{
+
+class Service {
+
   uint32_t _time = 0;
 
-public:
-
+ public:
   void     startRuntime(void)       { _time = micros(); }
-  uint32_t getRuntime  (void) const { return micros() - _time; };
+  uint32_t getRuntime  (void) const { return micros() - _time; }
 };
 
 
 
-class Sensor
-{
+
+class Sensor {
+
   Adafruit_INA219 _INA219;
-  double          _TCR, _res20, _resCable;
 
  public:
-
-  double current, voltage, resistance;
-  float  power, temperature;
-
+  double current, voltage;
   Sensor(void);
-
   void setPrecision(bool);
-  void setRes20    (double res) { _res20    = res; }
-  void setResCable (double res) { _resCable = res; }
-  void setTCR      (double tcr) { _TCR      = tcr; }
   void read        (void);
 };
 
 
 
-class DAC
-{
+
+class DAC {
+
   Adafruit_MCP4725 _MCP4725;
 
  public:
-
   DAC(void);
-
   void setOutput(uint16_t);
 };
 
 
 
-class Heater
-{
+
+class Heater {
+
+  double   _TCR, _res20, _resCable;
   float    _p, _i, _d;
   float    _dTemp, _dt, _timeLast, _dTdt, _temperatureLast, _idle;
   uint16_t _output;
@@ -86,38 +80,49 @@ class Heater
 
   Sensor   sensor;
   DAC      dac;
+
+  double   resistance;
+  float    power, temperature;
   uint16_t temperature_set;
 
   Heater(void);
 
-  void setPID   (float p, float i, float d) { _p = p; _i = i; _d = d; }
-  void setPID_P (float p)                   { _p = p; }
-  void setPID_I (float i)                   { _i = i; }
-  void setPID_D (float d)                   { _d = d; }
-  void calibrate(void);
-  void regulate (void);
+  void setRes20   (double res) { _res20    = res; }
+  void setResCable(double res) { _resCable = res; }
+  void setTCR     (double tcr) { _TCR      = tcr; }
+  void setPID_P   (float p)    { _p        = p;   }
+  void setPID_I   (float i)    { _i        = i;   }
+  void setPID_D   (float d)    { _d        = d;   }
+  void setPID     (float p, float i, float d) { _p = p; _i = i; _d = d; }
+
+  void update     (void);
+  void calibrate  (void);
+  void regulate   (void);
 };
 
 
 
-class Input
-{
+
+class Input {
+
 
 };
 
 
 
-class GUI
-{
+
+class GUI {
+
 
 };
+
 
 
 
 // =============================== VAPORIZER ================================ //
 
-class Vaporizer
-{
+class Vaporizer {
+
  public:
 
   Heater heater;
@@ -126,6 +131,7 @@ class Vaporizer
 };
 
 // -------------------------------- VAPORIZER ------------------------------- //
+
 
 
 
