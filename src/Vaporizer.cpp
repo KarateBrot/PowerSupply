@@ -69,7 +69,7 @@ Heater::Heater() {
   setTCR(TCR_SS316L);
 }
 
-void Heater::update() {
+void Heater::fetchData() {
 
   sensor.read();
 
@@ -95,9 +95,7 @@ void Heater::calibrate() {
   sensor.setPrecision(HIGH);
   dac.setOutput(10);
 
-  for (size_t i = 0; i < 30; i++) {
-    sensor.read();
-  }
+  for (size_t i = 0; i < 30; i++) { fetchData(); }
 
   dac.setOutput(0);
   setRes20(resistance);
@@ -150,8 +148,21 @@ void Heater::regulate() {
 
 
 
-// ================================ VAPORIZER =============================== //
+// ================================== GUI =================================== //
+
+GUI::GUI() {
+
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+  display.setTextColor(WHITE);
+}
+
+// ---------------------------------- GUI ----------------------------------- //
 
 
 
-// -------------------------------- VAPORIZER ------------------------------- //
+
+// =============================== VAPORIZER ================================ //
+
+
+
+// ------------------------------- VAPORIZER -------------------------------- //
