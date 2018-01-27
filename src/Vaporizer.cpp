@@ -102,6 +102,7 @@ void Heater::calibrate() {
   sensor.setPrecision(LOW);
 
   // <-- Insert PID-tuning here
+  
 
   // setPID(p, i, d);
 }
@@ -133,7 +134,7 @@ void Heater::regulate() {
   _temperatureLast = temperature;
 
   // ∫ΔTdt [°C*s]
-  if (_dTemp <= 5.0) {                                                          // only start integrating shortly before reaching ΔT = 0 (to prevent T from overshooting)
+  if (_dTemp <= 5.0) {                                                          // only start integrating shortly before reaching ΔT = 0 (to prevent integral windup)
     _idle += _dTemp*_dt + 0.05;                                                 // [+ 1.0]: let P and I fight each other (for "stiffer" temp regulation)
     _idle  = constrain(_idle, 0, 4095);
   }
