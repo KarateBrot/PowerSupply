@@ -21,6 +21,11 @@ Sensor::Sensor()
   setTCR(TCR_SS316L);
 }
 
+void Sensor::setPrecision(bool b)
+{
+  b ? _INA219.setCalibration_16V_400mA() : _INA219.setCalibration_32V_2A();
+}
+
 void Sensor::read()
 {
   // Current [mA]
@@ -45,11 +50,6 @@ void Sensor::read()
     ( 95.0f*temperature + (float)( _TCR*log(resistance/_res20) + 20.0 )*5.0f )/100.0f;
 }
 
-void Sensor::setPrecision(bool b)
-{
-  b ? _INA219.setCalibration_16V_400mA() : _INA219.setCalibration_32V_2A();
-}
-
 // -------------------------------- SENSOR ---------------------------------- //
 
 
@@ -62,7 +62,7 @@ DAC::DAC()
   _MCP4725.setVoltage(4095, false);            // boot with minimal power output
 }
 
-// Sets DAC pin "OUT" to DC voltage from 0..Vcc
+// Applies DC voltage from 0..Vcc at pin "OUT" on MCP4725 breakout board
 void DAC::setOutput(uint16_t val)
 {
   _MCP4725.setVoltage(4095 - val, false);
@@ -108,22 +108,23 @@ void Heater::regulate()
   // -------------------------------------------------------------------------//
   // SIGNAL OUTPUT:   u(t) = P*e(t) + I*∫e(t)dt + D*de(t)/dt                  //
   //                      e(t)     = ΔT                                       //
-  //                      ∫e(t)dt  = dac_idle                                 //
+  //                      ∫e(t)dt  = idle                                     //
   //                      de(t)/dt = -dT/dt                                   //
-  //                      u(t)     = dac_output                               //
-  //            =>    dac_output   = P*ΔT + I*dac_idle - D*dT/dt              //
+  //                      u(t)     = output                                   //
+  // -------------------------------------------------------------------------//
+  //                  =>  output = P*ΔT + I*idle - D*dT/dt                    //
   // ------------------------------------------------------------------------ //
 
   // ΔT [°C]
   _dTemp = (float)temperature_set - sensor.temperature;
 
   // Time step for I and D
-  float _dt = (micros() - _timeLast)/1000000.0;
+  _dt = (micros() - _timeLast)/1000000.0;
   _timeLast = micros();
 
   // dT/dt [°C/s]
-  _dTdt     = (sensor.temperature - _tempLast)/_dt;
-  _tempLast = sensor.temperature;
+  _dTdt = (sensor.temperature - _temperatureLast)/_dt;
+  _temperatureLast = sensor.temperature;
 
   // ∫ΔTdt [°C*s]
   if (_dTemp <= 5.0) {                                                          // only start integrating shortly before reaching ΔT = 0 (to prevent T from overshooting)

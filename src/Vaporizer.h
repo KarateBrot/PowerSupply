@@ -54,11 +54,11 @@ class Sensor
 
   Sensor(void);
 
-  void read        (void);
   void setPrecision(bool);
   void setRes20    (double res) { _res20    = res; }
   void setResCable (double res) { _resCable = res; }
   void setTCR      (double tcr) { _TCR      = tcr; }
+  void read        (void);
 };
 
 
@@ -79,7 +79,7 @@ class DAC
 class Heater
 {
   float    _p, _i, _d;
-  float    _dTemp, _dt, _timeLast, _dTdt, _tempLast, _idle;
+  float    _dTemp, _dt, _timeLast, _dTdt, _temperatureLast, _idle;
   uint16_t _output;
 
  public:
