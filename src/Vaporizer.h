@@ -19,9 +19,12 @@
   #include <Adafruit_GFX.h>                                                   //
   #include <Adafruit_SSD1306.h>                                               //
 // -------------------------------------------------------------------------- //
+  #include <vector>
+    using namespace std;
+// -------------------------------------------------------------------------- //
   #include <img/splash.h>                                                     //
 // -------------------------------------------------------------------------- //
-  #define VERSION    "0.1-a"                                                  //
+  #define V_FIRMWARE_VERSION    "0.1-a"                                                  //
 // -------------------------------------------------------------------------- //
   #define TCR_SS316L 0.00092      // at 20°C                                  //
 // -------------------------------------------------------------------------- //
@@ -35,13 +38,15 @@
 
 class Service {
 
-  uint32_t _time = 0;
+  uint32_t _runtime = 0;
+  uint32_t _timer_lastWaitCall = 0;
 
  public:
 
-  static String getVersion  (void)       { return VERSION; }
-  void          startRuntime(void)       { _time = micros(); }
-  uint32_t      getRuntime  (void) const { return micros() - _time; }
+  static String getVersion  (void)       { return V_FIRMWARE_VERSION; }
+  void          startRuntime(void)       { _runtime = micros(); }
+  uint32_t      getRuntime  (void) const { return micros() - _runtime; }
+  void          waitUntil   (uint32_t);
 };
 
 
@@ -122,11 +127,16 @@ class Input {
 
 class GUI {
 
+  vector<uint8_t> _state;
+
  public:
 
   Adafruit_SSD1306 display;
 
   GUI(void);
+
+  void clear(void);
+  void draw(void);
 };
 
 

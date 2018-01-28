@@ -13,6 +13,15 @@
 
 
 
+void Service::waitUntil(uint32_t timer) {
+
+  while (micros() - _timer_lastWaitCall < timer) { yield(); }
+  _timer_lastWaitCall = micros();
+}
+
+
+
+
 // ================================= SENSOR ================================= //
 
 Sensor::Sensor() {
@@ -102,7 +111,7 @@ void Heater::calibrate() {
   sensor.setPrecision(LOW);
 
   // <-- Insert PID-tuning here
-  
+
 
   // setPID(p, i, d);
 }
@@ -155,6 +164,21 @@ GUI::GUI() {
 
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
   display.setTextColor(WHITE);
+}
+
+void GUI::clear() {
+
+  display.clearDisplay();
+  display.display();
+}
+
+void GUI::draw() {
+
+  display.clearDisplay();
+
+  // drawing stuff here
+
+  display.display();
 }
 
 // ---------------------------------- GUI ----------------------------------- //
