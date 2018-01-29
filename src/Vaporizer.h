@@ -19,12 +19,12 @@
   #include <Adafruit_GFX.h>                                                   //
   #include <Adafruit_SSD1306.h>                                               //
 // -------------------------------------------------------------------------- //
-  #include <vector>
-    using namespace std;
+  #include <vector>                                                           //
+    using namespace std;                                                      //
 // -------------------------------------------------------------------------- //
   #include <img/splash.h>                                                     //
 // -------------------------------------------------------------------------- //
-  #define V_FIRMWARE_VERSION    "0.1-a"                                                  //
+  #define V_FIRMWARE_VERSION    "0.1-a"                                       //
 // -------------------------------------------------------------------------- //
   #define TCR_SS316L 0.00092      // at 20°C                                  //
 // -------------------------------------------------------------------------- //
@@ -83,17 +83,36 @@ class DAC {
 
 
 
+class PID_Ctrl {
+
+  float  _p, _error, _i, _errorInt, _d, _errorDiff;
+  float  _dt, _timeLast, _valueLast;
+
+ public:
+
+  PID_Ctrl(void);
+
+  void setP(float  p) { _p = p; }
+  void setI(float  i) { _i = i; }
+  void setD(float  d) { _d = d; }
+
+  void set (float p, float i, float d) { _p = p; _i = i; _d = d; }
+
+  float getOutput  (float, float);
+};
+
+
+
+
 class Heater {
 
   double   _TCR, _res20, _resCable;
-  float    _p, _i, _d;
-  float    _dTemp, _dt, _timeLast, _dTdt, _temperatureLast, _idle;
-  uint16_t _output;
 
  public:
 
   Sensor   sensor;
   DAC      dac;
+  PID_Ctrl pid;
 
   double   resistance;
   float    power, temperature;
@@ -104,14 +123,10 @@ class Heater {
   void setRes20   (double res) { _res20    = res; }
   void setResCable(double res) { _resCable = res; }
   void setTCR     (double tcr) { _TCR      = tcr; }
-  void setPID_P   (float  p)   { _p        = p;   }
-  void setPID_I   (float  i)   { _i        = i;   }
-  void setPID_D   (float  d)   { _d        = d;   }
-  void setPID     (float p, float i, float d) { _p = p; _i = i; _d = d; }
 
   void fetchData  (void);
-  void calibrate  (void);
   void regulate   (void);
+  void calibrate  (void);
 };
 
 

@@ -68,13 +68,55 @@ void DAC::setOutput(uint16_t val) {
 
 
 
+PID_Ctrl::PID_Ctrl() {
+
+}
+
+
+// <-- attachInput() here
+
+float PID_Ctrl::getOutput(float value_set, float value) {
+
+  // ------------------------------------------------------------------------ //
+  //                         --< PID-CONTROLLER >--                           //
+  // -------------------------------------------------------------------------//
+  // SIGNAL OUTPUT:   u(t) = P*e(t) + I*∫e(t)dt + D*de(t)/dt                  //
+  //                      e(t)     = ΔT                                       //
+  //                      ∫e(t)dt  = idle                                     //
+  //                      de(t)/dt = -dT/dt                                   //
+  // -------------------------------------------------------------------------//
+  //              =>  u(t) = P*ΔT + I*idle - D*dT/dt                          //
+  // ------------------------------------------------------------------------ //
+
+  // e(t)
+  _error = value_set - value;
+
+  // dt
+  _dt = (float)(micros() - _timeLast)/1000000.0f;
+  _timeLast = micros();
+
+  // de(t)/dt
+  _errorDiff = (value - _valueLast)/_dt;
+  _valueLast =  value;
+
+  // ∫e(t)dt
+  if (_error <= 0.025f) {                                                       // only start integrating shortly before reaching e(t) = 0 (to prevent integral windup)
+    _errorInt += _error*_dt + 0.001f;                                           // [+ 0.001]: let P and I fight each other (for "stiffer" temp regulation)
+    _errorInt  = constrain(_errorInt, 0, 1);
+  }
+
+  // u(t) = P*e(t) + I*∫e(t)dt + D*de(t)/dt
+  return constrain(_p*_error + _i*_errorInt - _d*_errorDiff, 0, 1);
+}
+
+
+
+
 // ================================= Heater ================================= //
 
 Heater::Heater() {
 
-  _p = PID_P;
-  _i = PID_I;
-  _d = PID_D;
+  pid.set(PID_P, PID_I, PID_D);
   setTCR(TCR_SS316L);
 }
 
@@ -98,6 +140,14 @@ void Heater::fetchData() {
     ( 95.0f*temperature + (float)( _TCR*log(resistance/_res20) + 20.0 )*5.0f )/100.0f;
 }
 
+// Sets DAC pin "OUT" to DC voltage according to PID-controller
+void Heater::regulate() {
+
+  float output = pid.getOutput(temperature_set, temperature);
+  output *= 4095.0f;
+  dac.setOutput((uint16_t)output);
+}
+
 // Make sure heater core is at room temperature before calibration!
 void Heater::calibrate() {
 
@@ -110,47 +160,11 @@ void Heater::calibrate() {
   setRes20(resistance);
   sensor.setPrecision(LOW);
 
+  pid.set(1.0f, 0.0f, 0.0f);
+
   // <-- Insert PID-tuning here
 
-
-  // setPID(p, i, d);
-}
-
-// Sets DAC pin "OUT" to DC voltage according to PID-controller
-void Heater::regulate() {
-
-  // ------------------------------------------------------------------------ //
-  //                         --< PID-CONTROLLER >--                           //
-  // -------------------------------------------------------------------------//
-  // SIGNAL OUTPUT:   u(t) = P*e(t) + I*∫e(t)dt + D*de(t)/dt                  //
-  //                      e(t)     = ΔT                                       //
-  //                      ∫e(t)dt  = idle                                     //
-  //                      de(t)/dt = -dT/dt                                   //
-  //                      u(t)     = output                                   //
-  // -------------------------------------------------------------------------//
-  //                  =>  output = P*ΔT + I*idle - D*dT/dt                    //
-  // ------------------------------------------------------------------------ //
-
-  // ΔT [°C]
-  _dTemp = (float)temperature_set - temperature;
-
-  // Time step for I and D
-  _dt = (micros() - _timeLast)/1000000.0;
-  _timeLast = micros();
-
-  // dT/dt [°C/s]
-  _dTdt = (temperature - _temperatureLast)/_dt;
-  _temperatureLast = temperature;
-
-  // ∫ΔTdt [°C*s]
-  if (_dTemp <= 5.0) {                                                          // only start integrating shortly before reaching ΔT = 0 (to prevent integral windup)
-    _idle += _dTemp*_dt + 0.05;                                                 // [+ 1.0]: let P and I fight each other (for "stiffer" temp regulation)
-    _idle  = constrain(_idle, 0, 4095);
-  }
-
-  _output = (uint16_t)constrain(_p*_dTemp + _i*_idle - _d*_dTdt, 0, 4095);
-
-  dac.setOutput(_output);
+  // pid.set(p_ideal, i_ideal, d_ideal);
 }
 
 // --------------------------------- Heater --------------------------------- //
