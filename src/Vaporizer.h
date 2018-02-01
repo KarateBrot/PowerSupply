@@ -24,13 +24,16 @@
 // -------------------------------------------------------------------------- //
   #include <img/splash.h>                                                     //
 // -------------------------------------------------------------------------- //
-  #define V_FIRMWARE_VERSION    "0.1-a"                                       //
+  #define V_FIRMWARE_VERSION     "0.1-a"                                      //
 // -------------------------------------------------------------------------- //
-  #define TCR_SS316L 0.00092      // at 20°C                                  //
+  #define HEATER_TCR_SS316L       0.00092                         // at 20°C  //
 // -------------------------------------------------------------------------- //
-  #define PID_P      850.0f                                                   //
-  #define PID_I      100.0f                                                   //
-  #define PID_D       80.0f                                                   //
+  #define HEATER_RES20            0.51                                        //
+  #define HEATER_RESCABLE         0.27                                        //
+// -------------------------------------------------------------------------- //
+  #define PID_P                 850.0                                         //
+  #define PID_I                 100.0                                         //
+  #define PID_D                  80.0                                         //
 // -------------------------------------------------------------------------- //
 
 
@@ -42,6 +45,8 @@ class Service {
   uint32_t _timer_lastWaitCall = 0;
 
  public:
+
+  Service(void);
 
   static String getVersion  (void)       { return V_FIRMWARE_VERSION; }
   void          startRuntime(void)       { _runtime = micros(); }
@@ -85,20 +90,21 @@ class DAC {
 
 class PID_Ctrl {
 
-  float  _p, _error, _i, _errorInt, _d, _errorDiff;
-  float  _dt, _timeLast, _valueLast;
+  double  _p, _error, _i, _errorInt, _d, _errorDiff;
+  double  _dt, _timeLast, _valueLast;
 
  public:
 
   PID_Ctrl(void);
 
-  void setP(float  p) { _p = p; }
-  void setI(float  i) { _i = i; }
-  void setD(float  d) { _d = d; }
+  PID_Ctrl&   setP  (double p) { _p = p; return *this; }
+  PID_Ctrl&   setI  (double i) { _i = i; return *this; }
+  PID_Ctrl&   setD  (double d) { _d = d; return *this; }
+  PID_Ctrl&   setPID(double p, double i, double d) { _p = p; _i = i; _d = d; return *this; }
 
-  void set (float p, float i, float d) { _p = p; _i = i; _d = d; }
-
-  float getOutput  (float, float);
+  double getOutput(double, double);
+  void   setOutput(DAC&, double, double);
+  void   autotune (void);
 };
 
 
@@ -106,7 +112,7 @@ class PID_Ctrl {
 
 class Heater {
 
-  double   _TCR, _res20, _resCable;
+  double _TCR, _res20, _resCable;
 
  public:
 
@@ -115,18 +121,18 @@ class Heater {
   PID_Ctrl pid;
 
   double   resistance;
-  float    power, temperature;
-  uint16_t temperature_set;
+  double   power, temperature;
+  uint16_t power_set, temperature_set;
 
   Heater(void);
 
-  void setRes20   (double res) { _res20    = res; }
-  void setResCable(double res) { _resCable = res; }
-  void setTCR     (double tcr) { _TCR      = tcr; }
+  Heater& setRes20   (double res) { _res20    = res; return *this; }
+  Heater& setResCable(double res) { _resCable = res; return *this; }
+  Heater& setTCR     (double tcr) { _TCR      = tcr; return *this; }
 
-  void fetchData  (void);
-  void regulate   (void);
-  void calibrate  (void);
+  void calculate(void);
+  void regulate (void);
+  void calibrate(void);
 };
 
 
@@ -151,7 +157,7 @@ class GUI {
   GUI(void);
 
   void clear(void);
-  void draw(void);
+  void draw (void);
 };
 
 

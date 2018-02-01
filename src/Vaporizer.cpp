@@ -13,6 +13,11 @@
 
 
 
+Service::Service() {
+
+  _timer_lastWaitCall = micros();
+}
+
 void Service::waitUntil(uint32_t timer) {
 
   while (micros() - _timer_lastWaitCall < timer) { yield(); }
@@ -72,10 +77,7 @@ PID_Ctrl::PID_Ctrl() {
 
 }
 
-
-// <-- attachInput() here
-
-float PID_Ctrl::getOutput(float value_set, float value) {
+double PID_Ctrl::getOutput(double value, double value_set) {
 
   // ------------------------------------------------------------------------ //
   //                         --< PID-CONTROLLER >--                           //
@@ -92,21 +94,32 @@ float PID_Ctrl::getOutput(float value_set, float value) {
   _error = value_set - value;
 
   // dt
-  _dt = (float)(micros() - _timeLast)/1000000.0f;
-  _timeLast = micros();
+  _dt       = (micros() - _timeLast)/1000000.0;
+  _timeLast =  micros();
 
   // de(t)/dt
   _errorDiff = (value - _valueLast)/_dt;
   _valueLast =  value;
 
   // ∫e(t)dt
-  if (_error <= 0.025f) {                                                       // only start integrating shortly before reaching e(t) = 0 (to prevent integral windup)
-    _errorInt += _error*_dt + 0.001f;                                           // [+ 0.001]: let P and I fight each other (for "stiffer" temp regulation)
+  if (_error  <= 0.025) {                                                       // only start integrating shortly before reaching e(t) = 0 (to prevent integral windup)
+    _errorInt += _error*_dt + 0.001;                                            // [+ 0.001]: let P and I fight each other (for "stiffer" temp regulation)
     _errorInt  = constrain(_errorInt, 0, 1);
   }
 
   // u(t) = P*e(t) + I*∫e(t)dt + D*de(t)/dt
   return constrain(_p*_error + _i*_errorInt - _d*_errorDiff, 0, 1);
+}
+
+void PID_Ctrl::setOutput(DAC &d, double value, double value_set) {
+
+  double output = getOutput(value, value_set)*4095.0;
+  d.setOutput((uint16_t)output);
+}
+
+void PID_Ctrl::autotune() {
+
+
 }
 
 
@@ -116,55 +129,66 @@ float PID_Ctrl::getOutput(float value_set, float value) {
 
 Heater::Heater() {
 
-  pid.set(PID_P, PID_I, PID_D);
-  setTCR(TCR_SS316L);
+  setTCR     (HEATER_TCR_SS316L);
+  setRes20   (HEATER_RES20);
+  setResCable(HEATER_RESCABLE);
+  pid.setPID (PID_P, PID_I, PID_D);
 }
 
-void Heater::fetchData() {
+void Heater::calculate() {
 
   sensor.read();
 
   // Resistance [Ω]
   resistance =
-    ( 9.0*resistance + (sensor.voltage/constrain(sensor.current, 1, 15000) - _resCable) )/10.0;
+    0.9*resistance +
+    0.1*( sensor.voltage/constrain(sensor.current, 1, 15000) - _resCable );
 
-  if (sensor.voltage > 100 && sensor.current < 10) {   // if no heater connected
-    resistance = _res20;
-  }
+  // Resistance [Ω] - if no heater connected
+  if (sensor.voltage > 100 && sensor.current < 10) { resistance = _res20; }
 
   // Power [W]
-  power = (float)(power + sensor.voltage*sensor.current/1000000.0)/2.0f;
+  power =
+    0.5*power +
+    0.5*sensor.voltage*sensor.current/1000000.0;
 
   // Temperature [°C]
   temperature =
-    ( 95.0f*temperature + (float)( _TCR*log(resistance/_res20) + 20.0 )*5.0f )/100.0f;
+    0.95*temperature +
+    0.05*(_TCR*log(resistance/_res20) + 20.0);
 }
 
 // Sets DAC pin "OUT" to DC voltage according to PID-controller
 void Heater::regulate() {
 
-  float output = pid.getOutput(temperature_set, temperature);
-  output *= 4095.0f;
-  dac.setOutput((uint16_t)output);
+  pid.setOutput(dac, temperature, temperature_set);
 }
 
 // Make sure heater core is at room temperature before calibration!
 void Heater::calibrate() {
 
-  sensor.setPrecision(HIGH);
-  dac.setOutput(10);
+  PID_Ctrl pid_helper;
+  pid_helper.setPID(1.0, 0.0, 0.0);                    // still needs manual tuning
 
-  for (size_t i = 0; i < 30; i++) { fetchData(); }
+  sensor.setPrecision(HIGH);
+
+  // Make sure current flow is 10mA +/- 1mA
+  double currentLast = 0.0;
+  while (abs(sensor.current - 10.0) > 1.0 && abs(currentLast - 10.0) > 1.0) {
+    currentLast = sensor.current;
+    calculate();
+    pid_helper.setOutput(dac, sensor.current, 10.0);
+  }
+
+  // Calculate resistance using reference current of 10mA
+  for (size_t i = 0; i < 15; i++) {
+    calculate();
+    pid_helper.setOutput(dac, sensor.current, 10.0);
+  }
 
   dac.setOutput(0);
   setRes20(resistance);
   sensor.setPrecision(LOW);
-
-  pid.set(1.0f, 0.0f, 0.0f);
-
-  // <-- Insert PID-tuning here
-
-  // pid.set(p_ideal, i_ideal, d_ideal);
 }
 
 // --------------------------------- Heater --------------------------------- //
