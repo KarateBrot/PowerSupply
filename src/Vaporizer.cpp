@@ -232,6 +232,7 @@ void GUI::draw() {
 
 Vaporizer::Vaporizer() {
 
+  Wire.begin(V_PIN_SCL, V_PIN_SDA);      // Select I2C pins
   Wire.setClock(800000L);                // for faster I2C transmission (800kHz)
 }
 

@@ -25,6 +25,8 @@
   #include <img/splash.h>                                                     //
 // -------------------------------------------------------------------------- //
   #define V_FIRMWARE_VERSION     "0.1-a"                                      //
+  #define V_PIN_SCL               5                               // Pin D1   //
+  #define V_PIN_SDA               4                               // Pin D2   //
 // -------------------------------------------------------------------------- //
   #define HEATER_TCR_SS316L       0.00092                         // at 20°C  //
 // -------------------------------------------------------------------------- //
@@ -148,6 +150,7 @@ class Input {
 
 class GUI {
 
+  static uint32_t frameCount;
   vector<uint8_t> _state;
 
  public:
