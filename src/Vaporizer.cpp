@@ -73,6 +73,8 @@ void DAC::setOutput(uint16_t val) {
 
 
 
+// ================================ PID_Ctrl ================================ //
+
 PID_Ctrl::PID_Ctrl() {
 
 }
@@ -111,7 +113,7 @@ double PID_Ctrl::getOutput(double value, double value_set) {
   return constrain(_p*_error + _i*_errorInt - _d*_errorDiff, 0, 1);
 }
 
-void PID_Ctrl::setOutput(DAC &d, double value, double value_set) {
+void PID_Ctrl::setOutputOfDAC(DAC &d, double value, double value_set) {
 
   double output = getOutput(value, value_set)*4095.0;
   d.setOutput((uint16_t)output);
@@ -121,6 +123,8 @@ void PID_Ctrl::autotune() {
 
 
 }
+
+// -------------------------------- PID_Ctrl -------------------------------- //
 
 
 
@@ -142,7 +146,7 @@ void Heater::calculate() {
   // Resistance [Ω]
   resistance =
     0.9*resistance +
-    0.1*( sensor.voltage/constrain(sensor.current, 1, 15000) - _resCable );
+    0.1*(sensor.voltage/constrain(sensor.current, 1, 15000) - _resCable);
 
   // Resistance [Ω] - if no heater connected
   if (sensor.voltage > 100 && sensor.current < 10) { resistance = _res20; }
@@ -161,14 +165,14 @@ void Heater::calculate() {
 // Sets DAC pin "OUT" to DC voltage according to PID-controller
 void Heater::regulate() {
 
-  pid.setOutput(dac, temperature, temperature_set);
+  pid.setOutputOfDAC(dac, temperature, temperature_set);
 }
 
 // Make sure heater core is at room temperature before calibration!
 void Heater::calibrate() {
 
   PID_Ctrl pid_helper;
-  pid_helper.setPID(1.0, 0.0, 0.0);                    // still needs manual tuning
+  pid_helper.setPID(1.0, 0.0, 0.0);                 // still needs manual tuning
 
   sensor.setPrecision(HIGH);
 
@@ -177,13 +181,13 @@ void Heater::calibrate() {
   while (abs(sensor.current - 10.0) > 1.0 && abs(currentLast - 10.0) > 1.0) {
     currentLast = sensor.current;
     calculate();
-    pid_helper.setOutput(dac, sensor.current, 10.0);
+    pid_helper.setOutputOfDAC(dac, sensor.current, 10.0);
   }
 
   // Calculate resistance using reference current of 10mA
   for (size_t i = 0; i < 15; i++) {
     calculate();
-    pid_helper.setOutput(dac, sensor.current, 10.0);
+    pid_helper.setOutputOfDAC(dac, sensor.current, 10.0);
   }
 
   dac.setOutput(0);
@@ -226,6 +230,9 @@ void GUI::draw() {
 
 // =============================== VAPORIZER ================================ //
 
+Vaporizer::Vaporizer() {
 
+  Wire.setClock(800000L);                // for faster I2C transmission (800kHz)
+}
 
 // ------------------------------- VAPORIZER -------------------------------- //

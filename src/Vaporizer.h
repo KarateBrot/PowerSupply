@@ -31,9 +31,9 @@
   #define HEATER_RES20            0.51                                        //
   #define HEATER_RESCABLE         0.27                                        //
 // -------------------------------------------------------------------------- //
-  #define PID_P                 850.0                                         //
-  #define PID_I                 100.0                                         //
-  #define PID_D                  80.0                                         //
+  #define PID_P                   1.0                                         //
+  #define PID_I                   0.1                                         //
+  #define PID_D                   0.08                                        //
 // -------------------------------------------------------------------------- //
 
 
@@ -102,9 +102,9 @@ class PID_Ctrl {
   PID_Ctrl&   setD  (double d) { _d = d; return *this; }
   PID_Ctrl&   setPID(double p, double i, double d) { _p = p; _i = i; _d = d; return *this; }
 
-  double getOutput(double, double);
-  void   setOutput(DAC&, double, double);
-  void   autotune (void);
+  double getOutput     (double, double);
+  void   setOutputOfDAC(DAC&, double, double);
+  void   autotune      (void);
 };
 
 
@@ -172,6 +172,8 @@ class Vaporizer {
   Heater heater;
   Input  input;
   GUI    gui;
+
+  Vaporizer(void);
 };
 
 // -------------------------------- VAPORIZER ------------------------------- //
