@@ -29,6 +29,11 @@
   #define V_SDA                   4                               // Pin D2   //
 // -------------------------------------------------------------------------- //
   #define HEATER_TCR_SS316L       0.00092                         // at 20°C  //
+  #define HEATER_TCR_SS316        0.000915                                    //
+  #define HEATER_TCR_SS317L       0.00088                                     //
+  #define HEATER_TCR_SS317        0.000875                                    //
+  #define HEATER_TCR_SS304        0.00105                                     //
+  #define HEATER_TCR_SS410        0.00155                                     //
 // -------------------------------------------------------------------------- //
   #define HEATER_RES20            0.51                                        //
   #define HEATER_RESCABLE         0.27                                        //
