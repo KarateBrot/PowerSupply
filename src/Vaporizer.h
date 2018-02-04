@@ -25,8 +25,8 @@
   #include <img/splash.h>                                                     //
 // -------------------------------------------------------------------------- //
   #define V_FIRMWARE_VERSION     "0.1-a"                                      //
-  #define V_PIN_SCL               5                               // Pin D1   //
-  #define V_PIN_SDA               4                               // Pin D2   //
+  #define V_SCL                   5                               // Pin D1   //
+  #define V_SDA                   4                               // Pin D2   //
 // -------------------------------------------------------------------------- //
   #define HEATER_TCR_SS316L       0.00092                         // at 20°C  //
 // -------------------------------------------------------------------------- //
@@ -92,17 +92,17 @@ class DAC {
 
 class PID_Ctrl {
 
-  double  _p, _error, _i, _errorInt, _d, _errorDiff;
-  double  _dt, _timeLast, _valueLast;
+  double _p, _error, _i, _errorInt, _d, _errorDiff;
+  double _dt, _timeLast, _valueLast;
 
  public:
 
   PID_Ctrl(void);
 
-  PID_Ctrl&   setP  (double p) { _p = p; return *this; }
-  PID_Ctrl&   setI  (double i) { _i = i; return *this; }
-  PID_Ctrl&   setD  (double d) { _d = d; return *this; }
-  PID_Ctrl&   setPID(double p, double i, double d) { _p = p; _i = i; _d = d; return *this; }
+  PID_Ctrl& setP  (double p) { _p = p; return *this; }
+  PID_Ctrl& setI  (double i) { _i = i; return *this; }
+  PID_Ctrl& setD  (double d) { _d = d; return *this; }
+  PID_Ctrl& setPID(double p, double i, double d) { _p = p; _i = i; _d = d; return *this; }
 
   double getOutput     (double, double);
   void   setOutputOfDAC(DAC&, double, double);
@@ -124,7 +124,7 @@ class Heater {
 
   double   resistance;
   double   power, temperature;
-  uint16_t power_set, temperature_set;
+  uint16_t power_set = 0, temperature_set = 200;
 
   Heater(void);
 
@@ -132,7 +132,7 @@ class Heater {
   Heater& setResCable(double res) { _resCable = res; return *this; }
   Heater& setTCR     (double tcr) { _TCR      = tcr; return *this; }
 
-  void calculate(void);
+  void update   (void);
   void regulate (void);
   void calibrate(void);
 };
@@ -150,8 +150,8 @@ class Input {
 
 class GUI {
 
-  static uint32_t frameCount;
-  vector<uint8_t> _state;
+  static uint32_t        _frameCount;
+  static vector<uint8_t> _state;
 
  public:
 
@@ -159,8 +159,24 @@ class GUI {
 
   GUI(void);
 
-  void clear(void);
-  void draw (void);
+  virtual void clear(void);
+  virtual void draw (void);
+};
+
+
+
+
+class Table : public GUI {
+
+
+};
+
+
+
+
+class Infoscreen : public GUI {
+
+
 };
 
 
@@ -172,9 +188,10 @@ class Vaporizer {
 
  public:
 
-  Heater heater;
-  Input  input;
-  GUI    gui;
+  Service service;
+  Heater  heater;
+  Input   input;
+  GUI     gui;
 
   Vaporizer(void);
 };

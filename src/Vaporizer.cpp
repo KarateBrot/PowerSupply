@@ -139,7 +139,7 @@ Heater::Heater() {
   pid.setPID (PID_P, PID_I, PID_D);
 }
 
-void Heater::calculate() {
+void Heater::update() {
 
   sensor.read();
 
@@ -180,13 +180,13 @@ void Heater::calibrate() {
   double currentLast = 0.0;
   while (abs(sensor.current - 10.0) > 1.0 && abs(currentLast - 10.0) > 1.0) {
     currentLast = sensor.current;
-    calculate();
+    update();
     pid_helper.setOutputOfDAC(dac, sensor.current, 10.0);
   }
 
   // Calculate resistance using reference current of 10mA
   for (size_t i = 0; i < 15; i++) {
-    calculate();
+    update();
     pid_helper.setOutputOfDAC(dac, sensor.current, 10.0);
   }
 
@@ -232,7 +232,7 @@ void GUI::draw() {
 
 Vaporizer::Vaporizer() {
 
-  Wire.begin(V_PIN_SCL, V_PIN_SDA);      // Select I2C pins
+  Wire.begin(V_SCL, V_SDA);              // Select I2C pins
   Wire.setClock(800000L);                // for faster I2C transmission (800kHz)
 }
 

@@ -1,7 +1,7 @@
 
 #include <Vaporizer.h>
 
-Vaporizer vaporizer;
+Vaporizer v;
 
 
 
@@ -9,12 +9,13 @@ Vaporizer vaporizer;
 
 void setup()
 {
-  
+
 }
 
 void loop()
 {
-
+  v.heater.update();
+  v.heater.regulate();
 }
 
 // ---------------------------------- RUN ----------------------------------- //
