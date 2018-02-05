@@ -13,15 +13,29 @@
 
 
 
-Service::Service() {
+Timer::Timer() {
 
-  _timer_lastWaitCall = micros();
+  _time         = micros();
+  _lastWaitCall = micros();
+  _lastCycle    = micros();
 }
 
-void Service::waitUntil(uint32_t timer) {
+void Timer::waitUntil(uint32_t timer) {
 
-  while (micros() - _timer_lastWaitCall < timer) { yield(); }
-  _timer_lastWaitCall = micros();
+  while (micros() - _lastWaitCall < timer) { yield(); }
+  _lastWaitCall = micros();
+}
+
+void Timer::limitFPS(uint8_t fps) {
+
+  waitUntil( (uint32_t)(1000000.0f/fps + 0.5f) );
+}
+
+float Timer::getFPS() {
+
+  float framerate = 1000000.0f/(micros() - _lastCycle);
+  _lastCycle = micros();
+  return framerate;
 }
 
 
@@ -211,15 +225,6 @@ GUI::GUI() {
 void GUI::clear() {
 
   display.clearDisplay();
-  display.display();
-}
-
-void GUI::draw() {
-
-  display.clearDisplay();
-
-  // drawing stuff here
-
   display.display();
 }
 

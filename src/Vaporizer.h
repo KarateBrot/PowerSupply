@@ -46,19 +46,19 @@
 
 
 
-class Service {
+class Timer {
 
-  uint32_t _runtime = 0;
-  uint32_t _timer_lastWaitCall = 0;
+  uint32_t _time, _lastWaitCall, _lastCycle;
 
  public:
 
-  Service(void);
+  Timer(void);
 
-  static String getVersion  (void)       { return V_FIRMWARE_VERSION; }
-  void          startRuntime(void)       { _runtime = micros(); }
-  uint32_t      getRuntime  (void) const { return micros() - _runtime; }
-  void          waitUntil   (uint32_t);
+  void     resetTime(void)       { _time = micros(); }
+  uint32_t getTime  (void) const { return micros() - _time; }
+  void     waitUntil(uint32_t);
+  void     limitFPS (uint8_t);
+  float    getFPS   (void);
 };
 
 
@@ -155,8 +155,10 @@ class Input {
 
 class GUI {
 
-  static uint32_t        _frameCount;
-  static vector<uint8_t> _state;
+ protected:
+
+  static uint32_t    frameCount;
+  static vector<GUI> windowBuffer;
 
  public:
 
@@ -164,14 +166,14 @@ class GUI {
 
   GUI(void);
 
-  virtual void clear(void);
-  virtual void draw (void);
+  void draw (void);
+  void clear(void);
 };
 
 
 
 
-class Table : public GUI {
+class Settings : public GUI {
 
 
 };
@@ -193,12 +195,15 @@ class Vaporizer {
 
  public:
 
-  Service service;
-  Heater  heater;
-  Input   input;
-  GUI     gui;
+  Timer  timer;
+  Heater heater;
+  Input  input;
+  GUI    gui;
 
   Vaporizer(void);
+
+  static String getVersion(void) { return V_FIRMWARE_VERSION; }
+
 };
 
 // -------------------------------- VAPORIZER ------------------------------- //

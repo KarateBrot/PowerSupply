@@ -7,13 +7,13 @@ Vaporizer v;
 
 // ================================== RUN =================================== //
 
-void setup()
-{
+void setup() {
 
+  
 }
 
-void loop()
-{
+void loop() {
+
   v.heater.update();
   v.heater.regulate();
 }
