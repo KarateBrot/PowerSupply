@@ -25,8 +25,6 @@
   #include <img/splash.h>                                                     //
 // -------------------------------------------------------------------------- //
   #define V_FIRMWARE_VERSION     "0.1-a"                                      //
-  #define V_SCL                   5                               // Pin D1   //
-  #define V_SDA                   4                               // Pin D2   //
 // -------------------------------------------------------------------------- //
   #define HEATER_TCR_SS316L       0.00092                         // at 20°C  //
   #define HEATER_TCR_SS316        0.000915                                    //
@@ -46,168 +44,172 @@
 
 
 
-class Timer {
+namespace Vaporizer {
 
-  uint32_t _time, _lastWaitCall, _lastCycle;
 
- public:
 
-  Timer(void);
 
-  void     resetTime(void)       { _time = micros(); }
-  uint32_t getTime  (void) const { return micros() - _time; }
-  void     waitUntil(uint32_t);
-  void     limitFPS (uint8_t);
-  float    getFPS   (void);
-};
+  class Timer {
 
+    uint32_t _time, _lastWaitCall, _lastCycle;
 
+   public:
 
+    Timer(void);
 
-class Sensor {
+    void     resetTime(void)       { _time = micros(); }
+    uint32_t getTime  (void) const { return micros() - _time; }
+    void     waitUntil(uint32_t);
+    void     limitFPS (uint8_t);
+    float    getFPS   (void);
+  };
 
-  Adafruit_INA219 _INA219;
 
- public:
 
-  double current, voltage;
 
-  Sensor(void);
+  class Sensor {
 
-  void setPrecision(bool);
-  void read        (void);
-};
+    Adafruit_INA219 _INA219;
 
+   public:
 
+    double current, voltage;
 
+    Sensor(void);
 
-class DAC {
+    void setPrecision(bool);
+    void read        (void);
+  };
 
-  Adafruit_MCP4725 _MCP4725;
 
- public:
 
-  DAC(void);
 
-  void setOutput(uint16_t);
-};
+  class DAC {
 
+    Adafruit_MCP4725 _MCP4725;
 
+   public:
 
+    DAC(void);
 
-class PID_Ctrl {
+    void setOutput(uint16_t);
+  };
 
-  double _p, _error, _i, _errorInt, _d, _errorDiff;
-  double _dt, _timeLast, _valueLast;
 
- public:
 
-  PID_Ctrl(void);
 
-  PID_Ctrl& setP  (double p) { _p = p; return *this; }
-  PID_Ctrl& setI  (double i) { _i = i; return *this; }
-  PID_Ctrl& setD  (double d) { _d = d; return *this; }
-  PID_Ctrl& setPID(double p, double i, double d) { _p = p; _i = i; _d = d; return *this; }
+  class PID_Ctrl {
 
-  double getOutput     (double, double);
-  void   setOutputOfDAC(DAC&, double, double);
-  void   autotune      (void);
-};
+    double _p, _error, _i, _errorInt, _d, _errorDiff;
+    double _dt, _timeLast, _valueLast;
 
+   public:
 
+    PID_Ctrl(void);
 
+    PID_Ctrl& setP  (double p) { _p = p; return *this; }
+    PID_Ctrl& setI  (double i) { _i = i; return *this; }
+    PID_Ctrl& setD  (double d) { _d = d; return *this; }
+    PID_Ctrl& setPID(double p, double i, double d) { _p = p; _i = i; _d = d; return *this; }
 
-class Heater {
+    double getOutput     (double, double);
+    void   setOutputOfDAC(DAC&, double, double);
+    void   autotune      (void);
+  };
 
-  double _TCR, _res20, _resCable;
 
- public:
 
-  Sensor   sensor;
-  DAC      dac;
-  PID_Ctrl pid;
 
-  double   resistance;
-  double   power, temperature;
-  uint16_t power_set = 0, temperature_set = 200;
+  class Heater {
 
-  Heater(void);
+    double _TCR, _res20, _resCable;
 
-  Heater& setRes20   (double res) { _res20    = res; return *this; }
-  Heater& setResCable(double res) { _resCable = res; return *this; }
-  Heater& setTCR     (double tcr) { _TCR      = tcr; return *this; }
+   public:
 
-  void update   (void);
-  void regulate (void);
-  void calibrate(void);
-};
+    Sensor   sensor;
+    DAC      dac;
+    PID_Ctrl pid;
 
+    double   resistance;
+    double   power, temperature;
+    uint16_t power_set = 0, temperature_set = 200;
 
+    Heater(void);
 
+    Heater& setRes20   (double res) { _res20    = res; return *this; }
+    Heater& setResCable(double res) { _resCable = res; return *this; }
+    Heater& setTCR     (double tcr) { _TCR      = tcr; return *this; }
 
-class Input {
+    void update   (void);
+    void regulate (void);
+    void calibrate(void);
+  };
 
 
-};
 
 
+  class Input {
 
 
-class GUI {
+  };
 
- protected:
 
-  static uint32_t    frameCount;
-  static vector<GUI> windowBuffer;
 
- public:
 
-  Adafruit_SSD1306 display;
+  class GUI {
 
-  GUI(void);
+   protected:
 
-  void draw (void);
-  void clear(void);
-};
+    static uint32_t    frameCount;
+    static vector<GUI> windowBuffer;
 
+   public:
 
+    Adafruit_SSD1306 display;
 
+    GUI(void);
 
-class Settings : public GUI {
+    void draw (void);
+    void clear(void);
+  };
 
 
-};
 
 
+  class Settings : public GUI {
 
 
-class Infoscreen : public GUI {
+  };
 
 
-};
 
 
+  class Infoscreen : public GUI {
 
 
-// =============================== VAPORIZER ================================ //
+  };
 
-class Vaporizer {
 
- public:
 
-  Timer  timer;
-  Heater heater;
-  Input  input;
-  GUI    gui;
 
-  Vaporizer(void);
+  // ============================== VAPORIZER =============================== //
+
+  extern Timer  timer;
+  extern Heater heater;
+  extern Input  input;
+  extern GUI    gui;
 
   static String getVersion(void) { return V_FIRMWARE_VERSION; }
 
-};
+  void init(uint8_t, uint8_t);
 
-// -------------------------------- VAPORIZER ------------------------------- //
 
+  // ------------------------------- VAPORIZER ------------------------------ //
+
+
+
+
+}
 
 
 
