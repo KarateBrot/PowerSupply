@@ -69,7 +69,7 @@ namespace Vaporizer {
 
   class Sensor {
 
-    Adafruit_INA219 _INA219;
+    static Adafruit_INA219 _INA219;
 
    public:
 
@@ -86,7 +86,7 @@ namespace Vaporizer {
 
   class DAC {
 
-    Adafruit_MCP4725 _MCP4725;
+    static Adafruit_MCP4725 _MCP4725;
 
    public:
 
@@ -199,9 +199,9 @@ namespace Vaporizer {
   extern Input  input;
   extern GUI    gui;
 
-  static String getVersion(void) { return V_FIRMWARE_VERSION; }
-
   void init(uint8_t, uint8_t);
+
+  static String getVersion(void) { return V_FIRMWARE_VERSION; }
 
 
   // ------------------------------- VAPORIZER ------------------------------ //

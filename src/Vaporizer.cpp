@@ -52,6 +52,8 @@ namespace Vaporizer {
 
   // ================================ SENSOR ================================ //
 
+  Adafruit_INA219 Sensor::_INA219;
+
   Sensor::Sensor() {
 
     _INA219.begin();
@@ -79,14 +81,16 @@ namespace Vaporizer {
 
   // ================================= DAC ================================== //
 
+  Adafruit_MCP4725 DAC::_MCP4725;
+
   DAC::DAC() {
 
     _MCP4725.begin(0x62);
-    _MCP4725.setVoltage(4095, false);            // boot with minimal power output
+    _MCP4725.setVoltage(4095, false);          // boot with minimal power output
   }
 
   // Applies DC voltage from 0..Vcc at pin "OUT" on MCP4725 breakout board
-  void Vaporizer::DAC::setOutput(uint16_t val) {
+  void DAC::setOutput(uint16_t val) {
 
     _MCP4725.setVoltage(4095 - val, false);
   }
@@ -194,8 +198,8 @@ namespace Vaporizer {
   // Make sure heater core is at room temperature before calibration!
   void Heater::calibrate() {
 
-    PID_Ctrl pid_helper;
-    pid_helper.setPID(1.0, 0.0, 0.0);               // still needs manual tuning
+    PID_Ctrl pid_calibration;
+    pid_calibration.setPID(1.0, 0.0, 0.0);          // still needs manual tuning
 
     sensor.setPrecision(HIGH);
 
@@ -204,13 +208,13 @@ namespace Vaporizer {
     while (abs(sensor.current - 10.0) > 1.0 && abs(currentLast - 10.0) > 1.0) {
       currentLast = sensor.current;
       update();
-      pid_helper.setOutputOfDAC(dac, sensor.current, 10.0);
+      pid_calibration.setOutputOfDAC(dac, sensor.current, 10.0);
     }
 
     // Calculate resistance using reference current of 10mA
     for (size_t i = 0; i < 15; i++) {
       update();
-      pid_helper.setOutputOfDAC(dac, sensor.current, 10.0);
+      pid_calibration.setOutputOfDAC(dac, sensor.current, 10.0);
     }
 
     dac.setOutput(0);
@@ -224,6 +228,8 @@ namespace Vaporizer {
 
 
   // ================================= GUI ================================== //
+
+  uint32_t GUI::frameCount = 0;
 
   GUI::GUI() {
 
