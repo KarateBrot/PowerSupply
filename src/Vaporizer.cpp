@@ -33,6 +33,13 @@ namespace Vaporizer {
     _lastWaitCall = micros();
   }
 
+  void Timer::delayUntil(uint32_t timer) {
+
+    uint32_t delay = timer - (micros() - _lastWaitCall);
+    delayMicroseconds(delay);
+    _lastWaitCall = micros();
+  }
+
   void Timer::limitFPS(uint8_t fps) {
 
     waitUntil( (uint32_t)(1000000.0f/fps + 0.5f) );
@@ -57,15 +64,14 @@ namespace Vaporizer {
   Sensor::Sensor() {
 
     _INA219.begin();
-    _INA219.setCalibration_32V_2A();
   }
 
-  void Vaporizer::Sensor::setPrecision(bool b) {
+  void Sensor::setPrecision(bool b) {
 
     b ? _INA219.setCalibration_16V_400mA() : _INA219.setCalibration_32V_2A();
   }
 
-  void Vaporizer::Sensor::read() {
+  void Sensor::read() {
 
     // Current [mA]
     current = (double)_INA219.getCurrent_mA()*2.0;   // R050 instead of R100 shunt
@@ -106,7 +112,7 @@ namespace Vaporizer {
 
   }
 
-  double PID_Ctrl::getOutput(double value, double value_set) {
+  void PID_Ctrl::_update(double value, double value_set) {
 
     // ---------------------------------------------------------------------- //
     //                        --< PID-CONTROLLER >--                          //
@@ -135,15 +141,19 @@ namespace Vaporizer {
       _errorInt += _error*_dt + 0.001;                                          // [+ 0.001]: let P and I fight each other (for "stiffer" temp regulation)
       _errorInt  = constrain(_errorInt, 0, 1);
     }
+  }
+
+  double PID_Ctrl::getOutput() {
 
     // u(t) = P*e(t) + I*∫e(t)dt + D*de(t)/dt
     return constrain(_p*_error + _i*_errorInt - _d*_errorDiff, 0, 1);
   }
 
-  void PID_Ctrl::setOutputOfDAC(DAC &d, double value, double value_set) {
+  void PID_Ctrl::regulate(double value, double value_set) {
 
-    double output = getOutput(value, value_set)*4095.0;
-    d.setOutput((uint16_t)output);
+    _update(value, value_set);
+    uint16_t output = (uint16_t)( getOutput()*4095.0 );
+    _dacPointer->setOutput(output);
   }
 
   void PID_Ctrl::autotune() {
@@ -163,7 +173,10 @@ namespace Vaporizer {
     setTCR     (HEATER_TCR_SS316L);
     setRes20   (HEATER_RES20);
     setResCable(HEATER_RESCABLE);
-    pid.setPID (PID_P, PID_I, PID_D);
+
+    pid
+      .attach(&dac)
+      .setPID(PID_P, PID_I, PID_D);
   }
 
   void Heater::update() {
@@ -192,14 +205,17 @@ namespace Vaporizer {
   // Sets DAC pin "OUT" to DC voltage according to PID-controller
   void Heater::regulate() {
 
-    pid.setOutputOfDAC(dac, temperature, temperature_set);
+    pid.regulate(temperature, temperature_set);
   }
 
   // Make sure heater core is at room temperature before calibration!
   void Heater::calibrate() {
 
     PID_Ctrl pid_calibration;
-    pid_calibration.setPID(1.0, 0.0, 0.0);          // still needs manual tuning
+
+    pid_calibration
+      .attach(&dac)
+      .setPID(1.0, 0.0, 0.0);                       // still needs manual tuning
 
     sensor.setPrecision(HIGH);
 
@@ -208,14 +224,17 @@ namespace Vaporizer {
     while (abs(sensor.current - 10.0) > 1.0 && abs(currentLast - 10.0) > 1.0) {
       currentLast = sensor.current;
       update();
-      pid_calibration.setOutputOfDAC(dac, sensor.current, 10.0);
+      pid_calibration.regulate(sensor.current, 10.0);
     }
 
     // Calculate resistance using reference current of 10mA
     for (size_t i = 0; i < 15; i++) {
       update();
-      pid_calibration.setOutputOfDAC(dac, sensor.current, 10.0);
+      pid_calibration.regulate(sensor.current, 10.0);
     }
+
+    // <= still needs room temp measurement for res20 to compensate for temps
+    // <= different from 20°C
 
     dac.setOutput(0);
     setRes20(resistance);
@@ -250,15 +269,14 @@ namespace Vaporizer {
 
   // ============================== VAPORIZER =============================== //
 
-  Timer  timer;
   Heater heater;
   Input  input;
   GUI    gui;
 
   void init(uint8_t scl, uint8_t sda) {
 
-    Wire.begin(scl, sda);                  // Select I2C pins
-    Wire.setClock(800000L);                // for faster I2C transmission (800kHz)
+    Wire.begin(scl, sda);                // Select I2C pins
+    Wire.setClock(800000L);              // for faster I2C transmission (800kHz)
   }
 
   // ------------------------------ VAPORIZER ------------------------------- //

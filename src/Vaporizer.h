@@ -57,11 +57,12 @@ namespace Vaporizer {
 
     Timer(void);
 
-    void     resetTime(void)       { _time = micros(); }
-    uint32_t getTime  (void) const { return micros() - _time; }
-    void     waitUntil(uint32_t);
-    void     limitFPS (uint8_t);
-    float    getFPS   (void);
+    void     resetTime (void)       { _time = micros(); }
+    uint32_t getTime   (void) const { return micros() - _time; }
+    void     waitUntil (uint32_t);
+    void     delayUntil(uint32_t);
+    void     limitFPS  (uint8_t);
+    float    getFPS    (void);
   };
 
 
@@ -102,19 +103,24 @@ namespace Vaporizer {
 
     double _p, _error, _i, _errorInt, _d, _errorDiff;
     double _dt, _timeLast, _valueLast;
+    DAC   *_dacPointer;
+
+    void   _update(double, double);
 
    public:
 
     PID_Ctrl(void);
+
+    PID_Ctrl& attach(DAC* d) { _dacPointer = d; return *this; };
 
     PID_Ctrl& setP  (double p) { _p = p; return *this; }
     PID_Ctrl& setI  (double i) { _i = i; return *this; }
     PID_Ctrl& setD  (double d) { _d = d; return *this; }
     PID_Ctrl& setPID(double p, double i, double d) { _p = p; _i = i; _d = d; return *this; }
 
-    double getOutput     (double, double);
-    void   setOutputOfDAC(DAC&, double, double);
-    void   autotune      (void);
+    double getOutput(void);
+    void   regulate (double, double);
+    void   autotune (void);
   };
 
 
@@ -139,6 +145,9 @@ namespace Vaporizer {
     Heater& setRes20   (double res) { _res20    = res; return *this; }
     Heater& setResCable(double res) { _resCable = res; return *this; }
     Heater& setTCR     (double tcr) { _TCR      = tcr; return *this; }
+
+    Heater& setTemp (uint16_t t) { temperature_set = t; return *this; }
+    Heater& setPower(uint16_t p) { power_set       = p; return *this; }
 
     void update   (void);
     void regulate (void);
