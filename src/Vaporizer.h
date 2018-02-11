@@ -103,7 +103,7 @@ namespace Vaporizer {
 
     double _p, _error, _i, _errorInt, _d, _errorDiff;
     double _dt, _timeLast, _valueLast;
-    DAC   *_dacPointer;
+    DAC   *_dacPointer = NULL;
 
     void   _update(double, double);
 
@@ -118,7 +118,7 @@ namespace Vaporizer {
     PID_Ctrl& setD  (double d) { _d = d; return *this; }
     PID_Ctrl& setPID(double p, double i, double d) { _p = p; _i = i; _d = d; return *this; }
 
-    double getOutput(void);
+    double getOutput(void) const;
     void   regulate (double, double);
     void   autotune (void);
   };

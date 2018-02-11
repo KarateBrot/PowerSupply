@@ -108,22 +108,23 @@ namespace Vaporizer {
 
   // =============================== PID_Ctrl =============================== //
 
+  // ------------------------------------------------------------------------ //
+  //                         --< PID-CONTROLLER >--                           //
+  // -----------------:------------------------------------------------------ //
+  // SIGNAL OUTPUT:   : u(t) = P*e(t) + I*∫e(t)dt + D*de(t)/dt                //
+  // -----------------:------------------------------------------------------ //
+  // ERROR:           :     e(t)     = T_set - T(t)                           //
+  // PAST ERR:        :     ∫e(t)dt  = e_past                                 //
+  // PREDICTED ERR:   :     de(t)/dt = -dT/dt                                 //
+  // -----------------:------------------------------------------------------ //
+  //       ──►        : u(t) = P*ΔT + I*e_past - D*dT/dt                      //
+  // -----------------:------------------------------------------------------ //
+
   PID_Ctrl::PID_Ctrl() {
 
   }
 
   void PID_Ctrl::_update(double value, double value_set) {
-
-    // ---------------------------------------------------------------------- //
-    //                        --< PID-CONTROLLER >--                          //
-    // -----------------------------------------------------------------------//
-    // SIGNAL OUTPUT:  u(t) = P*e(t) + I*∫e(t)dt + D*de(t)/dt                 //
-    //                     e(t)     = ΔT                                      //
-    //                     ∫e(t)dt  = idle                                    //
-    //                     de(t)/dt = -dT/dt                                  //
-    // -----------------------------------------------------------------------//
-    //             =>  u(t) = P*ΔT + I*idle - D*dT/dt                         //
-    // ---------------------------------------------------------------------- //
 
     // e(t)
     _error = value_set - value;
@@ -143,16 +144,16 @@ namespace Vaporizer {
     }
   }
 
-  double PID_Ctrl::getOutput() {
+  double PID_Ctrl::getOutput() const {
 
-    // u(t) = P*e(t) + I*∫e(t)dt + D*de(t)/dt
+    // u(t) = P*ΔT + I*e_past - D*dT/dt
     return constrain(_p*_error + _i*_errorInt - _d*_errorDiff, 0, 1);
   }
 
   void PID_Ctrl::regulate(double value, double value_set) {
 
     _update(value, value_set);
-    uint16_t output = (uint16_t)( getOutput()*4095.0 );
+    uint16_t output = (uint16_t)( getOutput()*4095.0 + 0.5 );
     _dacPointer->setOutput(output);
   }
 
