@@ -206,7 +206,16 @@ namespace Vaporizer {
   // Sets DAC pin "OUT" to DC voltage according to PID-controller
   void Heater::regulate() {
 
-    pid.regulate(temperature, temperature_set);
+    double   value;
+    uint16_t value_set;
+
+    _tempMode
+      ? value = temperature, value_set = temperature_set
+      : value = power      , value_set = power_set;
+
+    _isOn
+      ? pid.regulate(value, value_set)
+      : dac.setOutput(0);
   }
 
   // Make sure heater core is at room temperature before calibration!

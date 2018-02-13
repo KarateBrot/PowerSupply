@@ -1,0 +1,395 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<meguno-link-project version="1.0">
+  <culture>de-DE</culture>
+  <data>
+    <shared-visualizer-data>
+      <data id="SerialMonitorData" name="" instance-id="27d54d8e-2b40-4113-b652-9385724ccc68">
+        <send-cr-default>true</send-cr-default>
+        <send-lf-default>true</send-lf-default>
+        <word-wrap-default>true</word-wrap-default>
+        <include-date>false</include-date>
+        <include-time>true</include-time>
+        <include-custom>false</include-custom>
+        <custom-time-stamp />
+        <clear-on-send>false</clear-on-send>
+        <message-history />
+      </data>
+      <data id="UploadManagerData" name="f5f7bd03-904c-4581-afe6-5b13c190a05f" instance-id="fc47761f-77ee-40be-a3d8-7e411a5bf6b8">
+        <verify>true</verify>
+        <uploads />
+      </data>
+      <data id="DefaultPlotConfigurationData" name="" instance-id="7b9a232d-7576-4959-b748-cf6b7ca5a9d2">
+        <show-summary-table>false</show-summary-table>
+        <show-legend>true</show-legend>
+        <default-symbol-size>4</default-symbol-size>
+        <default-line-width>1</default-line-width>
+        <default-dash-style>Solid</default-dash-style>
+        <default-visibility>true</default-visibility>
+        <next-color>3</next-color>
+        <next-symbol>1</next-symbol>
+        <series-styles />
+      </data>
+      <data id="LogFileData" name="" instance-id="75f64054-cea3-4bb4-886b-9a716070e723">
+        <include-date>false</include-date>
+        <include-time>false</include-time>
+      </data>
+    </shared-visualizer-data>
+  </data>
+  <reporting>
+    <generate-scheduled-reports>false</generate-scheduled-reports>
+    <destinations>
+      <report-to-folder>
+        <last-report-number>0</last-report-number>
+        <folder-path>D:\Users\Jan Post\Documents</folder-path>
+        <use-sub-folder>true</use-sub-folder>
+        <sub-folder-pattern>Report {Seq}</sub-folder-pattern>
+        <enabled>true</enabled>
+        <period>PT1H</period>
+        <last-sent>0001-01-01T00:00:00</last-sent>
+      </report-to-folder>
+    </destinations>
+  </reporting>
+  <serial-sources>
+    <default>6</default>
+    <sources>
+      <source type="SharedRS232Port">
+        <id>6</id>
+        <display-name>My Serial Device 6</display-name>
+        <sort-order>0</sort-order>
+        <port-name>
+          <type>None</type>
+          <port />
+        </port-name>
+        <baud-rate>9600</baud-rate>
+        <data-bits>8</data-bits>
+        <handshaking>None</handshaking>
+        <parity>None</parity>
+        <stop-bits>One</stop-bits>
+        <disable-dtr>true</disable-dtr>
+        <disable-rts>false</disable-rts>
+      </source>
+    </sources>
+    <connect-sources />
+  </serial-sources>
+  <windows>
+    <window>
+      <DockPanel FormatVersion="1.0" DockLeftPortion="0.25" DockRightPortion="220" DockTopPortion="0.25" DockBottomPortion="0.25" ActiveDocumentPane="5" ActivePane="5">
+        <Contents Count="7">
+          <Content ID="0" PersistString="SourceManager" AutoHidePortion="0.25" IsHidden="False" IsFloat="False">
+            <instance-id>c0373940-b262-4ea9-8464-e10bc3345bbf</instance-id>
+            <ShowSourceInTitle>false</ShowSourceInTitle>
+            <ShowPortInTitle>false</ShowPortInTitle>
+            <SourceId>-1</SourceId>
+            <TabTitle>Connection Manager</TabTitle>
+          </Content>
+          <Content ID="1" PersistString="InterfacePanel" AutoHidePortion="0.25" IsHidden="False" IsFloat="False">
+            <design type="InterfacePanel">
+              <properties>
+                <property name="Name">UserControl1</property>
+                <property name="Size">952, 930</property>
+              </properties>
+              <components />
+            </design>
+            <values />
+            <instance-id>215be554-7ea0-443c-a8dc-816cbffd4081</instance-id>
+            <ShowSourceInTitle>false</ShowSourceInTitle>
+            <ShowPortInTitle>false</ShowPortInTitle>
+            <SourceId>6</SourceId>
+            <TabTitle>User Interface</TabTitle>
+          </Content>
+          <Content ID="2" PersistString="SerialMonitor" AutoHidePortion="0.25" IsHidden="False" IsFloat="False">
+            <InsertTimestamp>false</InsertTimestamp>
+            <WordWrap>true</WordWrap>
+            <IncludeDate>false</IncludeDate>
+            <IncludeTime>true</IncludeTime>
+            <IncludeCustom>false</IncludeCustom>
+            <CustomTimeStamp />
+            <AutoScroll>false</AutoScroll>
+            <ShowEOLMarkers>false</ShowEOLMarkers>
+            <ShowLineTime>false</ShowLineTime>
+            <ShowLineDate>false</ShowLineDate>
+            <instance-id>cc26291c-fe73-45e3-bee6-dfe51dd14c20</instance-id>
+            <ShowSourceInTitle>false</ShowSourceInTitle>
+            <ShowPortInTitle>false</ShowPortInTitle>
+            <SourceId>6</SourceId>
+            <TabTitle>Serial Monitor</TabTitle>
+          </Content>
+          <Content ID="3" PersistString="DataTable" AutoHidePortion="220" IsHidden="False" IsFloat="False">
+            <instance-id>233a5179-784c-41c9-917e-e08b8b61410f</instance-id>
+            <ShowSourceInTitle>false</ShowSourceInTitle>
+            <ShowPortInTitle>false</ShowPortInTitle>
+            <SourceId>6</SourceId>
+            <TabTitle>Settings</TabTitle>
+            <reporting-enabled>false</reporting-enabled>
+            <Channels>
+              <auto>true</auto>
+              <default>true</default>
+            </Channels>
+            <reporting>
+              <filename-pattern>Table {Seq}</filename-pattern>
+              <format>HTML</format>
+            </reporting>
+          </Content>
+          <Content ID="4" PersistString="ScatterPlotter" AutoHidePortion="0.25" IsHidden="False" IsFloat="False">
+            <instance-id>514f4e12-d29e-4c09-859f-3960ff36a187</instance-id>
+            <ShowSourceInTitle>false</ShowSourceInTitle>
+            <ShowPortInTitle>false</ShowPortInTitle>
+            <SourceId>6</SourceId>
+            <TabTitle>Power Plot</TabTitle>
+            <reporting-enabled>false</reporting-enabled>
+            <show-summary>false</show-summary>
+            <Channels>
+              <auto>true</auto>
+              <default>true</default>
+            </Channels>
+            <reporting>
+              <width>640</width>
+              <height>480</height>
+              <dpi>96</dpi>
+              <anti-alias>true</anti-alias>
+              <filename-pattern>Graph {Seq}</filename-pattern>
+              <format>b96b3caf-0728-11d3-9d7b-0000f81ef32e</format>
+            </reporting>
+            <title>
+              <text>X-Y Plot</text>
+              <visible>false</visible>
+              <font>
+                <color>-16777216</color>
+                <family>Microsoft Sans Serif</family>
+                <bold>true</bold>
+                <italic>false</italic>
+                <size>16</size>
+              </font>
+            </title>
+            <x-axis>
+              <minimum>0</minimum>
+              <maximum>100</maximum>
+              <major-step>100</major-step>
+              <minor-step>10</minor-step>
+              <major-unit>Day</major-unit>
+              <minor-unit>Day</minor-unit>
+              <minimum-auto>true</minimum-auto>
+              <maximum-auto>true</maximum-auto>
+              <major-step-auto>false</major-step-auto>
+              <minor-step-auto>false</minor-step-auto>
+              <text>Ticks</text>
+              <visible>true</visible>
+              <font>
+                <color>-16777216</color>
+                <family>Microsoft Sans Serif</family>
+                <bold>true</bold>
+                <italic>false</italic>
+                <size>14</size>
+              </font>
+            </x-axis>
+            <y-axis>
+              <minimum>0</minimum>
+              <maximum>50</maximum>
+              <major-step>5</major-step>
+              <minor-step>1</minor-step>
+              <major-unit>Day</major-unit>
+              <minor-unit>Day</minor-unit>
+              <minimum-auto>true</minimum-auto>
+              <maximum-auto>false</maximum-auto>
+              <major-step-auto>false</major-step-auto>
+              <minor-step-auto>false</minor-step-auto>
+              <text>Power</text>
+              <visible>true</visible>
+              <font>
+                <color>-16777216</color>
+                <family>Microsoft Sans Serif</family>
+                <bold>true</bold>
+                <italic>false</italic>
+                <size>14</size>
+              </font>
+            </y-axis>
+            <background-fill>
+              <color-1>-1</color-1>
+              <color-2>-1</color-2>
+              <angle>-45</angle>
+            </background-fill>
+          </Content>
+          <Content ID="5" PersistString="ScatterPlotter" AutoHidePortion="0.25" IsHidden="False" IsFloat="False">
+            <instance-id>a4c739c8-fa22-46dd-87c0-e1aa534c7da4</instance-id>
+            <ShowSourceInTitle>false</ShowSourceInTitle>
+            <ShowPortInTitle>false</ShowPortInTitle>
+            <SourceId>6</SourceId>
+            <TabTitle>Temperature Plot</TabTitle>
+            <reporting-enabled>false</reporting-enabled>
+            <show-summary>false</show-summary>
+            <Channels>
+              <auto>true</auto>
+              <default>true</default>
+            </Channels>
+            <reporting>
+              <width>640</width>
+              <height>480</height>
+              <dpi>96</dpi>
+              <anti-alias>true</anti-alias>
+              <filename-pattern>Graph {Seq}</filename-pattern>
+              <format>b96b3caf-0728-11d3-9d7b-0000f81ef32e</format>
+            </reporting>
+            <title>
+              <text>Temperature</text>
+              <visible>false</visible>
+              <font>
+                <color>-16777216</color>
+                <family>Microsoft Sans Serif</family>
+                <bold>true</bold>
+                <italic>false</italic>
+                <size>16</size>
+              </font>
+            </title>
+            <x-axis>
+              <minimum>0</minimum>
+              <maximum>100</maximum>
+              <major-step>100</major-step>
+              <minor-step>10</minor-step>
+              <major-unit>Day</major-unit>
+              <minor-unit>Day</minor-unit>
+              <minimum-auto>true</minimum-auto>
+              <maximum-auto>true</maximum-auto>
+              <major-step-auto>false</major-step-auto>
+              <minor-step-auto>false</minor-step-auto>
+              <text>Ticks</text>
+              <visible>true</visible>
+              <font>
+                <color>-16777216</color>
+                <family>Microsoft Sans Serif</family>
+                <bold>true</bold>
+                <italic>false</italic>
+                <size>14</size>
+              </font>
+            </x-axis>
+            <y-axis>
+              <minimum>0</minimum>
+              <maximum>300</maximum>
+              <major-step>20</major-step>
+              <minor-step>10</minor-step>
+              <major-unit>Day</major-unit>
+              <minor-unit>Day</minor-unit>
+              <minimum-auto>true</minimum-auto>
+              <maximum-auto>false</maximum-auto>
+              <major-step-auto>false</major-step-auto>
+              <minor-step-auto>false</minor-step-auto>
+              <text>Temperature</text>
+              <visible>true</visible>
+              <font>
+                <color>-16777216</color>
+                <family>Microsoft Sans Serif</family>
+                <bold>true</bold>
+                <italic>false</italic>
+                <size>14</size>
+              </font>
+            </y-axis>
+            <background-fill>
+              <color-1>-1</color-1>
+              <color-2>-1</color-2>
+              <angle>-45</angle>
+            </background-fill>
+          </Content>
+          <Content ID="6" PersistString="LogToFile" AutoHidePortion="0.25" IsHidden="False" IsFloat="False">
+            <file-path>
+              <path />
+              <relative>false</relative>
+            </file-path>
+            <IncludeDate>false</IncludeDate>
+            <IncludeTime>false</IncludeTime>
+            <InsertTimestamp>false</InsertTimestamp>
+            <instance-id>c939637e-bc61-48af-a4de-6b36f6a500e4</instance-id>
+            <ShowSourceInTitle>false</ShowSourceInTitle>
+            <ShowPortInTitle>false</ShowPortInTitle>
+            <SourceId>6</SourceId>
+            <TabTitle>Log to File</TabTitle>
+            <reporting-enabled>false</reporting-enabled>
+          </Content>
+        </Contents>
+        <Panes Count="9">
+          <Pane ID="0" DockState="Float" ActiveContent="-1">
+            <Contents Count="1">
+              <Content ID="0" RefID="1" />
+            </Contents>
+          </Pane>
+          <Pane ID="1" DockState="Document" ActiveContent="1">
+            <Contents Count="1">
+              <Content ID="0" RefID="1" />
+            </Contents>
+          </Pane>
+          <Pane ID="2" DockState="DockLeftAutoHide" ActiveContent="0">
+            <Contents Count="1">
+              <Content ID="0" RefID="0" />
+            </Contents>
+          </Pane>
+          <Pane ID="3" DockState="Document" ActiveContent="5">
+            <Contents Count="1">
+              <Content ID="0" RefID="5" />
+            </Contents>
+          </Pane>
+          <Pane ID="4" DockState="Document" ActiveContent="2">
+            <Contents Count="1">
+              <Content ID="0" RefID="2" />
+            </Contents>
+          </Pane>
+          <Pane ID="5" DockState="Document" ActiveContent="4">
+            <Contents Count="1">
+              <Content ID="0" RefID="4" />
+            </Contents>
+          </Pane>
+          <Pane ID="6" DockState="Float" ActiveContent="-1">
+            <Contents Count="1">
+              <Content ID="0" RefID="3" />
+            </Contents>
+          </Pane>
+          <Pane ID="7" DockState="Document" ActiveContent="3">
+            <Contents Count="1">
+              <Content ID="0" RefID="3" />
+            </Contents>
+          </Pane>
+          <Pane ID="8" DockState="Document" ActiveContent="6">
+            <Contents Count="1">
+              <Content ID="0" RefID="6" />
+            </Contents>
+          </Pane>
+        </Panes>
+        <DockWindows>
+          <DockWindow ID="0" DockState="Document" ZOrderIndex="0">
+            <NestedPanes Count="6">
+              <Pane ID="0" RefID="1" PrevPane="-1" Alignment="Right" Proportion="0.5" />
+              <Pane ID="1" RefID="3" PrevPane="1" Alignment="Right" Proportion="0.660790598290598" />
+              <Pane ID="2" RefID="4" PrevPane="1" Alignment="Bottom" Proportion="0.595041322314049" />
+              <Pane ID="3" RefID="5" PrevPane="3" Alignment="Bottom" Proportion="0.5" />
+              <Pane ID="4" RefID="7" PrevPane="1" Alignment="Right" Proportion="0.439157566302652" />
+              <Pane ID="5" RefID="8" PrevPane="4" Alignment="Bottom" Proportion="0.154411764705882" />
+            </NestedPanes>
+          </DockWindow>
+          <DockWindow ID="1" DockState="DockLeft" ZOrderIndex="2">
+            <NestedPanes Count="1">
+              <Pane ID="0" RefID="2" PrevPane="-1" Alignment="Bottom" Proportion="0.5" />
+            </NestedPanes>
+          </DockWindow>
+          <DockWindow ID="2" DockState="DockRight" ZOrderIndex="1">
+            <NestedPanes Count="0" />
+          </DockWindow>
+          <DockWindow ID="3" DockState="DockTop" ZOrderIndex="3">
+            <NestedPanes Count="0" />
+          </DockWindow>
+          <DockWindow ID="4" DockState="DockBottom" ZOrderIndex="4">
+            <NestedPanes Count="0" />
+          </DockWindow>
+        </DockWindows>
+        <FloatWindows Count="2">
+          <FloatWindow ID="0" Bounds="503, 346, 300, 300" ZOrderIndex="0">
+            <NestedPanes Count="1">
+              <Pane ID="0" RefID="0" PrevPane="-1" Alignment="Right" Proportion="0.5" />
+            </NestedPanes>
+          </FloatWindow>
+          <FloatWindow ID="1" Bounds="78, 78, 300, 300" ZOrderIndex="1">
+            <NestedPanes Count="1">
+              <Pane ID="0" RefID="6" PrevPane="-1" Alignment="Right" Proportion="0.5" />
+            </NestedPanes>
+          </FloatWindow>
+        </FloatWindows>
+      </DockPanel>
+    </window>
+  </windows>
+</meguno-link-project>

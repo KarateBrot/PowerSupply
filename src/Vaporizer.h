@@ -49,6 +49,11 @@ namespace Vaporizer {
 
 
 
+  enum mode_t { tempMode, powerMode };
+
+
+
+
   class Timer {
 
     uint32_t _time, _lastWaitCall, _lastCycle;
@@ -111,7 +116,8 @@ namespace Vaporizer {
 
     PID_Ctrl(void);
 
-    PID_Ctrl& attach(DAC* d) { _dacPointer = d; return *this; };
+    PID_Ctrl& attach(DAC* d) { _dacPointer = d;    return *this; };
+    PID_Ctrl& detach(void)   { _dacPointer = NULL; return *this; };
 
     PID_Ctrl& setP  (double p) { _p = p; return *this; }
     PID_Ctrl& setI  (double i) { _i = i; return *this; }
@@ -129,6 +135,7 @@ namespace Vaporizer {
   class Heater {
 
     double _TCR, _res20, _resCable;
+    bool   _isOn = true, _tempMode = true;
 
    public:
 
@@ -146,8 +153,18 @@ namespace Vaporizer {
     Heater& setResCable(double res) { _resCable = res; return *this; }
     Heater& setTCR     (double tcr) { _TCR      = tcr; return *this; }
 
+    Heater& setMode (mode_t m) {
+      switch (m) {
+        case tempMode:  _tempMode = true;
+        case powerMode: _tempMode = false;
+      } return *this;
+    }
+
     Heater& setTemp (uint16_t t) { temperature_set = t; return *this; }
     Heater& setPower(uint16_t p) { power_set       = p; return *this; }
+
+    Heater& on (void) { _isOn = true;  sensor.setPrecision(LOW);  return *this; }
+    Heater& off(void) { _isOn = false; sensor.setPrecision(HIGH); return *this; }
 
     void update   (void);
     void regulate (void);
@@ -203,7 +220,6 @@ namespace Vaporizer {
 
   // ============================== VAPORIZER =============================== //
 
-  extern Timer  timer;
   extern Heater heater;
   extern Input  input;
   extern GUI    gui;
