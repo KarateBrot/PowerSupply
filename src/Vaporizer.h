@@ -49,8 +49,8 @@ namespace Vaporizer {
 
 
 
-  enum mode_t { tempMode, powerMode };
-
+  enum mode_t  { TEMP_MODE, POWER_MODE };
+  enum state_t { OFF, ON };
 
 
 
@@ -62,12 +62,13 @@ namespace Vaporizer {
 
     Timer(void);
 
-    void     resetTime (void)       { _time = micros(); }
+    uint32_t cycle = 0;
+
+    void     startTime (void)       { _time = micros(); }
     uint32_t getTime   (void) const { return micros() - _time; }
     void     waitUntil (uint32_t);
-    void     delayUntil(uint32_t);
-    void     limitFPS  (uint8_t);
-    float    getFPS    (void);
+    void     limitCPS  (uint8_t);
+    float    getCPS    (void);
   };
 
 
@@ -135,7 +136,6 @@ namespace Vaporizer {
   class Heater {
 
     double _TCR, _res20, _resCable;
-    bool   _isOn = true, _tempMode = true;
 
    public:
 
@@ -147,24 +147,22 @@ namespace Vaporizer {
     double   power, temperature;
     uint16_t power_set = 0, temperature_set = 200;
 
+    state_t  state = ON;
+    mode_t   mode  = TEMP_MODE;
+
     Heater(void);
 
     Heater& setRes20   (double res) { _res20    = res; return *this; }
     Heater& setResCable(double res) { _resCable = res; return *this; }
     Heater& setTCR     (double tcr) { _TCR      = tcr; return *this; }
 
-    Heater& setMode (mode_t m) {
-      switch (m) {
-        case tempMode:  _tempMode = true;
-        case powerMode: _tempMode = false;
-      } return *this;
-    }
+    Heater& setMode (mode_t m) { mode = m; return *this; }
 
     Heater& setTemp (uint16_t t) { temperature_set = t; return *this; }
     Heater& setPower(uint16_t p) { power_set       = p; return *this; }
 
-    Heater& on (void) { _isOn = true;  sensor.setPrecision(LOW);  return *this; }
-    Heater& off(void) { _isOn = false; sensor.setPrecision(HIGH); return *this; }
+    Heater& on (void) { state = ON;  sensor.setPrecision(LOW);  return *this; }
+    Heater& off(void) { state = OFF; sensor.setPrecision(HIGH); return *this; }
 
     void update   (void);
     void regulate (void);

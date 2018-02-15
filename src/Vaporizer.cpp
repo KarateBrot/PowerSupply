@@ -33,23 +33,16 @@ namespace Vaporizer {
     _lastWaitCall = micros();
   }
 
-  void Timer::delayUntil(uint32_t timer) {
-
-    uint32_t delay = timer - (micros() - _lastWaitCall);
-    delayMicroseconds(delay);
-    _lastWaitCall = micros();
-  }
-
-  void Timer::limitFPS(uint8_t fps) {
+  void Timer::limitCPS(uint8_t fps) {
 
     waitUntil( (uint32_t)(1000000.0f/fps + 0.5f) );
   }
 
-  float Timer::getFPS() {
+  float Timer::getCPS() {
 
-    float framerate = 1000000.0f/(micros() - _lastCycle);
+    float cyclespersecond = 1000000.0f/(micros() - _lastCycle);
     _lastCycle = micros();
-    return framerate;
+    return cyclespersecond;
   }
 
   // -------------------------------- TIMER --------------------------------- //
@@ -138,7 +131,7 @@ namespace Vaporizer {
     _valueLast =  value;
 
     // ∫e(t)dt
-    if (_error  <= 0.025) {                                                     // only start integrating shortly before reaching e(t) = 0 (to prevent integral windup)
+    if (_error  <= 5.0) {                                                     // only start integrating shortly before reaching e(t) = 0 (to prevent integral windup)
       _errorInt += _error*_dt + 0.001;                                          // [+ 0.001]: let P and I fight each other (for "stiffer" temp regulation)
       _errorInt  = constrain(_errorInt, 0, 1);
     }
@@ -209,12 +202,12 @@ namespace Vaporizer {
     double   value;
     uint16_t value_set;
 
-    _tempMode
+    mode == TEMP_MODE
       ? value = temperature, value_set = temperature_set
-      : value = power      , value_set = power_set;
+      : value = power,       value_set = power_set;
 
-    _isOn
-      ? pid.regulate(value, value_set)
+    state == ON
+      ? pid.regulate(value, (double)value_set)
       : dac.setOutput(0);
   }
 

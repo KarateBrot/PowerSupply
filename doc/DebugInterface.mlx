@@ -25,9 +25,54 @@
         <default-line-width>1</default-line-width>
         <default-dash-style>Solid</default-dash-style>
         <default-visibility>true</default-visibility>
-        <next-color>3</next-color>
-        <next-symbol>1</next-symbol>
-        <series-styles />
+        <next-color>7</next-color>
+        <next-symbol>5</next-symbol>
+        <series-styles>
+          <style name="plot_temp">
+            <SeriesStyle xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+              <LineStyle>Solid</LineStyle>
+              <LineColor>Blue</LineColor>
+              <LineWidth>1</LineWidth>
+              <SymbolType>Diamond</SymbolType>
+              <SymbolColor>Blue</SymbolColor>
+              <SymbolSize>4</SymbolSize>
+              <Visible>true</Visible>
+            </SeriesStyle>
+          </style>
+          <style name="plot_power">
+            <SeriesStyle xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+              <LineStyle>Solid</LineStyle>
+              <LineColor>Black</LineColor>
+              <LineWidth>1</LineWidth>
+              <SymbolType>HDash</SymbolType>
+              <SymbolColor>Black</SymbolColor>
+              <SymbolSize>4</SymbolSize>
+              <Visible>true</Visible>
+            </SeriesStyle>
+          </style>
+          <style name="Temperature">
+            <SeriesStyle xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+              <LineStyle>Solid</LineStyle>
+              <LineColor>LightSeaGreen</LineColor>
+              <LineWidth>1</LineWidth>
+              <SymbolType>Plus</SymbolType>
+              <SymbolColor>LightSeaGreen</SymbolColor>
+              <SymbolSize>4</SymbolSize>
+              <Visible>true</Visible>
+            </SeriesStyle>
+          </style>
+          <style name="Power">
+            <SeriesStyle xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+              <LineStyle>Solid</LineStyle>
+              <LineColor>Cyan</LineColor>
+              <LineWidth>1</LineWidth>
+              <SymbolType>Square</SymbolType>
+              <SymbolColor>Cyan</SymbolColor>
+              <SymbolSize>4</SymbolSize>
+              <Visible>true</Visible>
+            </SeriesStyle>
+          </style>
+        </series-styles>
       </data>
       <data id="LogFileData" name="" instance-id="75f64054-cea3-4bb4-886b-9a716070e723">
         <include-date>false</include-date>
@@ -50,22 +95,22 @@
     </destinations>
   </reporting>
   <serial-sources>
-    <default>6</default>
+    <default>-1</default>
     <sources>
       <source type="SharedRS232Port">
-        <id>6</id>
-        <display-name>My Serial Device 6</display-name>
-        <sort-order>0</sort-order>
+        <id>8</id>
+        <display-name>Vaporizer</display-name>
+        <sort-order>1</sort-order>
         <port-name>
-          <type>None</type>
-          <port />
+          <type>Fixed</type>
+          <port>COM6</port>
         </port-name>
-        <baud-rate>9600</baud-rate>
+        <baud-rate>115200</baud-rate>
         <data-bits>8</data-bits>
         <handshaking>None</handshaking>
         <parity>None</parity>
         <stop-bits>One</stop-bits>
-        <disable-dtr>true</disable-dtr>
+        <disable-dtr>false</disable-dtr>
         <disable-rts>false</disable-rts>
       </source>
     </sources>
@@ -73,8 +118,8 @@
   </serial-sources>
   <windows>
     <window>
-      <DockPanel FormatVersion="1.0" DockLeftPortion="0.25" DockRightPortion="220" DockTopPortion="0.25" DockBottomPortion="0.25" ActiveDocumentPane="5" ActivePane="5">
-        <Contents Count="7">
+      <DockPanel FormatVersion="1.0" DockLeftPortion="0.25" DockRightPortion="220" DockTopPortion="0.25" DockBottomPortion="0.25" ActiveDocumentPane="4" ActivePane="4">
+        <Contents Count="8">
           <Content ID="0" PersistString="SourceManager" AutoHidePortion="0.25" IsHidden="False" IsFloat="False">
             <instance-id>c0373940-b262-4ea9-8464-e10bc3345bbf</instance-id>
             <ShowSourceInTitle>false</ShowSourceInTitle>
@@ -94,7 +139,7 @@
             <instance-id>215be554-7ea0-443c-a8dc-816cbffd4081</instance-id>
             <ShowSourceInTitle>false</ShowSourceInTitle>
             <ShowPortInTitle>false</ShowPortInTitle>
-            <SourceId>6</SourceId>
+            <SourceId>8</SourceId>
             <TabTitle>User Interface</TabTitle>
           </Content>
           <Content ID="2" PersistString="SerialMonitor" AutoHidePortion="0.25" IsHidden="False" IsFloat="False">
@@ -111,15 +156,15 @@
             <instance-id>cc26291c-fe73-45e3-bee6-dfe51dd14c20</instance-id>
             <ShowSourceInTitle>false</ShowSourceInTitle>
             <ShowPortInTitle>false</ShowPortInTitle>
-            <SourceId>6</SourceId>
+            <SourceId>8</SourceId>
             <TabTitle>Serial Monitor</TabTitle>
           </Content>
           <Content ID="3" PersistString="DataTable" AutoHidePortion="220" IsHidden="False" IsFloat="False">
             <instance-id>233a5179-784c-41c9-917e-e08b8b61410f</instance-id>
             <ShowSourceInTitle>false</ShowSourceInTitle>
             <ShowPortInTitle>false</ShowPortInTitle>
-            <SourceId>6</SourceId>
-            <TabTitle>Settings</TabTitle>
+            <SourceId>8</SourceId>
+            <TabTitle>Properties</TabTitle>
             <reporting-enabled>false</reporting-enabled>
             <Channels>
               <auto>true</auto>
@@ -134,13 +179,14 @@
             <instance-id>514f4e12-d29e-4c09-859f-3960ff36a187</instance-id>
             <ShowSourceInTitle>false</ShowSourceInTitle>
             <ShowPortInTitle>false</ShowPortInTitle>
-            <SourceId>6</SourceId>
+            <SourceId>8</SourceId>
             <TabTitle>Power Plot</TabTitle>
             <reporting-enabled>false</reporting-enabled>
             <show-summary>false</show-summary>
             <Channels>
-              <auto>true</auto>
-              <default>true</default>
+              <auto>false</auto>
+              <default>false</default>
+              <selected>Power</selected>
             </Channels>
             <reporting>
               <width>640</width>
@@ -163,7 +209,7 @@
             </title>
             <x-axis>
               <minimum>0</minimum>
-              <maximum>100</maximum>
+              <maximum>4800</maximum>
               <major-step>100</major-step>
               <minor-step>10</minor-step>
               <major-unit>Day</major-unit>
@@ -189,7 +235,7 @@
               <minor-step>1</minor-step>
               <major-unit>Day</major-unit>
               <minor-unit>Day</minor-unit>
-              <minimum-auto>true</minimum-auto>
+              <minimum-auto>false</minimum-auto>
               <maximum-auto>false</maximum-auto>
               <major-step-auto>false</major-step-auto>
               <minor-step-auto>false</minor-step-auto>
@@ -213,13 +259,14 @@
             <instance-id>a4c739c8-fa22-46dd-87c0-e1aa534c7da4</instance-id>
             <ShowSourceInTitle>false</ShowSourceInTitle>
             <ShowPortInTitle>false</ShowPortInTitle>
-            <SourceId>6</SourceId>
+            <SourceId>8</SourceId>
             <TabTitle>Temperature Plot</TabTitle>
             <reporting-enabled>false</reporting-enabled>
             <show-summary>false</show-summary>
             <Channels>
-              <auto>true</auto>
-              <default>true</default>
+              <auto>false</auto>
+              <default>false</default>
+              <selected>Temp</selected>
             </Channels>
             <reporting>
               <width>640</width>
@@ -242,7 +289,7 @@
             </title>
             <x-axis>
               <minimum>0</minimum>
-              <maximum>100</maximum>
+              <maximum>4800</maximum>
               <major-step>100</major-step>
               <minor-step>10</minor-step>
               <major-unit>Day</major-unit>
@@ -268,7 +315,7 @@
               <minor-step>10</minor-step>
               <major-unit>Day</major-unit>
               <minor-unit>Day</minor-unit>
-              <minimum-auto>true</minimum-auto>
+              <minimum-auto>false</minimum-auto>
               <maximum-auto>false</maximum-auto>
               <major-step-auto>false</major-step-auto>
               <minor-step-auto>false</minor-step-auto>
@@ -299,9 +346,30 @@
             <instance-id>c939637e-bc61-48af-a4de-6b36f6a500e4</instance-id>
             <ShowSourceInTitle>false</ShowSourceInTitle>
             <ShowPortInTitle>false</ShowPortInTitle>
-            <SourceId>6</SourceId>
+            <SourceId>8</SourceId>
             <TabTitle>Log to File</TabTitle>
             <reporting-enabled>false</reporting-enabled>
+          </Content>
+          <Content ID="7" PersistString="MessageStreamViewer" AutoHidePortion="0.25" IsHidden="False" IsFloat="False">
+            <Channels>
+              <auto>true</auto>
+              <default>true</default>
+            </Channels>
+            <InsertTimestamp>false</InsertTimestamp>
+            <WordWrap>true</WordWrap>
+            <IncludeDate>false</IncludeDate>
+            <IncludeTime>true</IncludeTime>
+            <IncludeCustom>false</IncludeCustom>
+            <CustomTimeStamp />
+            <AutoScroll>false</AutoScroll>
+            <ShowEOLMarkers>false</ShowEOLMarkers>
+            <ShowLineTime>false</ShowLineTime>
+            <ShowLineDate>false</ShowLineDate>
+            <instance-id>608825a2-ece4-4d85-a959-927bebc65a1a</instance-id>
+            <ShowSourceInTitle>false</ShowSourceInTitle>
+            <ShowPortInTitle>false</ShowPortInTitle>
+            <SourceId>8</SourceId>
+            <TabTitle>Message Monitor</TabTitle>
           </Content>
         </Contents>
         <Panes Count="9">
@@ -315,29 +383,31 @@
               <Content ID="0" RefID="1" />
             </Contents>
           </Pane>
-          <Pane ID="2" DockState="DockLeftAutoHide" ActiveContent="0">
-            <Contents Count="1">
-              <Content ID="0" RefID="0" />
-            </Contents>
-          </Pane>
-          <Pane ID="3" DockState="Document" ActiveContent="5">
+          <Pane ID="2" DockState="Document" ActiveContent="5">
             <Contents Count="1">
               <Content ID="0" RefID="5" />
             </Contents>
           </Pane>
-          <Pane ID="4" DockState="Document" ActiveContent="2">
-            <Contents Count="1">
-              <Content ID="0" RefID="2" />
+          <Pane ID="3" DockState="Document" ActiveContent="6">
+            <Contents Count="3">
+              <Content ID="0" RefID="7" />
+              <Content ID="1" RefID="2" />
+              <Content ID="2" RefID="6" />
             </Contents>
           </Pane>
-          <Pane ID="5" DockState="Document" ActiveContent="4">
+          <Pane ID="4" DockState="Document" ActiveContent="4">
             <Contents Count="1">
               <Content ID="0" RefID="4" />
             </Contents>
           </Pane>
-          <Pane ID="6" DockState="Float" ActiveContent="-1">
+          <Pane ID="5" DockState="Float" ActiveContent="-1">
             <Contents Count="1">
               <Content ID="0" RefID="3" />
+            </Contents>
+          </Pane>
+          <Pane ID="6" DockState="Document" ActiveContent="0">
+            <Contents Count="1">
+              <Content ID="0" RefID="0" />
             </Contents>
           </Pane>
           <Pane ID="7" DockState="Document" ActiveContent="3">
@@ -345,7 +415,7 @@
               <Content ID="0" RefID="3" />
             </Contents>
           </Pane>
-          <Pane ID="8" DockState="Document" ActiveContent="6">
+          <Pane ID="8" DockState="Float" ActiveContent="-1">
             <Contents Count="1">
               <Content ID="0" RefID="6" />
             </Contents>
@@ -355,17 +425,15 @@
           <DockWindow ID="0" DockState="Document" ZOrderIndex="0">
             <NestedPanes Count="6">
               <Pane ID="0" RefID="1" PrevPane="-1" Alignment="Right" Proportion="0.5" />
-              <Pane ID="1" RefID="3" PrevPane="1" Alignment="Right" Proportion="0.660790598290598" />
-              <Pane ID="2" RefID="4" PrevPane="1" Alignment="Bottom" Proportion="0.595041322314049" />
-              <Pane ID="3" RefID="5" PrevPane="3" Alignment="Bottom" Proportion="0.5" />
-              <Pane ID="4" RefID="7" PrevPane="1" Alignment="Right" Proportion="0.439157566302652" />
-              <Pane ID="5" RefID="8" PrevPane="4" Alignment="Bottom" Proportion="0.154411764705882" />
+              <Pane ID="1" RefID="2" PrevPane="1" Alignment="Right" Proportion="0.618559107153998" />
+              <Pane ID="2" RefID="3" PrevPane="1" Alignment="Bottom" Proportion="0.426652892561983" />
+              <Pane ID="3" RefID="4" PrevPane="2" Alignment="Bottom" Proportion="0.5" />
+              <Pane ID="4" RefID="6" PrevPane="1" Alignment="Top" Proportion="0.368459795295927" />
+              <Pane ID="5" RefID="7" PrevPane="1" Alignment="Right" Proportion="0.5" />
             </NestedPanes>
           </DockWindow>
           <DockWindow ID="1" DockState="DockLeft" ZOrderIndex="2">
-            <NestedPanes Count="1">
-              <Pane ID="0" RefID="2" PrevPane="-1" Alignment="Bottom" Proportion="0.5" />
-            </NestedPanes>
+            <NestedPanes Count="0" />
           </DockWindow>
           <DockWindow ID="2" DockState="DockRight" ZOrderIndex="1">
             <NestedPanes Count="0" />
@@ -377,7 +445,7 @@
             <NestedPanes Count="0" />
           </DockWindow>
         </DockWindows>
-        <FloatWindows Count="2">
+        <FloatWindows Count="3">
           <FloatWindow ID="0" Bounds="503, 346, 300, 300" ZOrderIndex="0">
             <NestedPanes Count="1">
               <Pane ID="0" RefID="0" PrevPane="-1" Alignment="Right" Proportion="0.5" />
@@ -385,7 +453,12 @@
           </FloatWindow>
           <FloatWindow ID="1" Bounds="78, 78, 300, 300" ZOrderIndex="1">
             <NestedPanes Count="1">
-              <Pane ID="0" RefID="6" PrevPane="-1" Alignment="Right" Proportion="0.5" />
+              <Pane ID="0" RefID="5" PrevPane="-1" Alignment="Right" Proportion="0.5" />
+            </NestedPanes>
+          </FloatWindow>
+          <FloatWindow ID="2" Bounds="193, 604, 300, 300" ZOrderIndex="2">
+            <NestedPanes Count="1">
+              <Pane ID="0" RefID="8" PrevPane="-1" Alignment="Right" Proportion="0.5" />
             </NestedPanes>
           </FloatWindow>
         </FloatWindows>
