@@ -125,6 +125,8 @@ namespace Vaporizer {
     PID_Ctrl& setD  (double d) { _d = d; return *this; }
     PID_Ctrl& setPID(double p, double i, double d) { _p = p; _i = i; _d = d; return *this; }
 
+    vector<double> getPID(void);
+
     double getOutput(void) const;
     void   regulate (double, double);
     void   autotune (void);
@@ -145,9 +147,9 @@ namespace Vaporizer {
 
     double   resistance;
     double   power, temperature;
-    uint16_t power_set = 0, temperature_set = 200;
+    uint16_t power_set = 10, temperature_set = 200;
 
-    state_t  state = ON;
+    state_t  state = OFF;
     mode_t   mode  = TEMP_MODE;
 
     Heater(void);
@@ -161,8 +163,8 @@ namespace Vaporizer {
     Heater& setTemp (uint16_t t) { temperature_set = t; return *this; }
     Heater& setPower(uint16_t p) { power_set       = p; return *this; }
 
-    Heater& on (void) { state = ON;  sensor.setPrecision(LOW);  return *this; }
-    Heater& off(void) { state = OFF; sensor.setPrecision(HIGH); return *this; }
+    Heater& on (void) { state = ON;  return *this; }
+    Heater& off(void) { state = OFF; return *this; }
 
     void update   (void);
     void regulate (void);

@@ -11,8 +11,15 @@
         <include-time>true</include-time>
         <include-custom>false</include-custom>
         <custom-time-stamp />
-        <clear-on-send>false</clear-on-send>
-        <message-history />
+        <clear-on-send>true</clear-on-send>
+        <message-history>
+          <item>!setTemp 100</item>
+          <item>!setTemp 100\r</item>
+          <item>!setTemp 100\r\n</item>
+          <item>!setTemperature 100\r\n</item>
+          <item>!setTemperature 200</item>
+          <item>!setTemperature 150</item>
+        </message-history>
       </data>
       <data id="UploadManagerData" name="f5f7bd03-904c-4581-afe6-5b13c190a05f" instance-id="fc47761f-77ee-40be-a3d8-7e411a5bf6b8">
         <verify>true</verify>
@@ -25,8 +32,8 @@
         <default-line-width>1</default-line-width>
         <default-dash-style>Solid</default-dash-style>
         <default-visibility>true</default-visibility>
-        <next-color>7</next-color>
-        <next-symbol>5</next-symbol>
+        <next-color>4</next-color>
+        <next-symbol>4</next-symbol>
         <series-styles>
           <style name="plot_temp">
             <SeriesStyle xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -53,11 +60,11 @@
           <style name="Temperature">
             <SeriesStyle xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
               <LineStyle>Solid</LineStyle>
-              <LineColor>LightSeaGreen</LineColor>
-              <LineWidth>1</LineWidth>
-              <SymbolType>Plus</SymbolType>
-              <SymbolColor>LightSeaGreen</SymbolColor>
-              <SymbolSize>4</SymbolSize>
+              <LineColor>Red</LineColor>
+              <LineWidth>2</LineWidth>
+              <SymbolType>None</SymbolType>
+              <SymbolColor>Red</SymbolColor>
+              <SymbolSize>5</SymbolSize>
               <Visible>true</Visible>
             </SeriesStyle>
           </style>
@@ -68,6 +75,61 @@
               <LineWidth>1</LineWidth>
               <SymbolType>Square</SymbolType>
               <SymbolColor>Cyan</SymbolColor>
+              <SymbolSize>4</SymbolSize>
+              <Visible>true</Visible>
+            </SeriesStyle>
+          </style>
+          <style name="Power_set">
+            <SeriesStyle xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+              <LineStyle>Solid</LineStyle>
+              <LineColor>Gray</LineColor>
+              <LineWidth>1</LineWidth>
+              <SymbolType>Star</SymbolType>
+              <SymbolColor>Gray</SymbolColor>
+              <SymbolSize>4</SymbolSize>
+              <Visible>true</Visible>
+            </SeriesStyle>
+          </style>
+          <style name="Temperature_set">
+            <SeriesStyle xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+              <LineStyle>Solid</LineStyle>
+              <LineColor>DeepPink</LineColor>
+              <LineWidth>1</LineWidth>
+              <SymbolType>Circle</SymbolType>
+              <SymbolColor>DeepPink</SymbolColor>
+              <SymbolSize>4</SymbolSize>
+              <Visible>true</Visible>
+            </SeriesStyle>
+          </style>
+          <style name="Temp_set">
+            <SeriesStyle xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+              <LineStyle>Solid</LineStyle>
+              <LineColor>Red</LineColor>
+              <LineWidth>1</LineWidth>
+              <SymbolType>Diamond</SymbolType>
+              <SymbolColor>Red</SymbolColor>
+              <SymbolSize>4</SymbolSize>
+              <Visible>true</Visible>
+            </SeriesStyle>
+          </style>
+          <style name="Temp">
+            <SeriesStyle xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+              <LineStyle>Solid</LineStyle>
+              <LineColor>Lime</LineColor>
+              <LineWidth>1</LineWidth>
+              <SymbolType>HDash</SymbolType>
+              <SymbolColor>Lime</SymbolColor>
+              <SymbolSize>4</SymbolSize>
+              <Visible>true</Visible>
+            </SeriesStyle>
+          </style>
+          <style name="PID_Output">
+            <SeriesStyle xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+              <LineStyle>Solid</LineStyle>
+              <LineColor>Blue</LineColor>
+              <LineWidth>1</LineWidth>
+              <SymbolType>Plus</SymbolType>
+              <SymbolColor>Blue</SymbolColor>
               <SymbolSize>4</SymbolSize>
               <Visible>true</Visible>
             </SeriesStyle>
@@ -105,7 +167,7 @@
           <type>Fixed</type>
           <port>COM6</port>
         </port-name>
-        <baud-rate>115200</baud-rate>
+        <baud-rate>500000</baud-rate>
         <data-bits>8</data-bits>
         <handshaking>None</handshaking>
         <parity>None</parity>
@@ -118,8 +180,8 @@
   </serial-sources>
   <windows>
     <window>
-      <DockPanel FormatVersion="1.0" DockLeftPortion="0.25" DockRightPortion="220" DockTopPortion="0.25" DockBottomPortion="0.25" ActiveDocumentPane="4" ActivePane="4">
-        <Contents Count="8">
+      <DockPanel FormatVersion="1.0" DockLeftPortion="0.25" DockRightPortion="220" DockTopPortion="0.25" DockBottomPortion="0.25" ActiveDocumentPane="1" ActivePane="1">
+        <Contents Count="9">
           <Content ID="0" PersistString="SourceManager" AutoHidePortion="0.25" IsHidden="False" IsFloat="False">
             <instance-id>c0373940-b262-4ea9-8464-e10bc3345bbf</instance-id>
             <ShowSourceInTitle>false</ShowSourceInTitle>
@@ -129,13 +191,417 @@
           </Content>
           <Content ID="1" PersistString="InterfacePanel" AutoHidePortion="0.25" IsHidden="False" IsFloat="False">
             <design type="InterfacePanel">
+              <children child-list="Controls">
+                <component type="System.Windows.Forms.GroupBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" name="GroupBox2">
+                  <children child-list="Controls">
+                    <component type="System.Windows.Forms.GroupBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" name="GroupBox5">
+                      <children child-list="Controls">
+                        <component type="IPControlLibrary.Controls.IPButton, IPControlLibrary, Version=1.19.18001.101, Culture=neutral, PublicKeyToken=null" name="IPButton6">
+                          <properties>
+                            <property name="OnClickSend">!setD [IPNumericUpDown5.Value]\r</property>
+                            <property name="Text">S</property>
+                            <property name="Font">Microsoft Sans Serif, 8.25pt</property>
+                            <property name="Location">107, 81</property>
+                            <property name="Name">IPButton6</property>
+                            <property name="Size">21, 22</property>
+                            <property name="TabIndex">11</property>
+                          </properties>
+                        </component>
+                        <component type="IPControlLibrary.Controls.IPButton, IPControlLibrary, Version=1.19.18001.101, Culture=neutral, PublicKeyToken=null" name="IPButton5">
+                          <properties>
+                            <property name="OnClickSend">!setI [IPNumericUpDown4.Value]\r</property>
+                            <property name="Text">S</property>
+                            <property name="Font">Microsoft Sans Serif, 8.25pt</property>
+                            <property name="Location">107, 53</property>
+                            <property name="Name">IPButton5</property>
+                            <property name="Size">21, 22</property>
+                            <property name="TabIndex">9</property>
+                          </properties>
+                        </component>
+                        <component type="IPControlLibrary.Controls.IPButton, IPControlLibrary, Version=1.19.18001.101, Culture=neutral, PublicKeyToken=null" name="IPButton4">
+                          <properties>
+                            <property name="OnClickSend">!setP [IPNumericUpDown3.Value]\r</property>
+                            <property name="Text">S</property>
+                            <property name="Font">Microsoft Sans Serif, 8.25pt</property>
+                            <property name="Location">107, 25</property>
+                            <property name="Name">IPButton4</property>
+                            <property name="Size">21, 22</property>
+                            <property name="TabIndex">7</property>
+                          </properties>
+                        </component>
+                        <component type="System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" name="Label10">
+                          <properties>
+                            <property name="TextAlign">MiddleLeft</property>
+                            <property name="Text">Autotune parameters</property>
+                            <property name="Font">Microsoft Sans Serif, 6.75pt</property>
+                            <property name="ForeColor">DarkGray</property>
+                            <property name="Location">68, 108</property>
+                            <property name="Name">Label10</property>
+                            <property name="Size">62, 43</property>
+                            <property name="TabIndex">2</property>
+                          </properties>
+                        </component>
+                        <component type="IPControlLibrary.Controls.IPButton, IPControlLibrary, Version=1.19.18001.101, Culture=neutral, PublicKeyToken=null" name="IPButton3">
+                          <properties>
+                            <property name="OnClickSend" />
+                            <property name="Text">Tune</property>
+                            <property name="Location">13, 118</property>
+                            <property name="Name">IPButton3</property>
+                            <property name="Size">49, 25</property>
+                            <property name="TabIndex">12</property>
+                          </properties>
+                        </component>
+                        <component type="IPControlLibrary.Controls.IPProgressBar, IPControlLibrary, Version=1.19.18001.101, Culture=neutral, PublicKeyToken=null" name="IPProgressBar2">
+                          <properties>
+                            <property name="Location">13, 152</property>
+                            <property name="Name">IPProgressBar2</property>
+                            <property name="Size">117, 23</property>
+                            <property name="TabIndex">2</property>
+                          </properties>
+                        </component>
+                        <component type="System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" name="Label8">
+                          <properties>
+                            <property name="AutoSize">True</property>
+                            <property name="Text">d</property>
+                            <property name="Font">Microsoft Sans Serif, 8.25pt</property>
+                            <property name="Location">23, 87</property>
+                            <property name="Name">Label8</property>
+                            <property name="Size">13, 13</property>
+                            <property name="TabIndex">1</property>
+                          </properties>
+                        </component>
+                        <component type="System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" name="Label6">
+                          <properties>
+                            <property name="AutoSize">True</property>
+                            <property name="Text">i</property>
+                            <property name="Font">Microsoft Sans Serif, 8.25pt</property>
+                            <property name="Location">23, 59</property>
+                            <property name="Name">Label6</property>
+                            <property name="Size">9, 13</property>
+                            <property name="TabIndex">1</property>
+                          </properties>
+                        </component>
+                        <component type="System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" name="Label4">
+                          <properties>
+                            <property name="AutoSize">True</property>
+                            <property name="Text">p</property>
+                            <property name="Font">Microsoft Sans Serif, 8.25pt</property>
+                            <property name="Location">23, 31</property>
+                            <property name="Name">Label4</property>
+                            <property name="Size">13, 13</property>
+                            <property name="TabIndex">1</property>
+                          </properties>
+                        </component>
+                        <component type="System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" name="Label7">
+                          <properties>
+                            <property name="AutoSize">True</property>
+                            <property name="Text">K</property>
+                            <property name="Location">12, 83</property>
+                            <property name="Name">Label7</property>
+                            <property name="Size">15, 16</property>
+                            <property name="TabIndex">1</property>
+                          </properties>
+                        </component>
+                        <component type="System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" name="Label5">
+                          <properties>
+                            <property name="AutoSize">True</property>
+                            <property name="Text">K</property>
+                            <property name="Location">12, 55</property>
+                            <property name="Name">Label5</property>
+                            <property name="Size">15, 16</property>
+                            <property name="TabIndex">1</property>
+                          </properties>
+                        </component>
+                        <component type="System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" name="Label3">
+                          <properties>
+                            <property name="AutoSize">True</property>
+                            <property name="Text">K</property>
+                            <property name="Location">12, 27</property>
+                            <property name="Name">Label3</property>
+                            <property name="Size">15, 16</property>
+                            <property name="TabIndex">1</property>
+                          </properties>
+                        </component>
+                        <component type="IPControlLibrary.Controls.IPNumericUpDown, IPControlLibrary, Version=1.19.18001.101, Culture=neutral, PublicKeyToken=null" name="IPNumericUpDown5">
+                          <children child-list="Controls" />
+                          <properties>
+                            <property name="OnValueChangedSend" />
+                            <property name="DecimalPlaces">2</property>
+                            <property name="Increment">0.01</property>
+                            <property name="TextAlign">Center</property>
+                            <property name="Location">39, 81</property>
+                            <property name="Name">IPNumericUpDown5</property>
+                            <property name="Size">60, 22</property>
+                            <property name="TabIndex">10</property>
+                            <property name="Tag">0,08</property>
+                          </properties>
+                        </component>
+                        <component type="IPControlLibrary.Controls.IPNumericUpDown, IPControlLibrary, Version=1.19.18001.101, Culture=neutral, PublicKeyToken=null" name="IPNumericUpDown4">
+                          <children child-list="Controls" />
+                          <properties>
+                            <property name="OnValueChangedSend" />
+                            <property name="DecimalPlaces">2</property>
+                            <property name="Increment">0.01</property>
+                            <property name="TextAlign">Center</property>
+                            <property name="Location">39, 53</property>
+                            <property name="Name">IPNumericUpDown4</property>
+                            <property name="Size">60, 22</property>
+                            <property name="TabIndex">8</property>
+                            <property name="Tag">0,10</property>
+                          </properties>
+                        </component>
+                        <component type="IPControlLibrary.Controls.IPNumericUpDown, IPControlLibrary, Version=1.19.18001.101, Culture=neutral, PublicKeyToken=null" name="IPNumericUpDown3">
+                          <children child-list="Controls" />
+                          <properties>
+                            <property name="OnValueChangedSend" />
+                            <property name="DecimalPlaces">2</property>
+                            <property name="Increment">0.01</property>
+                            <property name="TextAlign">Center</property>
+                            <property name="Location">39, 25</property>
+                            <property name="Name">IPNumericUpDown3</property>
+                            <property name="Size">60, 22</property>
+                            <property name="TabIndex">6</property>
+                            <property name="Tag">1,00</property>
+                          </properties>
+                        </component>
+                      </children>
+                      <properties>
+                        <property name="TabStop">False</property>
+                        <property name="Text">PID-Controller</property>
+                        <property name="Location">192, 92</property>
+                        <property name="Name">GroupBox5</property>
+                        <property name="Size">145, 190</property>
+                        <property name="TabIndex">10</property>
+                      </properties>
+                    </component>
+                    <component type="IPControlLibrary.Controls.IPButton, IPControlLibrary, Version=1.19.18001.101, Culture=neutral, PublicKeyToken=null" name="IPButton1">
+                      <properties>
+                        <property name="OnClickSend">!heaterToggle\r\n</property>
+                        <property name="Text">On / Off</property>
+                        <property name="Font">Microsoft Sans Serif, 9.75pt</property>
+                        <property name="Location">6, 33</property>
+                        <property name="Name">IPButton1</property>
+                        <property name="Size">331, 41</property>
+                        <property name="TabIndex">0</property>
+                      </properties>
+                    </component>
+                    <component type="System.Windows.Forms.GroupBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" name="GroupBox4">
+                      <children child-list="Controls">
+                        <component type="System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" name="Label9">
+                          <properties>
+                            <property name="TextAlign">MiddleLeft</property>
+                            <property name="Text">Make sure heater core is at room temp before calibration!</property>
+                            <property name="Font">Microsoft Sans Serif, 6.75pt</property>
+                            <property name="ForeColor">DarkGray</property>
+                            <property name="Location">64, 14</property>
+                            <property name="Name">Label9</property>
+                            <property name="Size">105, 43</property>
+                            <property name="TabIndex">2</property>
+                          </properties>
+                        </component>
+                        <component type="IPControlLibrary.Controls.IPButton, IPControlLibrary, Version=1.19.18001.101, Culture=neutral, PublicKeyToken=null" name="IPButton2">
+                          <properties>
+                            <property name="OnClickSend" />
+                            <property name="Text">Go</property>
+                            <property name="Location">14, 24</property>
+                            <property name="Name">IPButton2</property>
+                            <property name="Size">44, 25</property>
+                            <property name="TabIndex">5</property>
+                          </properties>
+                        </component>
+                        <component type="IPControlLibrary.Controls.IPProgressBar, IPControlLibrary, Version=1.19.18001.101, Culture=neutral, PublicKeyToken=null" name="IPProgressBar1">
+                          <properties>
+                            <property name="BackColor">Window</property>
+                            <property name="Location">14, 58</property>
+                            <property name="Name">IPProgressBar1</property>
+                            <property name="Size">146, 23</property>
+                            <property name="TabIndex">0</property>
+                          </properties>
+                        </component>
+                      </children>
+                      <properties>
+                        <property name="TabStop">False</property>
+                        <property name="Text">Calibration</property>
+                        <property name="Location">6, 186</property>
+                        <property name="Name">GroupBox4</property>
+                        <property name="Size">174, 96</property>
+                        <property name="TabIndex">9</property>
+                      </properties>
+                    </component>
+                    <component type="System.Windows.Forms.GroupBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" name="GroupBox3">
+                      <children child-list="Controls">
+                        <component type="IPControlLibrary.Controls.IPNumericUpDown, IPControlLibrary, Version=1.19.18001.101, Culture=neutral, PublicKeyToken=null" name="IPNumericUpDown1">
+                          <children child-list="Controls" />
+                          <properties>
+                            <property name="OnValueChangedSend">!setTemperature [IPNumericUpDown1.Value]\r</property>
+                            <property name="Maximum">300</property>
+                            <property name="Value">20</property>
+                            <property name="TextAlign">Center</property>
+                            <property name="Font">Microsoft Sans Serif, 9.75pt</property>
+                            <property name="Location">82, 25</property>
+                            <property name="Name">IPNumericUpDown1</property>
+                            <property name="RightToLeft">No</property>
+                            <property name="Size">49, 22</property>
+                            <property name="TabIndex">2</property>
+                            <property name="Tag">170</property>
+                          </properties>
+                        </component>
+                        <component type="IPControlLibrary.Controls.IPRadioButton, IPControlLibrary, Version=1.19.18001.101, Culture=neutral, PublicKeyToken=null" name="IPRadioButton2">
+                          <properties>
+                            <property name="OnCheckChangedSend" />
+                            <property name="TabStop">True</property>
+                            <property name="Text">Power</property>
+                            <property name="Location">14, 51</property>
+                            <property name="Name">IPRadioButton2</property>
+                            <property name="Size">64, 24</property>
+                            <property name="TabIndex">3</property>
+                          </properties>
+                        </component>
+                        <component type="System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" name="Label1">
+                          <properties>
+                            <property name="Text">°C</property>
+                            <property name="Font">Microsoft Sans Serif, 9.75pt</property>
+                            <property name="Location">137, 27</property>
+                            <property name="Name">Label1</property>
+                            <property name="Size">23, 23</property>
+                            <property name="TabIndex">2</property>
+                          </properties>
+                        </component>
+                        <component type="IPControlLibrary.Controls.IPRadioButton, IPControlLibrary, Version=1.19.18001.101, Culture=neutral, PublicKeyToken=null" name="IPRadioButton1">
+                          <properties>
+                            <property name="OnCheckChangedSend">!setMode [IPRadioButton1.Checked ? "0" : "1"]\r</property>
+                            <property name="TabStop">True</property>
+                            <property name="Text">Temp</property>
+                            <property name="Location">14, 23</property>
+                            <property name="Name">IPRadioButton1</property>
+                            <property name="Size">62, 24</property>
+                            <property name="TabIndex">1</property>
+                          </properties>
+                        </component>
+                        <component type="System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" name="Label2">
+                          <properties>
+                            <property name="Text">W</property>
+                            <property name="Font">Microsoft Sans Serif, 9.75pt</property>
+                            <property name="Location">137, 55</property>
+                            <property name="Name">Label2</property>
+                            <property name="Size">23, 23</property>
+                            <property name="TabIndex">5</property>
+                          </properties>
+                        </component>
+                        <component type="IPControlLibrary.Controls.IPNumericUpDown, IPControlLibrary, Version=1.19.18001.101, Culture=neutral, PublicKeyToken=null" name="IPNumericUpDown2">
+                          <children child-list="Controls" />
+                          <properties>
+                            <property name="OnValueChangedSend">!setPower [IPNumericUpDown2.Value]\r</property>
+                            <property name="Maximum">50</property>
+                            <property name="Value">20</property>
+                            <property name="TextAlign">Center</property>
+                            <property name="Font">Microsoft Sans Serif, 9.75pt</property>
+                            <property name="Location">82, 53</property>
+                            <property name="Name">IPNumericUpDown2</property>
+                            <property name="RightToLeft">No</property>
+                            <property name="Size">49, 22</property>
+                            <property name="TabIndex">4</property>
+                            <property name="Tag">10</property>
+                          </properties>
+                        </component>
+                      </children>
+                      <properties>
+                        <property name="TabStop">False</property>
+                        <property name="Text">Output</property>
+                        <property name="Location">6, 92</property>
+                        <property name="Name">GroupBox3</property>
+                        <property name="Size">174, 88</property>
+                        <property name="TabIndex">8</property>
+                      </properties>
+                    </component>
+                  </children>
+                  <properties>
+                    <property name="TabStop">False</property>
+                    <property name="Text">Vaporizer</property>
+                    <property name="Font">Microsoft Sans Serif, 9.75pt</property>
+                    <property name="Location">3, 3</property>
+                    <property name="Name">GroupBox2</property>
+                    <property name="Size">343, 288</property>
+                    <property name="TabIndex">3</property>
+                  </properties>
+                </component>
+              </children>
               <properties>
                 <property name="Name">UserControl1</property>
                 <property name="Size">952, 930</property>
               </properties>
               <components />
             </design>
-            <values />
+            <values>
+              <value name="IPButton6">
+                <property name="Enabled"><![CDATA[True]]></property>
+              </value>
+              <value name="IPButton5">
+                <property name="Enabled"><![CDATA[True]]></property>
+              </value>
+              <value name="IPButton4">
+                <property name="Enabled"><![CDATA[True]]></property>
+              </value>
+              <value name="IPButton3">
+                <property name="Enabled"><![CDATA[True]]></property>
+              </value>
+              <value name="IPProgressBar2">
+                <property name="Value"><![CDATA[0]]></property>
+                <property name="Minimum"><![CDATA[0]]></property>
+                <property name="Maximum"><![CDATA[100]]></property>
+                <property name="Enabled"><![CDATA[True]]></property>
+              </value>
+              <value name="IPNumericUpDown5">
+                <property name="Value"><![CDATA[0.08]]></property>
+                <property name="Minimum"><![CDATA[0]]></property>
+                <property name="Maximum"><![CDATA[100]]></property>
+                <property name="Enabled"><![CDATA[True]]></property>
+              </value>
+              <value name="IPNumericUpDown4">
+                <property name="Value"><![CDATA[0.1]]></property>
+                <property name="Minimum"><![CDATA[0]]></property>
+                <property name="Maximum"><![CDATA[100]]></property>
+                <property name="Enabled"><![CDATA[True]]></property>
+              </value>
+              <value name="IPNumericUpDown3">
+                <property name="Value"><![CDATA[1]]></property>
+                <property name="Minimum"><![CDATA[0]]></property>
+                <property name="Maximum"><![CDATA[100]]></property>
+                <property name="Enabled"><![CDATA[True]]></property>
+              </value>
+              <value name="IPButton1">
+                <property name="Enabled"><![CDATA[True]]></property>
+              </value>
+              <value name="IPButton2">
+                <property name="Enabled"><![CDATA[True]]></property>
+              </value>
+              <value name="IPProgressBar1">
+                <property name="Value"><![CDATA[0]]></property>
+                <property name="Minimum"><![CDATA[0]]></property>
+                <property name="Maximum"><![CDATA[100]]></property>
+                <property name="Enabled"><![CDATA[True]]></property>
+              </value>
+              <value name="IPNumericUpDown1">
+                <property name="Value"><![CDATA[200]]></property>
+                <property name="Minimum"><![CDATA[0]]></property>
+                <property name="Maximum"><![CDATA[300]]></property>
+                <property name="Enabled"><![CDATA[True]]></property>
+              </value>
+              <value name="IPRadioButton2">
+                <property name="Checked"><![CDATA[False]]></property>
+                <property name="Enabled"><![CDATA[True]]></property>
+              </value>
+              <value name="IPRadioButton1">
+                <property name="Checked"><![CDATA[True]]></property>
+                <property name="Enabled"><![CDATA[True]]></property>
+              </value>
+              <value name="IPNumericUpDown2">
+                <property name="Value"><![CDATA[10]]></property>
+                <property name="Minimum"><![CDATA[0]]></property>
+                <property name="Maximum"><![CDATA[50]]></property>
+                <property name="Enabled"><![CDATA[True]]></property>
+              </value>
+            </values>
             <instance-id>215be554-7ea0-443c-a8dc-816cbffd4081</instance-id>
             <ShowSourceInTitle>false</ShowSourceInTitle>
             <ShowPortInTitle>false</ShowPortInTitle>
@@ -175,167 +641,7 @@
               <format>HTML</format>
             </reporting>
           </Content>
-          <Content ID="4" PersistString="ScatterPlotter" AutoHidePortion="0.25" IsHidden="False" IsFloat="False">
-            <instance-id>514f4e12-d29e-4c09-859f-3960ff36a187</instance-id>
-            <ShowSourceInTitle>false</ShowSourceInTitle>
-            <ShowPortInTitle>false</ShowPortInTitle>
-            <SourceId>8</SourceId>
-            <TabTitle>Power Plot</TabTitle>
-            <reporting-enabled>false</reporting-enabled>
-            <show-summary>false</show-summary>
-            <Channels>
-              <auto>false</auto>
-              <default>false</default>
-              <selected>Power</selected>
-            </Channels>
-            <reporting>
-              <width>640</width>
-              <height>480</height>
-              <dpi>96</dpi>
-              <anti-alias>true</anti-alias>
-              <filename-pattern>Graph {Seq}</filename-pattern>
-              <format>b96b3caf-0728-11d3-9d7b-0000f81ef32e</format>
-            </reporting>
-            <title>
-              <text>X-Y Plot</text>
-              <visible>false</visible>
-              <font>
-                <color>-16777216</color>
-                <family>Microsoft Sans Serif</family>
-                <bold>true</bold>
-                <italic>false</italic>
-                <size>16</size>
-              </font>
-            </title>
-            <x-axis>
-              <minimum>0</minimum>
-              <maximum>4800</maximum>
-              <major-step>100</major-step>
-              <minor-step>10</minor-step>
-              <major-unit>Day</major-unit>
-              <minor-unit>Day</minor-unit>
-              <minimum-auto>true</minimum-auto>
-              <maximum-auto>true</maximum-auto>
-              <major-step-auto>false</major-step-auto>
-              <minor-step-auto>false</minor-step-auto>
-              <text>Ticks</text>
-              <visible>true</visible>
-              <font>
-                <color>-16777216</color>
-                <family>Microsoft Sans Serif</family>
-                <bold>true</bold>
-                <italic>false</italic>
-                <size>14</size>
-              </font>
-            </x-axis>
-            <y-axis>
-              <minimum>0</minimum>
-              <maximum>50</maximum>
-              <major-step>5</major-step>
-              <minor-step>1</minor-step>
-              <major-unit>Day</major-unit>
-              <minor-unit>Day</minor-unit>
-              <minimum-auto>false</minimum-auto>
-              <maximum-auto>false</maximum-auto>
-              <major-step-auto>false</major-step-auto>
-              <minor-step-auto>false</minor-step-auto>
-              <text>Power</text>
-              <visible>true</visible>
-              <font>
-                <color>-16777216</color>
-                <family>Microsoft Sans Serif</family>
-                <bold>true</bold>
-                <italic>false</italic>
-                <size>14</size>
-              </font>
-            </y-axis>
-            <background-fill>
-              <color-1>-1</color-1>
-              <color-2>-1</color-2>
-              <angle>-45</angle>
-            </background-fill>
-          </Content>
-          <Content ID="5" PersistString="ScatterPlotter" AutoHidePortion="0.25" IsHidden="False" IsFloat="False">
-            <instance-id>a4c739c8-fa22-46dd-87c0-e1aa534c7da4</instance-id>
-            <ShowSourceInTitle>false</ShowSourceInTitle>
-            <ShowPortInTitle>false</ShowPortInTitle>
-            <SourceId>8</SourceId>
-            <TabTitle>Temperature Plot</TabTitle>
-            <reporting-enabled>false</reporting-enabled>
-            <show-summary>false</show-summary>
-            <Channels>
-              <auto>false</auto>
-              <default>false</default>
-              <selected>Temp</selected>
-            </Channels>
-            <reporting>
-              <width>640</width>
-              <height>480</height>
-              <dpi>96</dpi>
-              <anti-alias>true</anti-alias>
-              <filename-pattern>Graph {Seq}</filename-pattern>
-              <format>b96b3caf-0728-11d3-9d7b-0000f81ef32e</format>
-            </reporting>
-            <title>
-              <text>Temperature</text>
-              <visible>false</visible>
-              <font>
-                <color>-16777216</color>
-                <family>Microsoft Sans Serif</family>
-                <bold>true</bold>
-                <italic>false</italic>
-                <size>16</size>
-              </font>
-            </title>
-            <x-axis>
-              <minimum>0</minimum>
-              <maximum>4800</maximum>
-              <major-step>100</major-step>
-              <minor-step>10</minor-step>
-              <major-unit>Day</major-unit>
-              <minor-unit>Day</minor-unit>
-              <minimum-auto>true</minimum-auto>
-              <maximum-auto>true</maximum-auto>
-              <major-step-auto>false</major-step-auto>
-              <minor-step-auto>false</minor-step-auto>
-              <text>Ticks</text>
-              <visible>true</visible>
-              <font>
-                <color>-16777216</color>
-                <family>Microsoft Sans Serif</family>
-                <bold>true</bold>
-                <italic>false</italic>
-                <size>14</size>
-              </font>
-            </x-axis>
-            <y-axis>
-              <minimum>0</minimum>
-              <maximum>300</maximum>
-              <major-step>20</major-step>
-              <minor-step>10</minor-step>
-              <major-unit>Day</major-unit>
-              <minor-unit>Day</minor-unit>
-              <minimum-auto>false</minimum-auto>
-              <maximum-auto>false</maximum-auto>
-              <major-step-auto>false</major-step-auto>
-              <minor-step-auto>false</minor-step-auto>
-              <text>Temperature</text>
-              <visible>true</visible>
-              <font>
-                <color>-16777216</color>
-                <family>Microsoft Sans Serif</family>
-                <bold>true</bold>
-                <italic>false</italic>
-                <size>14</size>
-              </font>
-            </y-axis>
-            <background-fill>
-              <color-1>-1</color-1>
-              <color-2>-1</color-2>
-              <angle>-45</angle>
-            </background-fill>
-          </Content>
-          <Content ID="6" PersistString="LogToFile" AutoHidePortion="0.25" IsHidden="False" IsFloat="False">
+          <Content ID="4" PersistString="LogToFile" AutoHidePortion="0.25" IsHidden="False" IsFloat="False">
             <file-path>
               <path />
               <relative>false</relative>
@@ -350,7 +656,7 @@
             <TabTitle>Log to File</TabTitle>
             <reporting-enabled>false</reporting-enabled>
           </Content>
-          <Content ID="7" PersistString="MessageStreamViewer" AutoHidePortion="0.25" IsHidden="False" IsFloat="False">
+          <Content ID="5" PersistString="MessageStreamViewer" AutoHidePortion="0.25" IsHidden="False" IsFloat="False">
             <Channels>
               <auto>true</auto>
               <default>true</default>
@@ -371,8 +677,189 @@
             <SourceId>8</SourceId>
             <TabTitle>Message Monitor</TabTitle>
           </Content>
+          <Content ID="6" PersistString="FileWriter" AutoHidePortion="0.25" IsHidden="False" IsFloat="False">
+            <Channels>
+              <auto>true</auto>
+              <default>true</default>
+            </Channels>
+            <file-path>
+              <path />
+              <relative>false</relative>
+            </file-path>
+            <IncludeDate>false</IncludeDate>
+            <IncludeTime>false</IncludeTime>
+            <InsertTimestamp>false</InsertTimestamp>
+            <instance-id>3554f946-4564-497a-b139-57e34ae1af10</instance-id>
+            <ShowSourceInTitle>false</ShowSourceInTitle>
+            <ShowPortInTitle>false</ShowPortInTitle>
+            <SourceId>-1</SourceId>
+            <TabTitle>Message Logger</TabTitle>
+            <reporting-enabled>false</reporting-enabled>
+          </Content>
+          <Content ID="7" PersistString="mlpChart" AutoHidePortion="0.25" IsHidden="False" IsFloat="False">
+            <instance-id>8b2402d5-bbde-4ed0-b3ec-71667286a5c6</instance-id>
+            <ShowSourceInTitle>false</ShowSourceInTitle>
+            <ShowPortInTitle>false</ShowPortInTitle>
+            <SourceId>8</SourceId>
+            <TabTitle>Power</TabTitle>
+            <reporting-enabled>false</reporting-enabled>
+            <show-summary>false</show-summary>
+            <Channels>
+              <auto>false</auto>
+              <default>false</default>
+              <selected>Power</selected>
+            </Channels>
+            <reporting>
+              <width>640</width>
+              <height>480</height>
+              <dpi>96</dpi>
+              <anti-alias>true</anti-alias>
+              <filename-pattern>Graph {Seq}</filename-pattern>
+              <format>b96b3caf-0728-11d3-9d7b-0000f81ef32e</format>
+            </reporting>
+            <title>
+              <text>Chart</text>
+              <visible>false</visible>
+              <font>
+                <color>-16777216</color>
+                <family>Microsoft Sans Serif</family>
+                <bold>true</bold>
+                <italic>false</italic>
+                <size>16</size>
+              </font>
+            </title>
+            <x-axis>
+              <minimum>43148.972326389048</minimum>
+              <maximum>43148.973912037443</maximum>
+              <major-step>30</major-step>
+              <minor-step>5</minor-step>
+              <major-unit>Second</major-unit>
+              <minor-unit>Second</minor-unit>
+              <minimum-auto>true</minimum-auto>
+              <maximum-auto>true</maximum-auto>
+              <major-step-auto>true</major-step-auto>
+              <minor-step-auto>true</minor-step-auto>
+              <text>time</text>
+              <visible>true</visible>
+              <font>
+                <color>-16777216</color>
+                <family>Microsoft Sans Serif</family>
+                <bold>true</bold>
+                <italic>false</italic>
+                <size>14</size>
+              </font>
+            </x-axis>
+            <y-axis>
+              <minimum>0</minimum>
+              <maximum>50</maximum>
+              <major-step>10</major-step>
+              <minor-step>2</minor-step>
+              <major-unit>Day</major-unit>
+              <minor-unit>Day</minor-unit>
+              <minimum-auto>false</minimum-auto>
+              <maximum-auto>false</maximum-auto>
+              <major-step-auto>false</major-step-auto>
+              <minor-step-auto>false</minor-step-auto>
+              <text>Power / W</text>
+              <visible>true</visible>
+              <font>
+                <color>-16777216</color>
+                <family>Microsoft Sans Serif</family>
+                <bold>true</bold>
+                <italic>false</italic>
+                <size>14</size>
+              </font>
+            </y-axis>
+            <background-fill>
+              <color-1>-526345</color-1>
+              <color-2>-1</color-2>
+              <angle>270</angle>
+            </background-fill>
+            <run>false</run>
+          </Content>
+          <Content ID="8" PersistString="mlpChart" AutoHidePortion="0.25" IsHidden="False" IsFloat="False">
+            <instance-id>546107d6-7f69-4168-bc6a-ae8d6ae6e9e1</instance-id>
+            <ShowSourceInTitle>false</ShowSourceInTitle>
+            <ShowPortInTitle>false</ShowPortInTitle>
+            <SourceId>8</SourceId>
+            <TabTitle>Temperature</TabTitle>
+            <reporting-enabled>false</reporting-enabled>
+            <show-summary>false</show-summary>
+            <Channels>
+              <auto>false</auto>
+              <default>false</default>
+              <selected>Temp</selected>
+            </Channels>
+            <reporting>
+              <width>640</width>
+              <height>480</height>
+              <dpi>96</dpi>
+              <anti-alias>true</anti-alias>
+              <filename-pattern>Graph {Seq}</filename-pattern>
+              <format>b96b3caf-0728-11d3-9d7b-0000f81ef32e</format>
+            </reporting>
+            <title>
+              <text>Chart</text>
+              <visible>false</visible>
+              <font>
+                <color>-16777216</color>
+                <family>Microsoft Sans Serif</family>
+                <bold>true</bold>
+                <italic>false</italic>
+                <size>16</size>
+              </font>
+            </title>
+            <x-axis>
+              <minimum>43148.972326389048</minimum>
+              <maximum>43148.973912037443</maximum>
+              <major-step>30</major-step>
+              <minor-step>5</minor-step>
+              <major-unit>Second</major-unit>
+              <minor-unit>Second</minor-unit>
+              <minimum-auto>true</minimum-auto>
+              <maximum-auto>true</maximum-auto>
+              <major-step-auto>true</major-step-auto>
+              <minor-step-auto>true</minor-step-auto>
+              <text>time</text>
+              <visible>true</visible>
+              <font>
+                <color>-16777216</color>
+                <family>Microsoft Sans Serif</family>
+                <bold>true</bold>
+                <italic>false</italic>
+                <size>14</size>
+              </font>
+            </x-axis>
+            <y-axis>
+              <minimum>0</minimum>
+              <maximum>300</maximum>
+              <major-step>50</major-step>
+              <minor-step>10</minor-step>
+              <major-unit>Day</major-unit>
+              <minor-unit>Day</minor-unit>
+              <minimum-auto>false</minimum-auto>
+              <maximum-auto>false</maximum-auto>
+              <major-step-auto>false</major-step-auto>
+              <minor-step-auto>false</minor-step-auto>
+              <text>Temperature / °C</text>
+              <visible>true</visible>
+              <font>
+                <color>-16777216</color>
+                <family>Microsoft Sans Serif</family>
+                <bold>true</bold>
+                <italic>false</italic>
+                <size>14</size>
+              </font>
+            </y-axis>
+            <background-fill>
+              <color-1>-526345</color-1>
+              <color-2>-1</color-2>
+              <angle>270</angle>
+            </background-fill>
+            <run>false</run>
+          </Content>
         </Contents>
-        <Panes Count="9">
+        <Panes Count="10">
           <Pane ID="0" DockState="Float" ActiveContent="-1">
             <Contents Count="1">
               <Content ID="0" RefID="1" />
@@ -383,41 +870,47 @@
               <Content ID="0" RefID="1" />
             </Contents>
           </Pane>
-          <Pane ID="2" DockState="Document" ActiveContent="5">
+          <Pane ID="2" DockState="Document" ActiveContent="8">
             <Contents Count="1">
-              <Content ID="0" RefID="5" />
+              <Content ID="0" RefID="8" />
             </Contents>
           </Pane>
-          <Pane ID="3" DockState="Document" ActiveContent="6">
-            <Contents Count="3">
-              <Content ID="0" RefID="7" />
+          <Pane ID="3" DockState="Document" ActiveContent="5">
+            <Contents Count="4">
+              <Content ID="0" RefID="5" />
               <Content ID="1" RefID="2" />
               <Content ID="2" RefID="6" />
+              <Content ID="3" RefID="4" />
             </Contents>
           </Pane>
-          <Pane ID="4" DockState="Document" ActiveContent="4">
-            <Contents Count="1">
-              <Content ID="0" RefID="4" />
-            </Contents>
-          </Pane>
-          <Pane ID="5" DockState="Float" ActiveContent="-1">
+          <Pane ID="4" DockState="Float" ActiveContent="-1">
             <Contents Count="1">
               <Content ID="0" RefID="3" />
             </Contents>
           </Pane>
-          <Pane ID="6" DockState="Document" ActiveContent="0">
+          <Pane ID="5" DockState="Document" ActiveContent="0">
             <Contents Count="1">
               <Content ID="0" RefID="0" />
             </Contents>
           </Pane>
-          <Pane ID="7" DockState="Document" ActiveContent="3">
+          <Pane ID="6" DockState="Document" ActiveContent="3">
             <Contents Count="1">
               <Content ID="0" RefID="3" />
             </Contents>
           </Pane>
+          <Pane ID="7" DockState="Float" ActiveContent="-1">
+            <Contents Count="1">
+              <Content ID="0" RefID="4" />
+            </Contents>
+          </Pane>
           <Pane ID="8" DockState="Float" ActiveContent="-1">
             <Contents Count="1">
-              <Content ID="0" RefID="6" />
+              <Content ID="0" RefID="7" />
+            </Contents>
+          </Pane>
+          <Pane ID="9" DockState="Document" ActiveContent="7">
+            <Contents Count="1">
+              <Content ID="0" RefID="7" />
             </Contents>
           </Pane>
         </Panes>
@@ -427,9 +920,9 @@
               <Pane ID="0" RefID="1" PrevPane="-1" Alignment="Right" Proportion="0.5" />
               <Pane ID="1" RefID="2" PrevPane="1" Alignment="Right" Proportion="0.618559107153998" />
               <Pane ID="2" RefID="3" PrevPane="1" Alignment="Bottom" Proportion="0.426652892561983" />
-              <Pane ID="3" RefID="4" PrevPane="2" Alignment="Bottom" Proportion="0.5" />
-              <Pane ID="4" RefID="6" PrevPane="1" Alignment="Top" Proportion="0.368459795295927" />
-              <Pane ID="5" RefID="7" PrevPane="1" Alignment="Right" Proportion="0.5" />
+              <Pane ID="3" RefID="5" PrevPane="1" Alignment="Top" Proportion="0.200589759194844" />
+              <Pane ID="4" RefID="6" PrevPane="1" Alignment="Right" Proportion="0.4" />
+              <Pane ID="5" RefID="9" PrevPane="2" Alignment="Bottom" Proportion="0.5" />
             </NestedPanes>
           </DockWindow>
           <DockWindow ID="1" DockState="DockLeft" ZOrderIndex="2">
@@ -445,7 +938,7 @@
             <NestedPanes Count="0" />
           </DockWindow>
         </DockWindows>
-        <FloatWindows Count="3">
+        <FloatWindows Count="4">
           <FloatWindow ID="0" Bounds="503, 346, 300, 300" ZOrderIndex="0">
             <NestedPanes Count="1">
               <Pane ID="0" RefID="0" PrevPane="-1" Alignment="Right" Proportion="0.5" />
@@ -453,10 +946,15 @@
           </FloatWindow>
           <FloatWindow ID="1" Bounds="78, 78, 300, 300" ZOrderIndex="1">
             <NestedPanes Count="1">
-              <Pane ID="0" RefID="5" PrevPane="-1" Alignment="Right" Proportion="0.5" />
+              <Pane ID="0" RefID="4" PrevPane="-1" Alignment="Right" Proportion="0.5" />
             </NestedPanes>
           </FloatWindow>
           <FloatWindow ID="2" Bounds="193, 604, 300, 300" ZOrderIndex="2">
+            <NestedPanes Count="1">
+              <Pane ID="0" RefID="7" PrevPane="-1" Alignment="Right" Proportion="0.5" />
+            </NestedPanes>
+          </FloatWindow>
+          <FloatWindow ID="3" Bounds="26, 26, 300, 300" ZOrderIndex="3">
             <NestedPanes Count="1">
               <Pane ID="0" RefID="8" PrevPane="-1" Alignment="Right" Proportion="0.5" />
             </NestedPanes>

@@ -67,7 +67,7 @@ namespace Vaporizer {
   void Sensor::read() {
 
     // Current [mA]
-    current = (double)_INA219.getCurrent_mA()*2.0;   // R050 instead of R100 shunt
+    current = (double)_INA219.getCurrent_mA()*2.0; // R050 instead of R100 shunt
 
     // Voltage [mV]
     voltage = (double)_INA219.getBusVoltage_V()*1000.0;
@@ -131,10 +131,17 @@ namespace Vaporizer {
     _valueLast =  value;
 
     // ∫e(t)dt
-    if (_error  <= 5.0) {                                                     // only start integrating shortly before reaching e(t) = 0 (to prevent integral windup)
+    if (_error  <= 5.0) {                                                       // only start integrating shortly before reaching e(t) = 0 (to prevent integral windup)
       _errorInt += _error*_dt + 0.001;                                          // [+ 0.001]: let P and I fight each other (for "stiffer" temp regulation)
-      _errorInt  = constrain(_errorInt, 0, 1);
+      _errorInt  = constrain(_errorInt, 0, 1/_i);
     }
+  }
+
+  vector<double> PID_Ctrl::getPID() {
+
+    vector<double> v;
+    v.push_back(_p); v.push_back(_i); v.push_back(_d);
+    return v;
   }
 
   double PID_Ctrl::getOutput() const {
@@ -199,16 +206,18 @@ namespace Vaporizer {
   // Sets DAC pin "OUT" to DC voltage according to PID-controller
   void Heater::regulate() {
 
-    double   value;
-    uint16_t value_set;
+    if (state == ON) {
 
-    mode == TEMP_MODE
-      ? value = temperature, value_set = temperature_set
-      : value = power,       value_set = power_set;
+      mode == TEMP_MODE
+        ? pid.regulate(temperature, temperature_set)
+        : pid.regulate(power, power_set);
+      sensor.setPrecision(LOW);
 
-    state == ON
-      ? pid.regulate(value, (double)value_set)
-      : dac.setOutput(0);
+    } else {
+
+      dac.setOutput(0);
+      sensor.setPrecision(HIGH);
+    }
   }
 
   // Make sure heater core is at room temperature before calibration!
@@ -228,12 +237,14 @@ namespace Vaporizer {
       currentLast = sensor.current;
       update();
       pid_calibration.regulate(sensor.current, 10.0);
+      yield();
     }
 
     // Calculate resistance using reference current of 10mA
     for (size_t i = 0; i < 15; i++) {
       update();
       pid_calibration.regulate(sensor.current, 10.0);
+      yield();
     }
 
     // <= still needs room temp measurement for res20 to compensate for temps
