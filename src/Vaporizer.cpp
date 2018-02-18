@@ -175,6 +175,9 @@ namespace Vaporizer {
     setRes20   (HEATER_RES20);
     setResCable(HEATER_RESCABLE);
 
+    resistance  = HEATER_RES20;
+    temperature = 20.0;
+
     pid
       .attach(&dac)
       .setPID(PID_P, PID_I, PID_D);
@@ -200,7 +203,7 @@ namespace Vaporizer {
     // Temperature [°C]
     temperature =
       0.95*temperature +
-      0.05*(_TCR*log(resistance/_res20) + 20.0);
+      0.05*(log(resistance/_res20)/_TCR + 20.0);
   }
 
   // Sets DAC pin "OUT" to DC voltage according to PID-controller
@@ -289,7 +292,7 @@ namespace Vaporizer {
 
   void init(uint8_t scl, uint8_t sda) {
 
-    Wire.begin(scl, sda);                // Select I2C pins
+    Wire.begin(sda, scl);                // Select I2C pins
     Wire.setClock(800000L);              // for faster I2C transmission (800kHz)
   }
 

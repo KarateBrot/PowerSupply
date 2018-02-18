@@ -62,7 +62,7 @@ namespace Vaporizer {
 
     Timer(void);
 
-    uint32_t cycle = 0;
+    uint32_t counter = 0;
 
     void     startTime (void)       { _time = micros(); }
     uint32_t getTime   (void) const { return micros() - _time; }

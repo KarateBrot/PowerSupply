@@ -23,14 +23,16 @@ void sendData() {
 
   table.SendData("- - MAIN - - - - - -", "");
 
-  table.SendData("Voltage",  heater.sensor.voltage/1000.0, "V" );
   table.SendData("Current",  heater.sensor.current/1000.0, "A" );
+  table.SendData("Voltage",  heater.sensor.voltage/1000.0, "V" );
   table.SendData("Cycles/s", timer.getCPS(),               "Hz");
+  table.SendData("Cycle",    timer.counter                     );
 
   table.SendData("- - HEATER - - -", "");
 
-  table.SendData("Temperature", heater.temperature, "*C");
-  table.SendData("Power",       heater.power,       "W" );
+  table.SendData("Resistance",  heater.resistance,  "Ohm");
+  table.SendData("Power",       heater.power,       "W"  );
+  table.SendData("Temperature", heater.temperature, "*C" );
 
   heater.state == ON
     ? table.SendData("State", "ON")
@@ -115,7 +117,7 @@ void loop() {
   sendData();
   cmd.Process();
   timer.limitCPS(30);
-  timer.cycle++;
+  timer.counter++;
 }
 
 // ---------------------------------- RUN ----------------------------------- //
