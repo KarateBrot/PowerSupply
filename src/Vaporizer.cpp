@@ -171,7 +171,7 @@ namespace Vaporizer {
 
   Heater::Heater() {
 
-    setTCR     (HEATER_TCR_SS316L);
+    setTCR     (HEATER_TCR);
     setRes20   (HEATER_RES20);
     setResCable(HEATER_RESCABLE);
 
