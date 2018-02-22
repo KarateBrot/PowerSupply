@@ -10,9 +10,10 @@
 #define SDA   4                                                        // Pin D2
 
 
-Timer   timer;
-Table   table;
-Message msg;
+Timer          timer;
+Table          table;
+Message        msg;
+InterfacePanel panel;
 
 TimePlot plot_temp("Temp"), plot_power("Power");
 
@@ -32,7 +33,7 @@ void sendData() {
 
   table.SendData("Resistance",  heater.resistance,  "Ohm");
   table.SendData("Power",       heater.power,       "W"  );
-  table.SendData("Temperature", heater.temperature, "*C" );
+  table.SendData("Temperature", (int)(heater.temperature + 0.5), "*C" );
 
   heater.state == ON
     ? table.SendData("State", "ON")
@@ -52,7 +53,7 @@ void sendData() {
 
   plot_power.SendData("Power",           heater.power,           Plot::Red,   Plot::Solid, 2, Plot::NoMarker);
   plot_power.SendData("Power_set",       heater.power_set,       Plot::Black, Plot::Solid, 1, Plot::NoMarker);
-  plot_power.SendData("PID_Output", 50.0*heater.pid.getOutput(), Plot::Cyan,  Plot::Solid, 1, Plot::NoMarker);
+  plot_power.SendData("PID_Output", 10.0*heater.pid.getOutput(), Plot::Cyan,  Plot::Solid, 1, Plot::NoMarker);
 }
 
 void Cmd_setTemperature(CommandParameter &Parameters) {
@@ -67,8 +68,13 @@ void Cmd_setPower(CommandParameter &Parameters) {
 
 void Cmd_toggleHeater(CommandParameter &Parameters) {
 
-  heater.state == OFF ? heater.on()           : heater.off();
-  heater.state == ON  ? msg.Send("Heater ON") : msg.Send("Heater OFF");
+  heater.state == OFF ? heater.on() : heater.off();
+
+  if (heater.state == ON) {
+    msg.Send("Heater ON");
+  } else {
+    msg.Send("Heater OFF");
+  }
 }
 
 void Cmd_setMode(CommandParameter &Parameters) {

@@ -35,7 +35,7 @@
 //----------------------------------------------------------------------------//
   #define V_FIRMWARE_VERSION     "0.1-a"                                      //
 //----------------------------------------------------------------------------//
-  #define HEATER_TCR             SS316                             // at 20°C //
+  #define HEATER_TCR              SS316                            // at 20°C //
 //----------------------------------------------------------------------------//
     #define SS316                 0.000915                                    //
     #define SS316L                0.00092                                     //
@@ -44,7 +44,7 @@
     #define SS304                 0.00105                                     //
     #define SS410                 0.00155                                     //
 //----------------------------------------------------------------------------//
-  #define HEATER_RES20            8.01                                        //
+  #define HEATER_RES20            6.77                                        //
   #define HEATER_RESCABLE         0.27                                        //
 //----------------------------------------------------------------------------//
   #define PID_P                   1.0                                         //
@@ -65,7 +65,9 @@ namespace Vaporizer {
 
 
 
-  class Timer {
+  struct Timer {
+
+   private:
 
     uint32_t _time, _lastWaitCall, _lastCycle;
 
@@ -85,7 +87,9 @@ namespace Vaporizer {
 
 
 
-  class Sensor {
+  struct Sensor {
+
+   private:
 
     static Adafruit_INA219 _INA219;
 
@@ -102,7 +106,9 @@ namespace Vaporizer {
 
 
 
-  class DAC {
+  struct DAC {
+
+   private:
 
     static Adafruit_MCP4725 _MCP4725;
 
@@ -136,7 +142,7 @@ namespace Vaporizer {
     PID_Ctrl& setD  (double d) { _d = d; return *this; }
     PID_Ctrl& setPID(double p, double i, double d) { _p = p; _i = i; _d = d; return *this; }
 
-    vector<double> getPID(void);
+    vector<double> getPID(void) const;
 
     double getOutput(void) const;
     void   regulate (double, double);
@@ -197,8 +203,7 @@ namespace Vaporizer {
 
    protected:
 
-    static uint32_t    frameCount;
-    static vector<GUI> windowBuffer;
+    Timer timer;
 
    public:
 
@@ -237,8 +242,7 @@ namespace Vaporizer {
 
   void init(uint8_t, uint8_t);
 
-  static String getVersion(void) { return V_FIRMWARE_VERSION; }
-
+  static String v_version(void) { return V_FIRMWARE_VERSION; }
 
   // ------------------------------- VAPORIZER ------------------------------ //
 

@@ -67,10 +67,14 @@ namespace Vaporizer {
   void Sensor::read() {
 
     // Current [mA]
-    current = (double)_INA219.getCurrent_mA()*2.0; // R050 instead of R100 shunt
+    current =
+      0.5*current +
+      0.5*_INA219.getCurrent_mA()*2.0;             // R050 instead of R100 shunt
 
     // Voltage [mV]
-    voltage = (double)_INA219.getBusVoltage_V()*1000.0;
+    voltage =
+      0.5*voltage +
+      0.5*_INA219.getBusVoltage_V()*1000.0;
   }
 
   // ------------------------------- SENSOR --------------------------------- //
@@ -106,7 +110,7 @@ namespace Vaporizer {
   // -----------------:------------------------------------------------------ //
   // SIGNAL OUTPUT:   : u(t) = P*e(t) + I*∫e(t)dt + D*de(t)/dt                //
   // -----------------:------------------------------------------------------ //
-  // ERROR:           :     e(t)     = T_set - T(t)                           //
+  // ERROR:           :     e(t)     = T_set - T(t) = ΔT                      //
   // PAST ERR:        :     ∫e(t)dt  = e_past                                 //
   // PREDICTED ERR:   :     de(t)/dt = -dT/dt                                 //
   // -----------------:------------------------------------------------------ //
@@ -131,13 +135,13 @@ namespace Vaporizer {
     _valueLast =  value;
 
     // ∫e(t)dt
-    if (_error  <= 5.0) {                                                       // only start integrating shortly before reaching e(t) = 0 (to prevent integral windup)
-      _errorInt += _error*_dt + 0.001;                                          // [+ 0.001]: let P and I fight each other (for "stiffer" temp regulation)
+    if (_error  <= 10) {      // only integrate shortly before reaching e(t) = 0
+      _errorInt += _error*_dt;
       _errorInt  = constrain(_errorInt, 0, 1/_i);
     }
   }
 
-  vector<double> PID_Ctrl::getPID() {
+  vector<double> PID_Ctrl::getPID() const {
 
     vector<double> v;
     v.push_back(_p); v.push_back(_i); v.push_back(_d);
@@ -189,8 +193,8 @@ namespace Vaporizer {
 
     // Resistance [Ω]
     resistance =
-      0.9*resistance +
-      0.1*(sensor.voltage/constrain(sensor.current, 1, 15000) - _resCable);
+      0.7*resistance +
+      0.3*(sensor.voltage/constrain(sensor.current, 1, 15000) - _resCable);
 
     // Resistance [Ω] - if no heater connected
     if (sensor.voltage > 100 && sensor.current < 10) { resistance = _res20; }
@@ -202,8 +206,8 @@ namespace Vaporizer {
 
     // Temperature [°C]
     temperature =
-      0.95*temperature +
-      0.05*(log(resistance/_res20)/_TCR + 20.0);
+      0.7*temperature +
+      0.3*(log(resistance/_res20)/_TCR + 20.0);
   }
 
   // Sets DAC pin "OUT" to DC voltage according to PID-controller
@@ -211,6 +215,7 @@ namespace Vaporizer {
 
     if (state == ON) {
 
+      // TODO: Set ideal PID consts for each mode
       mode == TEMP_MODE
         ? pid.regulate(temperature, temperature_set)
         : pid.regulate(power, power_set);
@@ -230,7 +235,7 @@ namespace Vaporizer {
 
     pid_calibration
       .attach(&dac)
-      .setPID(1.0, 0.0, 0.0);                       // still needs manual tuning
+      .setPID(1.0, 0.0, 0.0);                             // TODO: Manual tuning
 
     sensor.setPrecision(HIGH);
 
@@ -250,8 +255,7 @@ namespace Vaporizer {
       yield();
     }
 
-    // <= still needs room temp measurement for res20 to compensate for temps
-    // <= different from 20°C
+    // TODO: Room temp measurement to compensate res for temps != 20°C
 
     dac.setOutput(0);
     setRes20(resistance);
@@ -264,8 +268,6 @@ namespace Vaporizer {
 
 
   // ================================= GUI ================================== //
-
-  uint32_t GUI::frameCount = 0;
 
   GUI::GUI() {
 

@@ -32,8 +32,8 @@
         <default-line-width>1</default-line-width>
         <default-dash-style>Solid</default-dash-style>
         <default-visibility>true</default-visibility>
-        <next-color>4</next-color>
-        <next-symbol>4</next-symbol>
+        <next-color>5</next-color>
+        <next-symbol>5</next-symbol>
         <series-styles>
           <style name="plot_temp">
             <SeriesStyle xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -134,6 +134,17 @@
               <Visible>true</Visible>
             </SeriesStyle>
           </style>
+          <style name="lol">
+            <SeriesStyle xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+              <LineStyle>Solid</LineStyle>
+              <LineColor>Black</LineColor>
+              <LineWidth>1</LineWidth>
+              <SymbolType>Square</SymbolType>
+              <SymbolColor>Black</SymbolColor>
+              <SymbolSize>4</SymbolSize>
+              <Visible>true</Visible>
+            </SeriesStyle>
+          </style>
         </series-styles>
       </data>
       <data id="LogFileData" name="" instance-id="75f64054-cea3-4bb4-886b-9a716070e723">
@@ -165,7 +176,7 @@
         <sort-order>1</sort-order>
         <port-name>
           <type>Fixed</type>
-          <port>COM6</port>
+          <port>COM5</port>
         </port-name>
         <baud-rate>500000</baud-rate>
         <data-bits>8</data-bits>
@@ -180,7 +191,7 @@
   </serial-sources>
   <windows>
     <window>
-      <DockPanel FormatVersion="1.0" DockLeftPortion="0.25" DockRightPortion="220" DockTopPortion="0.25" DockBottomPortion="0.25" ActiveDocumentPane="1" ActivePane="1">
+      <DockPanel FormatVersion="1.0" DockLeftPortion="0.25" DockRightPortion="464" DockTopPortion="0.25" DockBottomPortion="0.25" ActiveDocumentPane="1" ActivePane="1">
         <Contents Count="9">
           <Content ID="0" PersistString="SourceManager" AutoHidePortion="0.25" IsHidden="False" IsFloat="False">
             <instance-id>c0373940-b262-4ea9-8464-e10bc3345bbf</instance-id>
@@ -194,6 +205,26 @@
               <children child-list="Controls">
                 <component type="System.Windows.Forms.GroupBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" name="GroupBox2">
                   <children child-list="Controls">
+                    <component type="System.Windows.Forms.Panel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" name="Panel2">
+                      <properties>
+                        <property name="BorderStyle">Fixed3D</property>
+                        <property name="BackColor">Gainsboro</property>
+                        <property name="Location">327, 33</property>
+                        <property name="Name">Panel2</property>
+                        <property name="Size">10, 41</property>
+                        <property name="TabIndex">4</property>
+                      </properties>
+                    </component>
+                    <component type="System.Windows.Forms.Panel, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" name="Panel1">
+                      <properties>
+                        <property name="BorderStyle">Fixed3D</property>
+                        <property name="BackColor">Gainsboro</property>
+                        <property name="Location">6, 33</property>
+                        <property name="Name">Panel1</property>
+                        <property name="Size">10, 41</property>
+                        <property name="TabIndex">4</property>
+                      </properties>
+                    </component>
                     <component type="System.Windows.Forms.GroupBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" name="GroupBox5">
                       <children child-list="Controls">
                         <component type="IPControlLibrary.Controls.IPButton, IPControlLibrary, Version=1.19.18001.101, Culture=neutral, PublicKeyToken=null" name="IPButton6">
@@ -201,7 +232,7 @@
                             <property name="OnClickSend">!setD [IPNumericUpDown5.Value]\r</property>
                             <property name="Text">S</property>
                             <property name="Font">Microsoft Sans Serif, 8.25pt</property>
-                            <property name="Location">107, 81</property>
+                            <property name="Location">109, 81</property>
                             <property name="Name">IPButton6</property>
                             <property name="Size">21, 22</property>
                             <property name="TabIndex">11</property>
@@ -212,7 +243,7 @@
                             <property name="OnClickSend">!setI [IPNumericUpDown4.Value]\r</property>
                             <property name="Text">S</property>
                             <property name="Font">Microsoft Sans Serif, 8.25pt</property>
-                            <property name="Location">107, 53</property>
+                            <property name="Location">109, 53</property>
                             <property name="Name">IPButton5</property>
                             <property name="Size">21, 22</property>
                             <property name="TabIndex">9</property>
@@ -223,7 +254,7 @@
                             <property name="OnClickSend">!setP [IPNumericUpDown3.Value]\r</property>
                             <property name="Text">S</property>
                             <property name="Font">Microsoft Sans Serif, 8.25pt</property>
-                            <property name="Location">107, 25</property>
+                            <property name="Location">109, 25</property>
                             <property name="Name">IPButton4</property>
                             <property name="Size">21, 22</property>
                             <property name="TabIndex">7</property>
@@ -333,7 +364,6 @@
                             <property name="Name">IPNumericUpDown5</property>
                             <property name="Size">60, 22</property>
                             <property name="TabIndex">10</property>
-                            <property name="Tag">0,08</property>
                           </properties>
                         </component>
                         <component type="IPControlLibrary.Controls.IPNumericUpDown, IPControlLibrary, Version=1.19.18001.101, Culture=neutral, PublicKeyToken=null" name="IPNumericUpDown4">
@@ -347,7 +377,6 @@
                             <property name="Name">IPNumericUpDown4</property>
                             <property name="Size">60, 22</property>
                             <property name="TabIndex">8</property>
-                            <property name="Tag">0,10</property>
                           </properties>
                         </component>
                         <component type="IPControlLibrary.Controls.IPNumericUpDown, IPControlLibrary, Version=1.19.18001.101, Culture=neutral, PublicKeyToken=null" name="IPNumericUpDown3">
@@ -356,12 +385,12 @@
                             <property name="OnValueChangedSend" />
                             <property name="DecimalPlaces">2</property>
                             <property name="Increment">0.01</property>
+                            <property name="Value">0.1</property>
                             <property name="TextAlign">Center</property>
                             <property name="Location">39, 25</property>
                             <property name="Name">IPNumericUpDown3</property>
                             <property name="Size">60, 22</property>
                             <property name="TabIndex">6</property>
-                            <property name="Tag">1,00</property>
                           </properties>
                         </component>
                       </children>
@@ -374,14 +403,14 @@
                         <property name="TabIndex">10</property>
                       </properties>
                     </component>
-                    <component type="IPControlLibrary.Controls.IPButton, IPControlLibrary, Version=1.19.18001.101, Culture=neutral, PublicKeyToken=null" name="IPButton1">
+                    <component type="IPControlLibrary.Controls.IPButton, IPControlLibrary, Version=1.19.18001.101, Culture=neutral, PublicKeyToken=null" name="PowerButton">
                       <properties>
                         <property name="OnClickSend">!heaterToggle\r\n</property>
-                        <property name="Text">On / Off</property>
+                        <property name="Text">ON</property>
                         <property name="Font">Microsoft Sans Serif, 9.75pt</property>
-                        <property name="Location">6, 33</property>
-                        <property name="Name">IPButton1</property>
-                        <property name="Size">331, 41</property>
+                        <property name="Location">22, 32</property>
+                        <property name="Name">PowerButton</property>
+                        <property name="Size">299, 41</property>
                         <property name="TabIndex">0</property>
                       </properties>
                     </component>
@@ -435,7 +464,7 @@
                           <properties>
                             <property name="OnValueChangedSend">!setTemperature [IPNumericUpDown1.Value]\r</property>
                             <property name="Maximum">300</property>
-                            <property name="Value">20</property>
+                            <property name="Value">200</property>
                             <property name="TextAlign">Center</property>
                             <property name="Font">Microsoft Sans Serif, 9.75pt</property>
                             <property name="Location">82, 25</property>
@@ -443,7 +472,6 @@
                             <property name="RightToLeft">No</property>
                             <property name="Size">49, 22</property>
                             <property name="TabIndex">2</property>
-                            <property name="Tag">170</property>
                           </properties>
                         </component>
                         <component type="IPControlLibrary.Controls.IPRadioButton, IPControlLibrary, Version=1.19.18001.101, Culture=neutral, PublicKeyToken=null" name="IPRadioButton2">
@@ -493,7 +521,7 @@
                           <properties>
                             <property name="OnValueChangedSend">!setPower [IPNumericUpDown2.Value]\r</property>
                             <property name="Maximum">50</property>
-                            <property name="Value">20</property>
+                            <property name="Value">10</property>
                             <property name="TextAlign">Center</property>
                             <property name="Font">Microsoft Sans Serif, 9.75pt</property>
                             <property name="Location">82, 53</property>
@@ -501,7 +529,6 @@
                             <property name="RightToLeft">No</property>
                             <property name="Size">49, 22</property>
                             <property name="TabIndex">4</property>
-                            <property name="Tag">10</property>
                           </properties>
                         </component>
                       </children>
@@ -552,24 +579,24 @@
                 <property name="Enabled"><![CDATA[True]]></property>
               </value>
               <value name="IPNumericUpDown5">
-                <property name="Value"><![CDATA[0.08]]></property>
+                <property name="Value"><![CDATA[0]]></property>
                 <property name="Minimum"><![CDATA[0]]></property>
                 <property name="Maximum"><![CDATA[100]]></property>
                 <property name="Enabled"><![CDATA[True]]></property>
               </value>
               <value name="IPNumericUpDown4">
-                <property name="Value"><![CDATA[0.1]]></property>
+                <property name="Value"><![CDATA[0]]></property>
                 <property name="Minimum"><![CDATA[0]]></property>
                 <property name="Maximum"><![CDATA[100]]></property>
                 <property name="Enabled"><![CDATA[True]]></property>
               </value>
               <value name="IPNumericUpDown3">
-                <property name="Value"><![CDATA[1]]></property>
+                <property name="Value"><![CDATA[0.1]]></property>
                 <property name="Minimum"><![CDATA[0]]></property>
                 <property name="Maximum"><![CDATA[100]]></property>
                 <property name="Enabled"><![CDATA[True]]></property>
               </value>
-              <value name="IPButton1">
+              <value name="PowerButton">
                 <property name="Enabled"><![CDATA[True]]></property>
               </value>
               <value name="IPButton2">
@@ -729,14 +756,14 @@
               </font>
             </title>
             <x-axis>
-              <minimum>43148.972326389048</minimum>
-              <maximum>43148.973912037443</maximum>
-              <major-step>30</major-step>
+              <minimum>43150.093148553278</minimum>
+              <maximum>43150.093634664547</maximum>
+              <major-step>15</major-step>
               <minor-step>5</minor-step>
               <major-unit>Second</major-unit>
               <minor-unit>Second</minor-unit>
-              <minimum-auto>true</minimum-auto>
-              <maximum-auto>true</maximum-auto>
+              <minimum-auto>false</minimum-auto>
+              <maximum-auto>false</maximum-auto>
               <major-step-auto>true</major-step-auto>
               <minor-step-auto>true</minor-step-auto>
               <text>time</text>
@@ -751,9 +778,9 @@
             </x-axis>
             <y-axis>
               <minimum>0</minimum>
-              <maximum>50</maximum>
-              <major-step>10</major-step>
-              <minor-step>2</minor-step>
+              <maximum>10</maximum>
+              <major-step>2</major-step>
+              <minor-step>1</minor-step>
               <major-unit>Day</major-unit>
               <minor-unit>Day</minor-unit>
               <minimum-auto>false</minimum-auto>
@@ -775,7 +802,7 @@
               <color-2>-1</color-2>
               <angle>270</angle>
             </background-fill>
-            <run>false</run>
+            <run>true</run>
           </Content>
           <Content ID="8" PersistString="mlpChart" AutoHidePortion="0.25" IsHidden="False" IsFloat="False">
             <instance-id>546107d6-7f69-4168-bc6a-ae8d6ae6e9e1</instance-id>
@@ -810,14 +837,14 @@
               </font>
             </title>
             <x-axis>
-              <minimum>43148.972326389048</minimum>
-              <maximum>43148.973912037443</maximum>
-              <major-step>30</major-step>
+              <minimum>43150.093125810381</minimum>
+              <maximum>43150.093635069672</maximum>
+              <major-step>15</major-step>
               <minor-step>5</minor-step>
               <major-unit>Second</major-unit>
               <minor-unit>Second</minor-unit>
-              <minimum-auto>true</minimum-auto>
-              <maximum-auto>true</maximum-auto>
+              <minimum-auto>false</minimum-auto>
+              <maximum-auto>false</maximum-auto>
               <major-step-auto>true</major-step-auto>
               <minor-step-auto>true</minor-step-auto>
               <text>time</text>
@@ -856,7 +883,7 @@
               <color-2>-1</color-2>
               <angle>270</angle>
             </background-fill>
-            <run>false</run>
+            <run>true</run>
           </Content>
         </Contents>
         <Panes Count="10">
