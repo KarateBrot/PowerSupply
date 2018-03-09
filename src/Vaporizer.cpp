@@ -52,19 +52,19 @@ namespace Vaporizer {
 
   // ================================ SENSOR ================================ //
 
-  Adafruit_INA219 Sensor::_INA219;
+  Adafruit_INA219 Sensor_Plant::_INA219;
 
-  Sensor::Sensor() {
+  Sensor_Plant::Sensor_Plant() {
 
     _INA219.begin();
   }
 
-  void Sensor::setPrecision(bool b) {
+  void Sensor_Plant::setPrecision(bool b) {
 
     b ? _INA219.setCalibration_16V_400mA() : _INA219.setCalibration_32V_2A();
   }
 
-  void Sensor::read() {
+  void Sensor_Plant::read() {
 
     // Current [mA]
     current =
@@ -143,8 +143,7 @@ namespace Vaporizer {
 
   vector<double> PID_Ctrl::getPID() const {
 
-    vector<double> v;
-    v.push_back(_p); v.push_back(_i); v.push_back(_d);
+    vector<double> v({_p, _i, _d});
     return v;
   }
 
@@ -292,6 +291,7 @@ namespace Vaporizer {
   Input  input;
   GUI    gui;
 
+  // Needs to be called lastly in Setup() to overwrite Wire (I2C) settings
   void init(uint8_t scl, uint8_t sda) {
 
     Wire.begin(sda, scl);                // Select I2C pins

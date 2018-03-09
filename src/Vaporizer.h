@@ -87,7 +87,7 @@ namespace Vaporizer {
 
 
 
-  struct Sensor {
+  struct Sensor_Plant {
 
    private:
 
@@ -97,10 +97,21 @@ namespace Vaporizer {
 
     double current, voltage;
 
-    Sensor(void);
+    Sensor_Plant(void);
 
     void setPrecision(bool);
     void read        (void);
+  };
+
+
+
+  struct Sensor_Ambient {
+
+   private:
+
+   public:
+
+    void read(void);
   };
 
 
@@ -158,9 +169,9 @@ namespace Vaporizer {
 
    public:
 
-    Sensor   sensor;
-    DAC      dac;
-    PID_Ctrl pid;
+    Sensor_Plant sensor;
+    DAC          dac;
+    PID_Ctrl     pid;
 
     double   resistance;
     double   power, temperature;
