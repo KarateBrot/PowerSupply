@@ -27,6 +27,7 @@
 //----------------------------------------------------------------------------//
   #include <img/splash.h>                                                     //
 //----------------------------------------------------------------------------//
+//############################################################################//
 
 
 //############################################################################//
@@ -51,6 +52,7 @@
   #define PID_I                   0.1                                         //
   #define PID_D                   0.08                                        //
 //----------------------------------------------------------------------------//
+//############################################################################//
 
 
 
@@ -64,6 +66,9 @@ namespace Vaporizer {
   enum state_t { OFF, ON };
 
 
+
+
+  // ================================== TIMER ==================================
 
   struct Timer {
 
@@ -84,10 +89,20 @@ namespace Vaporizer {
     float    getCPS    (void);
   };
 
+  // ---------------------------------- TIMER ----------------------------------
 
 
 
-  struct Sensor_Plant {
+
+  // ================================= SENSORS =================================
+
+  struct Sensor {
+
+    virtual void read(void) = 0;
+  };
+
+
+  struct Sensor_Power : public Sensor {
 
    private:
 
@@ -97,15 +112,14 @@ namespace Vaporizer {
 
     double current, voltage;
 
-    Sensor_Plant(void);
+    Sensor_Power(void);
 
     void setPrecision(bool);
     void read        (void);
   };
 
 
-
-  struct Sensor_Ambient {
+  struct Sensor_Ambient : public Sensor {
 
    private:
 
@@ -114,8 +128,12 @@ namespace Vaporizer {
     void read(void);
   };
 
+  // --------------------------------- SENSORS ---------------------------------
 
 
+
+
+  // =================================== DAC ===================================
 
   struct DAC {
 
@@ -130,8 +148,12 @@ namespace Vaporizer {
     void setOutput(uint16_t);
   };
 
+  // ----------------------------------- DAC -----------------------------------
 
 
+
+
+  // =================================== PID ===================================
 
   class PID_Ctrl {
 
@@ -160,6 +182,8 @@ namespace Vaporizer {
     void   autotune (void);
   };
 
+  // ----------------------------------- PID -----------------------------------
+
 
 
 
@@ -169,7 +193,7 @@ namespace Vaporizer {
 
    public:
 
-    Sensor_Plant sensor;
+    Sensor_Power sensor;
     DAC          dac;
     PID_Ctrl     pid;
 
@@ -186,10 +210,10 @@ namespace Vaporizer {
     Heater& setResCable(double res) { _resCable = res; return *this; }
     Heater& setTCR     (double tcr) { _TCR      = tcr; return *this; }
 
-    Heater& setMode (mode_t m) { mode = m; return *this; }
-
     Heater& setTemp (uint16_t t) { temperature_set = t; return *this; }
     Heater& setPower(uint16_t p) { power_set       = p; return *this; }
+
+    Heater& setMode (mode_t m) { mode = m; return *this; }
 
     Heater& on (void) { state = ON;  return *this; }
     Heater& off(void) { state = OFF; return *this; }
@@ -202,9 +226,71 @@ namespace Vaporizer {
 
 
 
+  // ================================= CONTROLS ================================
+
+  struct Controls {
+
+    virtual uint8_t read(void) = 0;
+  };
+
+
+  struct Encoder : public Controls {
+
+   private:
+
+    static const uint8_t _LUT[7][4];
+    uint8_t _state, _pinCLK, _pinDT;
+
+   public:
+
+    enum dir_t   { DIR_NONE = 0x0, CW = 0x10, CCW = 0x20};
+    enum state_t { START, CW_FINAL, CW_BEGIN, CW_NEXT, CCW_BEGIN, CCW_FINAL, CCW_NEXT };
+
+    Encoder(void);
+
+    void    begin(uint8_t, uint8_t);
+    uint8_t read(void);
+  };
+
+
+  struct Button : public Controls {
+
+    uint8_t read(void);
+  };
+
+
+  struct Switch : public Controls {
+
+    uint8_t read(void);
+  };
+
+  // --------------------------------- CONTROLS --------------------------------
+
+
+
+
   class Input {
 
+   private:
 
+    static void _isr_encoder(void);
+    static void _isr_button (void);
+
+   public:
+
+    enum action_t { NOACTION, DECREASE, INCREASE, PRESS, RELEASE, LONGPRESS };
+
+    static Encoder encoder;
+    vector<Button> buttons;
+    vector<Switch> switches;
+
+    Input(void);
+
+    void addEncoder(uint8_t, uint8_t);
+    void addButton (uint8_t, void *(void));
+    void addSwitch (uint8_t, void *(void));
+
+    void update(void);
   };
 
 
@@ -245,7 +331,7 @@ namespace Vaporizer {
 
 
 
-  // ============================== VAPORIZER =============================== //
+  // ================================ VAPORIZER ================================
 
   extern Heater heater;
   extern Input  input;
@@ -253,9 +339,11 @@ namespace Vaporizer {
 
   void init(uint8_t, uint8_t);
 
+  //void ISR(void);
+
   static String v_version(void) { return V_FIRMWARE_VERSION; }
 
-  // ------------------------------- VAPORIZER ------------------------------ //
+  // -------------------------------- VAPORIZER --------------------------------
 
 
 

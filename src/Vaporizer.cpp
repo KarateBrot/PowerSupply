@@ -18,7 +18,7 @@ namespace Vaporizer {
 
 
 
-  // ================================ TIMER ================================= //
+  // ================================ TIMER ====================================
 
   Timer::Timer() {
 
@@ -45,26 +45,26 @@ namespace Vaporizer {
     return cyclespersecond;
   }
 
-  // -------------------------------- TIMER --------------------------------- //
+  // -------------------------------- TIMER ------------------------------------
 
 
 
 
-  // ================================ SENSOR ================================ //
+  // ================================ SENSOR ===================================
 
-  Adafruit_INA219 Sensor_Plant::_INA219;
+  Adafruit_INA219 Sensor_Power::_INA219;
 
-  Sensor_Plant::Sensor_Plant() {
+  Sensor_Power::Sensor_Power() {
 
     _INA219.begin();
   }
 
-  void Sensor_Plant::setPrecision(bool b) {
+  void Sensor_Power::setPrecision(bool b) {
 
     b ? _INA219.setCalibration_16V_400mA() : _INA219.setCalibration_32V_2A();
   }
 
-  void Sensor_Plant::read() {
+  void Sensor_Power::read() {
 
     // Current [mA]
     current =
@@ -77,12 +77,12 @@ namespace Vaporizer {
       0.5*_INA219.getBusVoltage_V()*1000.0;
   }
 
-  // ------------------------------- SENSOR --------------------------------- //
+  // ------------------------------- SENSOR ------------------------------------
 
 
 
 
-  // ================================= DAC ================================== //
+  // ================================= DAC =====================================
 
   Adafruit_MCP4725 DAC::_MCP4725;
 
@@ -98,12 +98,12 @@ namespace Vaporizer {
     _MCP4725.setVoltage(4095 - val, false);
   }
 
-  // --------------------------------- DAC ---------------------------------- //
+  // --------------------------------- DAC -------------------------------------
 
 
 
 
-  // =============================== PID_Ctrl =============================== //
+  // =============================== PID_Ctrl ==================================
 
   // ------------------------------------------------------------------------ //
   //                         --< PID-CONTROLLER >--                           //
@@ -162,15 +162,15 @@ namespace Vaporizer {
 
   void PID_Ctrl::autotune() {
 
-
+    // TODO: Autotune algorithm
   }
 
-  // ------------------------------- PID_Ctrl ------------------------------- //
+  // ------------------------------- PID_Ctrl ----------------------------------
 
 
 
 
-  // ================================ Heater ================================ //
+  // ================================ Heater ===================================
 
   Heater::Heater() {
 
@@ -261,12 +261,103 @@ namespace Vaporizer {
     sensor.setPrecision(LOW);
   }
 
-  // -------------------------------- Heater -------------------------------- //
+  // -------------------------------- Heater -----------------------------------
 
 
 
 
-  // ================================= GUI ================================== //
+  // =============================== CONTROLS ==================================
+
+  const uint8_t Encoder::_LUT[7][4] = {
+
+    { START,    CW_BEGIN,  CCW_BEGIN, START       },
+    { CW_NEXT,  START,     CW_FINAL,  START | CW  },
+    { CW_NEXT,  CW_BEGIN,  START,     START       },
+    { CW_NEXT,  CW_BEGIN,  CW_FINAL,  START       },
+    { CCW_NEXT, START,     CCW_BEGIN, START       },
+    { CCW_NEXT, CCW_FINAL, START,     START | CCW },
+    { CCW_NEXT, CCW_FINAL, CCW_BEGIN, START       }
+  };
+
+  Encoder::Encoder() {
+
+    _state = START;
+  }
+
+  void Encoder::begin(uint8_t pinCLK, uint8_t pinDT) {
+
+    _pinCLK = pinCLK;
+    _pinDT  = pinDT;
+
+    pinMode(_pinCLK, INPUT);
+    pinMode(_pinDT,  INPUT);
+
+    digitalWrite(_pinCLK, HIGH);
+    digitalWrite(_pinDT,  HIGH);
+  }
+
+  uint8_t Encoder::read() {
+
+    uint8_t stateTemp = (digitalRead(_pinCLK) << 1) | digitalRead(_pinDT);
+    _state = _LUT[_state & 0xf][stateTemp];
+
+    return _state & 0x30;
+  }
+
+  // ------------------------------- CONTROLS ----------------------------------
+
+
+
+
+  // ================================ Input ====================================
+
+  Encoder Input::encoder;
+
+  Input::Input() {
+
+
+  }
+
+  void Input::_isr_encoder() {
+
+    uint8_t state = encoder.read();
+
+    switch (state) {
+      case Encoder::CW:  Serial.println("Right"); break;
+      case Encoder::CCW: Serial.println("Leftt"); break;
+      default:           break;
+    }
+  }
+
+  void Input::addEncoder(uint8_t pinCLK, uint8_t pinDT) {
+
+    encoder.begin(pinCLK, pinDT);
+
+    attachInterrupt(pinCLK, _isr_encoder, CHANGE);
+    attachInterrupt(pinDT,  _isr_encoder, CHANGE);
+  }
+
+  void Input::addButton(uint8_t pin, void *isr()) {
+
+    buttons.push_back(Button());
+  }
+
+  void Input::addSwitch(uint8_t pin, void *isr()) {
+
+    switches.push_back(Switch());
+  }
+
+  void Input::update() {
+
+    // TODO: process/execute action_t stack
+  }
+
+  // -------------------------------- Input ------------------------------------
+
+
+
+
+  // ================================= GUI =====================================
 
   GUI::GUI() {
 
@@ -280,12 +371,12 @@ namespace Vaporizer {
     display.display();
   }
 
-  // --------------------------------- GUI ---------------------------------- //
+  // --------------------------------- GUI -------------------------------------
 
 
 
 
-  // ============================== VAPORIZER =============================== //
+  // ============================== VAPORIZER ==================================
 
   Heater heater;
   Input  input;
@@ -298,7 +389,7 @@ namespace Vaporizer {
     Wire.setClock(800000L);              // for faster I2C transmission (800kHz)
   }
 
-  // ------------------------------ VAPORIZER ------------------------------- //
+  // ------------------------------ VAPORIZER ----------------------------------
 
 
 
