@@ -17,10 +17,11 @@
 //############################################################################//
 //----------------------------------------------------------------------------//
   #include <Arduino.h>                                                        //
-  #include <Adafruit_INA219.h>                                                //
-  #include <Adafruit_MCP4725.h>                                               //
-  #include <Adafruit_GFX.h>                                                   //
-  #include <Adafruit_SSD1306.h>                                               //
+//----------------------------------------------------------------------------//
+  #include <Adafruit_INA219.h>                // Current & voltage sensor     //
+  #include <Adafruit_MCP4725.h>               // Digital to analog converter  //
+  #include <Adafruit_GFX.h>                   // Graphics engine              //
+  #include <Adafruit_SSD1306.h>               // Display driver               //
 //----------------------------------------------------------------------------//
   #include <vector>                                                           //
     using namespace std;                                                      //
@@ -36,7 +37,7 @@
 //----------------------------------------------------------------------------//
   #define V_FIRMWARE_VERSION     "0.1-a"                                      //
 //----------------------------------------------------------------------------//
-  #define HEATER_TCR              SS316                            // at 20°C //
+  #define HEATER_TCR              SS316                                       //
 //----------------------------------------------------------------------------//
     #define SS316                 0.000915                                    //
     #define SS316L                0.00092                                     //
@@ -45,8 +46,8 @@
     #define SS304                 0.00105                                     //
     #define SS410                 0.00155                                     //
 //----------------------------------------------------------------------------//
-  #define HEATER_RES20            6.77                                        //
-  #define HEATER_RESCABLE         0.27                                        //
+  #define HEATER_RES20            6.77        // Resistance of heater at 20°C //
+  #define HEATER_RESCABLE         0.27        // Resistance of cable          //
 //----------------------------------------------------------------------------//
   #define PID_P                   1.0                                         //
   #define PID_I                   0.1                                         //
@@ -62,8 +63,9 @@ namespace Vaporizer {
 
 
 
-  enum mode_t  { TEMP_MODE, POWER_MODE };
-  enum state_t { OFF, ON };
+  enum mode_t   { TEMP_MODE, POWER_MODE };
+  enum state_t  { OFF, ON };
+  enum action_t { NONE, DECREASE, INCREASE, ENTER, ENTER2 };
 
 
 
@@ -78,15 +80,18 @@ namespace Vaporizer {
 
    public:
 
-    Timer(void);
+    Timer (void);
+    ~Timer(void);
+
+    static uint32_t lifetime;
 
     uint32_t counter = 0;
 
-    void     startTime (void)       { _time = micros(); }
-    uint32_t getTime   (void) const { return micros() - _time; }
-    void     waitUntil (uint32_t);
-    void     limitCPS  (uint8_t);
-    float    getCPS    (void);
+    void     reset      (void)       { _time = micros(); }
+    uint32_t getDuration(void) const { return micros() - _time; }
+    void     waitUntil  (uint32_t);
+    void     limitCPS   (uint8_t);
+    float    getCPS     (void);
   };
 
   // ---------------------------------- TIMER ----------------------------------
@@ -213,7 +218,7 @@ namespace Vaporizer {
     Heater& setTemp (uint16_t t) { temperature_set = t; return *this; }
     Heater& setPower(uint16_t p) { power_set       = p; return *this; }
 
-    Heater& setMode (mode_t m) { mode = m; return *this; }
+    Heater& setMode(mode_t m) { mode = m; return *this; }
 
     Heater& on (void) { state = ON;  return *this; }
     Heater& off(void) { state = OFF; return *this; }
@@ -230,7 +235,17 @@ namespace Vaporizer {
 
   struct Controls {
 
+    friend struct ISR;
+
+   protected:
+
+    uint8_t _id, _state, _pin;
+
+   public:
+
     virtual uint8_t read(void) = 0;
+
+    uint8_t getID (void) const { return _id; }
   };
 
 
@@ -238,28 +253,61 @@ namespace Vaporizer {
 
    private:
 
-    static const uint8_t _LUT[7][4];
-    uint8_t _state, _pinCLK, _pinDT;
+    static       uint8_t _idCounter;
+    static const uint8_t _stateMachine[7][4];
+    uint8_t              _pin2;
 
    public:
 
-    enum dir_t   { DIR_NONE = 0x0, CW = 0x10, CCW = 0x20};
-    enum state_t { START, CW_FINAL, CW_BEGIN, CW_NEXT, CCW_BEGIN, CCW_FINAL, CCW_NEXT };
+    enum state_t {
+
+      START, CW_FINAL, CW_BEGIN, CW_NEXT, CCW_BEGIN, CCW_FINAL, CCW_NEXT,
+      CW = 0x10, CCW = 0x20
+    };
 
     Encoder(void);
 
     void    begin(uint8_t, uint8_t);
-    uint8_t read(void);
+    uint8_t read (void);
   };
 
 
   struct Button : public Controls {
+
+   private:
+
+    static       uint8_t _idCounter;
+    static const uint8_t _stateMachine[4][4];
+    bool                 _activateHold, _spamHold;
+
+   public:
+
+    enum state_t { UP, DOWN, IDLE, HOLD };
+
+    action_t action;
+
+    Button(uint8_t, action_t, bool, bool);
 
     uint8_t read(void);
   };
 
 
   struct Switch : public Controls {
+
+   private:
+
+    static uint8_t _idCounter;
+    bool          *_varPointer = NULL;
+
+   public:
+
+    enum state_t { OFF, ON };
+
+    Switch(uint8_t);
+
+    void attach(bool* var) {  _varPointer = var;  }
+    void detach(void)      {  _varPointer = NULL; }
+    void setVar(bool x)    { *_varPointer = x;    }
 
     uint8_t read(void);
   };
@@ -271,26 +319,40 @@ namespace Vaporizer {
 
   class Input {
 
-   private:
+    friend struct ISR;
+
+   protected:
+
+    static vector<action_t> _actions;
 
     static void _isr_encoder(void);
     static void _isr_button (void);
 
    public:
 
-    enum action_t { NOACTION, DECREASE, INCREASE, PRESS, RELEASE, LONGPRESS };
-
-    static Encoder encoder;
-    vector<Button> buttons;
-    vector<Switch> switches;
+    static Encoder        encoder;
+    static vector<Button> buttons;
+    static vector<Switch> switches;
 
     Input(void);
 
     void addEncoder(uint8_t, uint8_t);
-    void addButton (uint8_t, void *(void));
-    void addSwitch (uint8_t, void *(void));
+    void addButton (uint8_t);
+    void addButton (uint8_t, action_t, bool, bool);
+    void addSwitch (uint8_t, bool *);
 
     void update(void);
+  };
+
+
+
+
+  struct ISR {
+
+    static void encoder        (void);
+    static void button_decrease(void);
+    static void button_increase(void);
+    static void button_enter   (void);
   };
 
 
@@ -300,11 +362,11 @@ namespace Vaporizer {
 
    protected:
 
-    Timer timer;
+    static Timer timer;
 
    public:
 
-    Adafruit_SSD1306 display;
+    static Adafruit_SSD1306 display;
 
     GUI(void);
 
@@ -338,8 +400,6 @@ namespace Vaporizer {
   extern GUI    gui;
 
   void init(uint8_t, uint8_t);
-
-  //void ISR(void);
 
   static String v_version(void) { return V_FIRMWARE_VERSION; }
 

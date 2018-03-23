@@ -19,9 +19,8 @@ Timer timer;
 void setup() {
 
   Serial.begin(9600);
-  init(SCL, SDA);
 
-  // setup_cmd();
+  init(SCL, SDA);
 
   input.addEncoder(PIN_CLK, PIN_DT);
 }
@@ -30,8 +29,7 @@ void loop() {
 
   heater.update();
   heater.regulate();
-  // sendData();
-  // cmd.Process();
+  input.update();
   timer.limitCPS(30);
   timer.counter++;
 }

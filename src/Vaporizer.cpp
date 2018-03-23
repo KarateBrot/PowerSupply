@@ -20,11 +20,18 @@ namespace Vaporizer {
 
   // ================================ TIMER ====================================
 
+  uint32_t Timer::lifetime = 0;
+
   Timer::Timer() {
 
     _time         = micros();
     _lastWaitCall = micros();
     _lastCycle    = micros();
+  }
+
+  Timer::~Timer() {
+
+    lifetime = micros() - _time;
   }
 
   void Timer::waitUntil(uint32_t timer) {
@@ -268,8 +275,11 @@ namespace Vaporizer {
 
   // =============================== CONTROLS ==================================
 
-  const uint8_t Encoder::_LUT[7][4] = {
+  uint8_t Encoder::_idCounter = 0;
 
+  const uint8_t Encoder::_stateMachine[7][4] = {
+
+    // state machine "naturally" debounces encoder
     { START,    CW_BEGIN,  CCW_BEGIN, START       },
     { CW_NEXT,  START,     CW_FINAL,  START | CW  },
     { CW_NEXT,  CW_BEGIN,  START,     START       },
@@ -281,27 +291,90 @@ namespace Vaporizer {
 
   Encoder::Encoder() {
 
+    _id    = _idCounter++;
+    _pin   = 0xff;
+    _pin2  = 0xff;
     _state = START;
   }
 
   void Encoder::begin(uint8_t pinCLK, uint8_t pinDT) {
 
-    _pinCLK = pinCLK;
-    _pinDT  = pinDT;
+    _pin  = pinCLK;
+    _pin2 = pinDT;
 
-    pinMode(_pinCLK, INPUT);
-    pinMode(_pinDT,  INPUT);
-
-    digitalWrite(_pinCLK, HIGH);
-    digitalWrite(_pinDT,  HIGH);
+    pinMode     (_pin,  INPUT);
+    pinMode     (_pin2, INPUT);
+    digitalWrite(_pin,  HIGH);
+    digitalWrite(_pin2, HIGH);
   }
 
   uint8_t Encoder::read() {
 
-    uint8_t stateTemp = (digitalRead(_pinCLK) << 1) | digitalRead(_pinDT);
-    _state = _LUT[_state & 0xf][stateTemp];
+    uint8_t stateTemp = (digitalRead(_pin) << 1) | digitalRead(_pin2);
+    _state = _stateMachine[_state & 0xf][stateTemp];
 
     return _state & 0x30;
+  }
+
+  // - - - - -
+
+  uint8_t Button::_idCounter = 0;
+
+  const uint8_t Button::_stateMachine[4][4] = {
+
+   // HOLD ACTS ONCE     | HOLD LOOPS
+   // _spamHold   = 0    | _spamHold   = 1
+   // digitalRead = 0..1 | digitalRead = 0..1
+    { IDLE, DOWN,          IDLE,  DOWN },
+    { UP,   HOLD,          UP,    HOLD },
+    { IDLE, DOWN,          IDLE,  DOWN },
+    { IDLE, IDLE,          IDLE,  HOLD }
+  };
+
+  Button::Button(uint8_t pin, action_t pressAction, bool activateHold, bool spamHold) {
+
+    _id  = _idCounter++;
+    _pin = pin;
+
+    pinMode     (_pin, INPUT);
+    digitalWrite(_pin, LOW);
+
+    _state = digitalRead(_pin);
+
+    _activateHold = activateHold;
+    _spamHold     = spamHold;
+
+    action = pressAction;
+  }
+
+  uint8_t Button::read() {
+
+    bool stateTemp = (_spamHold << 1) | digitalRead(_pin);
+    _state = _stateMachine[_state][stateTemp];
+
+    return _state;
+  }
+
+  // - - - - -
+
+  uint8_t Switch::_idCounter = 0;
+
+  Switch::Switch(uint8_t pin) {
+
+    _id  = _idCounter++;
+    _pin = pin;
+
+    pinMode     (_pin, INPUT);
+    digitalWrite(_pin, LOW);
+
+    _state = digitalRead(_pin);
+  }
+
+  uint8_t Switch::read() {
+
+    _state = digitalRead(_pin);
+
+    return _state;
   }
 
   // ------------------------------- CONTROLS ----------------------------------
@@ -311,7 +384,11 @@ namespace Vaporizer {
 
   // ================================ Input ====================================
 
-  Encoder Input::encoder;
+  vector<action_t> Input::_actions;
+
+  Encoder          Input::encoder;
+  vector<Button>   Input::buttons;
+  vector<Switch>   Input::switches;
 
   Input::Input() {
 
@@ -320,12 +397,26 @@ namespace Vaporizer {
 
   void Input::_isr_encoder() {
 
-    uint8_t state = encoder.read();
+    uint8_t direction = encoder.read();
 
-    switch (state) {
-      case Encoder::CW:  Serial.println("Right"); break;
-      case Encoder::CCW: Serial.println("Leftt"); break;
+    switch (direction) {
+      case Encoder::CW:  _actions.push_back(INCREASE); break;
+      case Encoder::CCW: _actions.push_back(DECREASE); break;
       default:           break;
+    }
+  }
+
+  void Input::_isr_button() {
+
+    for (Button b : buttons) {
+
+      uint8_t state = b.read();
+
+      switch (state) {
+        case Button::UP:   _actions.push_back(b.action); break;
+        case Button::HOLD: _actions.push_back(ENTER2);   break;
+        default:           break;
+      }
     }
   }
 
@@ -337,19 +428,45 @@ namespace Vaporizer {
     attachInterrupt(pinDT,  _isr_encoder, CHANGE);
   }
 
-  void Input::addButton(uint8_t pin, void *isr()) {
+  void Input::addButton(uint8_t pin) {
 
-    buttons.push_back(Button());
+    buttons.push_back(Button(pin, ENTER, false, false));
+    attachInterrupt(pin, _isr_button, CHANGE);
   }
 
-  void Input::addSwitch(uint8_t pin, void *isr()) {
+  void Input::addButton(uint8_t pin, action_t pressAction, bool activateHold, bool spamHold) {
 
-    switches.push_back(Switch());
+    buttons.push_back(Button(pin, pressAction, activateHold, spamHold));
+    attachInterrupt(pin, _isr_button, CHANGE);
+  }
+
+  void Input::addSwitch(uint8_t pin, bool* varToAttach) {
+
+    Switch s(pin);
+    s.attach(varToAttach);
+    switches.push_back(s);
   }
 
   void Input::update() {
 
-    // TODO: process/execute action_t stack
+    for (Switch s : switches) {
+
+      bool state = s.read();
+      s.setVar(state);
+    }
+
+    for (action_t action : _actions) {
+
+      switch (action) {
+        case INCREASE: break;
+        case DECREASE: break;
+        case ENTER:    break;
+        case ENTER2:   break;
+        default:       break;
+      }
+    }
+
+    _actions.clear();
   }
 
   // -------------------------------- Input ------------------------------------
@@ -358,6 +475,8 @@ namespace Vaporizer {
 
 
   // ================================= GUI =====================================
+
+  Adafruit_SSD1306 GUI::display;
 
   GUI::GUI() {
 
