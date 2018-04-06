@@ -1,6 +1,5 @@
 
 #include <Vaporizer.h>
-  using namespace Vaporizer;
 
 // #include <MegunoLinkInterface.h>
 
@@ -11,27 +10,24 @@
 #define PIN_DT    12
 
 
-Timer timer;
+Vaporizer vape;
 
 
-// ================================== RUN =================================== //
+// =================================== RUN =====================================
 
 void setup() {
 
   Serial.begin(9600);
 
-  init(SCL, SDA);
-
-  input.addEncoder(PIN_CLK, PIN_DT);
+  vape.begin(SCL, SDA);
 }
 
 void loop() {
 
-  heater.update();
-  heater.regulate();
-  input.update();
-  timer.limitCPS(30);
-  timer.counter++;
+  vape.heater.update();
+  vape.heater.regulate();
+  vape.timer.limitCPS(30);
+  vape.tick++;
 }
 
-// ---------------------------------- RUN ----------------------------------- //
+// ----------------------------------- RUN -------------------------------------

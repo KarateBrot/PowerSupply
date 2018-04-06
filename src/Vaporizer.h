@@ -58,14 +58,9 @@
 
 
 
-namespace Vaporizer {
-
-
-
-
-  enum mode_t   { TEMP_MODE, POWER_MODE };
-  enum state_t  { OFF, ON };
-  enum action_t { NONE, DECREASE, INCREASE, ENTER, ENTER2 };
+  enum operation_t { TEMP_MODE, POWER_MODE };
+  enum state_t     { OFF, ON };
+  enum action_t    { NONE, DECREASE, INCREASE, ENTER, ENTER2 };
 
 
 
@@ -85,8 +80,6 @@ namespace Vaporizer {
 
     static uint32_t lifetime;
 
-    uint32_t counter = 0;
-
     void     reset      (void)       { _time = micros(); }
     uint32_t getDuration(void) const { return micros() - _time; }
     void     waitUntil  (uint32_t);
@@ -103,7 +96,7 @@ namespace Vaporizer {
 
   struct Sensor {
 
-    virtual void read(void) = 0;
+
   };
 
 
@@ -115,12 +108,12 @@ namespace Vaporizer {
 
    public:
 
-    double current, voltage;
-
     Sensor_Power(void);
 
     void setPrecision(bool);
-    void read        (void);
+
+    double getCurrent(void);
+    double getVoltage(void);
   };
 
 
@@ -202,12 +195,11 @@ namespace Vaporizer {
     DAC          dac;
     PID_Ctrl     pid;
 
-    double   resistance;
-    double   power, temperature;
+    double   voltage, current, resistance, power, temperature;
     uint16_t power_set = 10, temperature_set = 200;
 
-    state_t  state = OFF;
-    mode_t   mode  = TEMP_MODE;
+    state_t     state = OFF;
+    operation_t mode  = TEMP_MODE;
 
     Heater(void);
 
@@ -218,7 +210,7 @@ namespace Vaporizer {
     Heater& setTemp (uint16_t t) { temperature_set = t; return *this; }
     Heater& setPower(uint16_t p) { power_set       = p; return *this; }
 
-    Heater& setMode(mode_t m) { mode = m; return *this; }
+    Heater& setMode(operation_t m) { mode = m; return *this; }
 
     Heater& on (void) { state = ON;  return *this; }
     Heater& off(void) { state = OFF; return *this; }
@@ -234,8 +226,6 @@ namespace Vaporizer {
   // ================================= CONTROLS ================================
 
   struct Controls {
-
-    friend struct ISR;
 
    protected:
 
@@ -319,40 +309,14 @@ namespace Vaporizer {
 
   class Input {
 
-    friend struct ISR;
 
    protected:
 
-    static vector<action_t> _actions;
 
-    static void _isr_encoder(void);
-    static void _isr_button (void);
 
    public:
 
-    static Encoder        encoder;
-    static vector<Button> buttons;
-    static vector<Switch> switches;
-
     Input(void);
-
-    void addEncoder(uint8_t, uint8_t);
-    void addButton (uint8_t);
-    void addButton (uint8_t, action_t, bool, bool);
-    void addSwitch (uint8_t, bool *);
-
-    void update(void);
-  };
-
-
-
-
-  struct ISR {
-
-    static void encoder        (void);
-    static void button_decrease(void);
-    static void button_increase(void);
-    static void button_enter   (void);
   };
 
 
@@ -395,20 +359,27 @@ namespace Vaporizer {
 
   // ================================ VAPORIZER ================================
 
-  extern Heater heater;
-  extern Input  input;
-  extern GUI    gui;
+  class Vaporizer {
 
-  void init(uint8_t, uint8_t);
+   public:
 
-  static String v_version(void) { return V_FIRMWARE_VERSION; }
+    Timer  timer;
+    Heater heater;
+    Input  input;
+    GUI    gui;
+
+    uint32_t tick = 0;
+
+    Vaporizer(void);
+
+    void begin(uint8_t, uint8_t);
+
+    static String version(void) { return V_FIRMWARE_VERSION; }
+  };
 
   // -------------------------------- VAPORIZER --------------------------------
 
 
-
-
-}
 
 
 #endif // VAPORIZER_H
