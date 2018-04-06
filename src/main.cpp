@@ -1,37 +1,35 @@
 
-#include <Vaporizer.h>
-  using namespace Vaporizer;
+// #define HEATER_RES20     6.77                 // Resistance of heater at 20°C
+// #define HEATER_RESCABLE  0.27                 // Resistance of cable
 
+#define PIN_SCL          5                    // Pin D1
+#define PIN_SDA          4                    // Pin D2
+#define PIN_CLK         14
+#define PIN_DT          12
+
+
+//----------------------------------------------------------------------------//
+
+#include <Vaporizer.h>
 // #include <MegunoLinkInterface.h>
 
 
-#define PIN_SCL    5                                                   // Pin D1
-#define PIN_SDA    4                                                   // Pin D2
-#define PIN_CLK   14
-#define PIN_DT    12
+Vaporizer vape;
 
-
-Timer timer;
-
-
-// ================================== RUN =================================== //
 
 void setup() {
 
   Serial.begin(9600);
-
-  init(SCL, SDA);
-
-  input.addEncoder(PIN_CLK, PIN_DT);
+  vape.begin(PIN_SCL, PIN_SDA);
 }
+
 
 void loop() {
 
-  heater.update();
-  heater.regulate();
-  input.update();
-  timer.limitCPS(30);
-  timer.counter++;
+  vape.heater.update();
+  vape.heater.regulate();
+  vape.timer.limitCPS(30);
+  vape.tick++;
 }
 
-// ---------------------------------- RUN ----------------------------------- //
+//----------------------------------------------------------------------------//

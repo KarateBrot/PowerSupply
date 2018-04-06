@@ -13,11 +13,6 @@
 
 
 
-namespace Vaporizer {
-
-
-
-
   // ================================ TIMER ====================================
 
   uint32_t Timer::lifetime = 0;
@@ -71,17 +66,16 @@ namespace Vaporizer {
     b ? _INA219.setCalibration_16V_400mA() : _INA219.setCalibration_32V_2A();
   }
 
-  void Sensor_Power::read() {
+  double Sensor_Power::getCurrent() {
 
     // Current [mA]
-    current =
-      0.5*current +
-      0.5*_INA219.getCurrent_mA()*2.0;             // R050 instead of R100 shunt
+    return _INA219.getCurrent_mA()*2.0;            // R050 instead of R100 shunt
+  }
+
+  double Sensor_Power::getVoltage() {
 
     // Voltage [mV]
-    voltage =
-      0.5*voltage +
-      0.5*_INA219.getBusVoltage_V()*1000.0;
+    return _INA219.getBusVoltage_V()*1000.0;
   }
 
   // ------------------------------- SENSOR ------------------------------------
@@ -164,7 +158,7 @@ namespace Vaporizer {
 
     _update(value, value_set);
     uint16_t output = (uint16_t)( getOutput()*4095.0 + 0.5 );
-    _dacPointer->setOutput(output);
+    _dacPtr->setOutput(output);
   }
 
   void PID_Ctrl::autotune() {
@@ -195,20 +189,30 @@ namespace Vaporizer {
 
   void Heater::update() {
 
-    sensor.read();
+    // Voltage [mV]
+    voltage =
+      0.5*voltage +
+      0.5*sensor.getVoltage();
+
+    // Current [mA]
+    current =
+      0.5*current +
+      0.5*sensor.getCurrent();
+
+  // ------------
 
     // Resistance [Ω]
     resistance =
       0.7*resistance +
-      0.3*(sensor.voltage/constrain(sensor.current, 1, 15000) - _resCable);
+      0.3*(voltage/constrain(current, 1, 15000) - _resCable);
 
     // Resistance [Ω] - if no heater connected
-    if (sensor.voltage > 100 && sensor.current < 10) { resistance = _res20; }
+    if (voltage > 100 && current < 10) { resistance = _res20; }
 
     // Power [W]
     power =
       0.5*power +
-      0.5*sensor.voltage*sensor.current/1000000.0;
+      0.5*voltage*current/1000000.0;
 
     // Temperature [°C]
     temperature =
@@ -247,17 +251,17 @@ namespace Vaporizer {
 
     // Make sure current flow is 10mA +/- 1mA
     double currentLast = 0.0;
-    while (abs(sensor.current - 10.0) > 1.0 && abs(currentLast - 10.0) > 1.0) {
-      currentLast = sensor.current;
+    while (abs(current - 10.0) > 1.0 && abs(currentLast - 10.0) > 1.0) {
+      currentLast = current;
       update();
-      pid_calibration.regulate(sensor.current, 10.0);
+      pid_calibration.regulate(current, 10.0);
       yield();
     }
 
     // Calculate resistance using reference current of 10mA
     for (size_t i = 0; i < 15; i++) {
       update();
-      pid_calibration.regulate(sensor.current, 10.0);
+      pid_calibration.regulate(current, 10.0);
       yield();
     }
 
@@ -279,7 +283,7 @@ namespace Vaporizer {
 
   const uint8_t Encoder::_stateMachine[7][4] = {
 
-    // state machine "naturally" debounces encoder
+    // state machine naturally debounces encoder
     { START,    CW_BEGIN,  CCW_BEGIN, START       },
     { CW_NEXT,  START,     CW_FINAL,  START | CW  },
     { CW_NEXT,  CW_BEGIN,  START,     START       },
@@ -384,89 +388,9 @@ namespace Vaporizer {
 
   // ================================ Input ====================================
 
-  vector<action_t> Input::_actions;
-
-  Encoder          Input::encoder;
-  vector<Button>   Input::buttons;
-  vector<Switch>   Input::switches;
-
   Input::Input() {
 
 
-  }
-
-  void Input::_isr_encoder() {
-
-    uint8_t direction = encoder.read();
-
-    switch (direction) {
-      case Encoder::CW:  _actions.push_back(INCREASE); break;
-      case Encoder::CCW: _actions.push_back(DECREASE); break;
-      default:           break;
-    }
-  }
-
-  void Input::_isr_button() {
-
-    for (Button b : buttons) {
-
-      uint8_t state = b.read();
-
-      switch (state) {
-        case Button::UP:   _actions.push_back(b.action); break;
-        case Button::HOLD: _actions.push_back(ENTER2);   break;
-        default:           break;
-      }
-    }
-  }
-
-  void Input::addEncoder(uint8_t pinCLK, uint8_t pinDT) {
-
-    encoder.begin(pinCLK, pinDT);
-
-    attachInterrupt(pinCLK, _isr_encoder, CHANGE);
-    attachInterrupt(pinDT,  _isr_encoder, CHANGE);
-  }
-
-  void Input::addButton(uint8_t pin) {
-
-    buttons.push_back(Button(pin, ENTER, false, false));
-    attachInterrupt(pin, _isr_button, CHANGE);
-  }
-
-  void Input::addButton(uint8_t pin, action_t pressAction, bool activateHold, bool spamHold) {
-
-    buttons.push_back(Button(pin, pressAction, activateHold, spamHold));
-    attachInterrupt(pin, _isr_button, CHANGE);
-  }
-
-  void Input::addSwitch(uint8_t pin, bool* varToAttach) {
-
-    Switch s(pin);
-    s.attach(varToAttach);
-    switches.push_back(s);
-  }
-
-  void Input::update() {
-
-    for (Switch s : switches) {
-
-      bool state = s.read();
-      s.setVar(state);
-    }
-
-    for (action_t action : _actions) {
-
-      switch (action) {
-        case INCREASE: break;
-        case DECREASE: break;
-        case ENTER:    break;
-        case ENTER2:   break;
-        default:       break;
-      }
-    }
-
-    _actions.clear();
   }
 
   // -------------------------------- Input ------------------------------------
@@ -497,20 +421,16 @@ namespace Vaporizer {
 
   // ============================== VAPORIZER ==================================
 
-  Heater heater;
-  Input  input;
-  GUI    gui;
+  Vaporizer::Vaporizer() {
+
+
+  }
 
   // Needs to be called lastly in Setup() to overwrite Wire (I2C) settings
-  void init(uint8_t scl, uint8_t sda) {
+  void Vaporizer::begin(uint8_t scl, uint8_t sda) {
 
     Wire.begin(sda, scl);                // Select I2C pins
     Wire.setClock(800000L);              // for faster I2C transmission (800kHz)
   }
 
   // ------------------------------ VAPORIZER ----------------------------------
-
-
-
-
-}
