@@ -67,13 +67,9 @@
 
 
 
-<<<<<<< HEAD
 enum operation_t { TEMP_MODE, POWER_MODE };
 enum state_t     { OFF, ON };
-=======
-  enum operation_t { TEMP_MODE, POWER_MODE };
-  enum state_t     { OFF, ON };
->>>>>>> 60d99b75c278af8afa9b1f92da3ea290bc0e0881
+enum task_t      { UP, DOWN, ENTER, HOLD };
 
 
 
@@ -84,11 +80,7 @@ struct Timer {
 
  private:
 
-<<<<<<< HEAD
   uint32_t _tick, _time, _lastWait, _lastTick;
-=======
-    uint32_t _tick, _time, _lastWait, _lastTick;
->>>>>>> 60d99b75c278af8afa9b1f92da3ea290bc0e0881
 
  public:
 
@@ -97,21 +89,7 @@ struct Timer {
 
   static uint32_t lifetime;
 
-<<<<<<< HEAD
   void waitUntil(uint32_t);
-=======
-    void waitUntil(uint32_t);
-
-    void  tickRate (uint8_t);
-    float getTickRate(void);
-
-    void     tick   (void)       { _tick++; }
-    uint32_t getTick(void) const { return _tick; }
-
-    void     reset  (void)       { _time = micros(); }
-    uint32_t getTime(void) const { return micros() - _time; }
-  };
->>>>>>> 60d99b75c278af8afa9b1f92da3ea290bc0e0881
 
   void  tickRate (uint8_t);
   float getTickRate(void);
@@ -201,12 +179,8 @@ class PID_Ctrl {
 
   PID_Ctrl(void);
 
-<<<<<<< HEAD
   PID_Ctrl& attach(DAC* d) { _dacPtr = d;    return *this; };
   PID_Ctrl& detach(void)   { _dacPtr = NULL; return *this; };
-=======
-    //TODO: Implement functions to quantify control performance (L1/L2-Standard)
->>>>>>> 60d99b75c278af8afa9b1f92da3ea290bc0e0881
 
   PID_Ctrl& setP  (double p) { _p = p; return *this; }
   PID_Ctrl& setI  (double i) { _i = i; return *this; }
@@ -267,25 +241,13 @@ class Heater {
 // ----------------------------------- HEATER ----------------------------------
 
 
-<<<<<<< HEAD
-=======
-    uint8_t  _state, _pin;
-    uint32_t _lastRead;
->>>>>>> 60d99b75c278af8afa9b1f92da3ea290bc0e0881
 
 
-<<<<<<< HEAD
 // ================================== CONTROLS =================================
 
 struct Controls {
 
  protected:
-=======
-    enum state_t { UP, DOWN };
-
-    virtual uint8_t read(void) = 0;
-  };
->>>>>>> 60d99b75c278af8afa9b1f92da3ea290bc0e0881
 
   uint8_t  _state, _pin;
   uint32_t _lastRead;
@@ -294,20 +256,16 @@ struct Controls {
 
   enum state_t { UP, DOWN };
 
-<<<<<<< HEAD
+  uint8_t getPin(void) const { return _pin; }
+
   virtual uint8_t read(void) = 0;
 };
-=======
-    uint8_t              _pin2;
-    static const uint8_t _stateMachine[7][4];
->>>>>>> 60d99b75c278af8afa9b1f92da3ea290bc0e0881
 
 
 struct Encoder : public Controls {
 
  private:
 
-<<<<<<< HEAD
   uint8_t              _pin2;
   static const uint8_t _stateMachine[7][4];
 
@@ -317,20 +275,16 @@ struct Encoder : public Controls {
 
     START, CW_FINAL, CW_BEGIN, CW_NEXT, CCW_BEGIN, CCW_FINAL, CCW_NEXT,
     CW = 0x10, CCW = 0x20
-=======
-    Encoder(uint8_t, uint8_t);
-
-    uint8_t read (void);
->>>>>>> 60d99b75c278af8afa9b1f92da3ea290bc0e0881
   };
 
   Encoder(uint8_t, uint8_t);
+
+  uint8_t getPin2(void) const { return _pin2; }
 
   uint8_t read(void);
 };
 
 
-<<<<<<< HEAD
 struct Button : public Controls {
 
  private:
@@ -341,11 +295,6 @@ struct Button : public Controls {
 
   uint8_t read(void);
 };
-=======
-   public:
-
-    Button(uint8_t);
->>>>>>> 60d99b75c278af8afa9b1f92da3ea290bc0e0881
 
 
 struct Switch : public Controls {
@@ -354,33 +303,14 @@ struct Switch : public Controls {
 
   bool *_ptr = NULL;
 
-<<<<<<< HEAD
  public:
-=======
-    bool *_ptr = NULL;
->>>>>>> 60d99b75c278af8afa9b1f92da3ea290bc0e0881
 
   Switch(uint8_t);
 
-<<<<<<< HEAD
   void attach(bool* var) { _ptr = var;  }
   void detach(void)      { _ptr = NULL; }
 
   uint8_t read(void);
-};
-
-=======
-    Switch(uint8_t);
-
-    void attach(bool* var) { _ptr = var;  }
-    void detach(void)      { _ptr = NULL; }
->>>>>>> 60d99b75c278af8afa9b1f92da3ea290bc0e0881
-
-struct Controls_List {
-
-  vector<Encoder> _encoders;
-  vector<Button>  _buttons;
-  vector<Switch>  _switches;
 };
 
 // ---------------------------------- CONTROLS ---------------------------------
@@ -392,15 +322,26 @@ struct Controls_List {
 
 class Input {
 
- protected:
+ private:
 
-  static Controls_List _controls;
+  static vector<Encoder> _encoders;
+  static vector<Button>  _buttons;
+  static vector<Switch>  _switches;
 
-  void _isr(void);
+  static vector<task_t>  _tasks;
+
+  static void _isr(void);
 
  public:
 
   Input(void);
+
+  void add(Encoder);
+  void add(Button);
+  void add(Switch);
+
+  void handle(task_t);
+  void update(void);
 };
 
 // ----------------------------------- INPUT -----------------------------------
@@ -447,7 +388,6 @@ class Infoscreen : public GUI {
 
 class Vaporizer {
 
-<<<<<<< HEAD
  public:
 
   Timer  timer;
@@ -456,12 +396,6 @@ class Vaporizer {
   GUI    gui;
 
   Vaporizer(void);
-=======
-    Vaporizer(void);
-
-    void begin(uint8_t, uint8_t);
-    void run  (uint8_t);
->>>>>>> 60d99b75c278af8afa9b1f92da3ea290bc0e0881
 
   void begin(uint8_t, uint8_t);
   void run  (uint8_t);
