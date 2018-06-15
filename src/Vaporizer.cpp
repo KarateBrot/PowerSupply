@@ -19,9 +19,10 @@
 
   Timer::Timer() {
 
-    _time         = micros();
-    _lastWaitCall = micros();
-    _lastCycle    = micros();
+    _tick     = 0;
+    _time     = micros();
+    _lastWait = micros();
+    _lastTick = micros();
   }
 
   Timer::~Timer() {
@@ -31,20 +32,20 @@
 
   void Timer::waitUntil(uint32_t timer) {
 
-    while (micros() - _lastWaitCall < timer) { yield(); }
-    _lastWaitCall = micros();
+    while (micros() - _lastWait < timer) { yield(); }
+    _lastWait = micros();
   }
 
-  void Timer::limitCPS(uint8_t fps) {
+  void Timer::tickRate(uint8_t tps) {
 
-    waitUntil( (uint32_t)(1000000.0f/fps + 0.5f) );
+    waitUntil( (uint32_t)(1000000.0f/tps + 0.5f) );
   }
 
-  float Timer::getCPS() {
+  float Timer::getTickRate() {
 
-    float cyclespersecond = 1000000.0f/(micros() - _lastCycle);
-    _lastCycle = micros();
-    return cyclespersecond;
+    float tickrate = 1000000.0f/(micros() - _lastTick);
+    _lastTick = micros();
+    return tickrate;
   }
 
   // -------------------------------- TIMER ------------------------------------
@@ -279,8 +280,6 @@
 
   // =============================== CONTROLS ==================================
 
-  uint8_t Encoder::_idCounter = 0;
-
   const uint8_t Encoder::_stateMachine[7][4] = {
 
     // state machine naturally debounces encoder
@@ -293,23 +292,17 @@
     { CCW_NEXT, CCW_FINAL, CCW_BEGIN, START       }
   };
 
-  Encoder::Encoder() {
+  Encoder::Encoder(uint8_t CLK, uint8_t DT) {
 
-    _id    = _idCounter++;
-    _pin   = 0xff;
-    _pin2  = 0xff;
-    _state = START;
-  }
-
-  void Encoder::begin(uint8_t pinCLK, uint8_t pinDT) {
-
-    _pin  = pinCLK;
-    _pin2 = pinDT;
-
+    _pin        = CLK;
     pinMode     (_pin,  INPUT);
-    pinMode     (_pin2, INPUT);
     digitalWrite(_pin,  HIGH);
+
+    _pin2       = DT;
+    pinMode     (_pin2, INPUT);
     digitalWrite(_pin2, HIGH);
+
+    _state = START;
   }
 
   uint8_t Encoder::read() {
@@ -322,50 +315,32 @@
 
   // - - - - -
 
-  uint8_t Button::_idCounter = 0;
+  Button::Button(uint8_t pin) {
 
-  const uint8_t Button::_stateMachine[4][4] = {
-
-   // HOLD ACTS ONCE     | HOLD LOOPS
-   // _spamHold   = 0    | _spamHold   = 1
-   // digitalRead = 0..1 | digitalRead = 0..1
-    { IDLE, DOWN,          IDLE,  DOWN },
-    { UP,   HOLD,          UP,    HOLD },
-    { IDLE, DOWN,          IDLE,  DOWN },
-    { IDLE, IDLE,          IDLE,  HOLD }
-  };
-
-  Button::Button(uint8_t pin, action_t pressAction, bool activateHold, bool spamHold) {
-
-    _id  = _idCounter++;
     _pin = pin;
 
     pinMode     (_pin, INPUT);
     digitalWrite(_pin, LOW);
 
     _state = digitalRead(_pin);
-
-    _activateHold = activateHold;
-    _spamHold     = spamHold;
-
-    action = pressAction;
   }
 
   uint8_t Button::read() {
 
-    bool stateTemp = (_spamHold << 1) | digitalRead(_pin);
-    _state = _stateMachine[_state][stateTemp];
+    // easy debouncing (1000/50 button state changes per second max.)
+    if (millis() - _lastRead >= 50) {
+
+      _state    = digitalRead(_pin);
+      _lastRead = millis();
+    }
 
     return _state;
   }
 
   // - - - - -
 
-  uint8_t Switch::_idCounter = 0;
-
   Switch::Switch(uint8_t pin) {
 
-    _id  = _idCounter++;
     _pin = pin;
 
     pinMode     (_pin, INPUT);
@@ -376,7 +351,13 @@
 
   uint8_t Switch::read() {
 
-    _state = digitalRead(_pin);
+    // easy debouncing (1000/50 switch state changes per second max.)
+    if (millis() - _lastRead >= 50) {
+
+      _state    = digitalRead(_pin);
+     *_ptr      = _state;
+      _lastRead = millis();
+    }
 
     return _state;
   }
@@ -429,8 +410,18 @@
   // Needs to be called lastly in Setup() to overwrite Wire (I2C) settings
   void Vaporizer::begin(uint8_t scl, uint8_t sda) {
 
-    Wire.begin(sda, scl);                // Select I2C pins
-    Wire.setClock(800000L);              // for faster I2C transmission (800kHz)
+    Wire.begin(sda, scl);                    // Select I2C pins
+    Wire.setClock(WIRE_FREQ);                // Faster I2C transmission (800kHz)
+    analogWriteRange(PWM_RANGE);
+    analogWriteFreq(PWM_FREQ);
+  }
+
+  void Vaporizer::run(uint8_t tickrate) {
+
+    timer.tick();
+    heater.update();
+    heater.regulate();
+    timer.tickRate(tickrate);
   }
 
   // ------------------------------ VAPORIZER ----------------------------------
