@@ -369,6 +369,12 @@ uint8_t Switch::read() {
 
 // ================================= Input =====================================
 
+vector<Encoder> Input::_encoders;
+vector<Button>  Input::_buttons;
+vector<Switch>  Input::_switches;
+
+vector<task_t>  Input::_tasks;
+
 Input::Input() {
 
 }
