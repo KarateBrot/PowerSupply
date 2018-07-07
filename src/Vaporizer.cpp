@@ -15,19 +15,58 @@
 
 // ================================= TIMER =====================================
 
-uint32_t Timer::lifetime = 0;
+uint32_t Stopwatch::lifetime = 0;
+
+Task::Task(fptr_t f, float tps) {
+
+  execute      = f;
+  tickRate     = tps;
+  lastExecute  = micros();
+}
+
+vector<Task> Timer::_tasks;
+float        Timer::_tickrate  = 0.0f;
+uint32_t     Timer::_lastTick  = micros();
+uint32_t     Timer::_lastWait  = micros();
+uint32_t     Timer::_deltaTime = 0;
+bool         Timer::_running   = true;
 
 Timer::Timer() {
 
   _tick     = 0;
-  _time     = micros();
   _lastWait = micros();
   _lastTick = micros();
 }
 
-Timer::~Timer() {
+void Timer::add(fptr_t f, float tps) {
 
-  lifetime = micros() - _time;
+  _tasks.push_back(Task(f, tps));
+}
+
+void Timer::run() {
+
+  _running = true;
+
+  while (_running) {
+
+    uint8_t size = _tasks.size();
+
+    for (size_t n = 0; n < size; n++) {
+
+      Task &task = _tasks[n];
+      _deltaTime = (uint32_t)(1000000.0f/task.tickRate);
+
+      if (micros() - task.lastExecute > _deltaTime) {
+        task.execute();
+        task.lastExecute = micros();
+      }
+    }
+
+    _tickrate = 1000000.0f/(float)(micros() - _lastTick);
+    _lastTick = micros();
+
+    yield();
+  }
 }
 
 void Timer::waitUntil(uint32_t timer) {
@@ -36,16 +75,9 @@ void Timer::waitUntil(uint32_t timer) {
   _lastWait = micros();
 }
 
-void Timer::tickRate(uint8_t tps) {
+void Timer::forceTickRate(float tps) {
 
   waitUntil( (uint32_t)(1000000.0f/tps + 0.5f) );
-}
-
-float Timer::getTickRate() {
-
-  float tickrate = 1000000.0f/(micros() - _lastTick);
-  _lastTick = micros();
-  return tickrate;
 }
 
 // --------------------------------- TIMER -------------------------------------
@@ -70,7 +102,7 @@ void Sensor_Power::setPrecision(bool b) {
 double Sensor_Power::getCurrent() {
 
   // Current [mA]
-  return _INA219.getCurrent_mA()*2.0;            // R050 instead of R100 shunt
+  return _INA219.getCurrent_mA()*2.0;              // R050 instead of R100 shunt
 }
 
 double Sensor_Power::getVoltage() {
@@ -91,7 +123,7 @@ Adafruit_MCP4725 DAC::_MCP4725;
 DAC::DAC() {
 
   _MCP4725.begin(0x62);
-  _MCP4725.setVoltage(4095, false);          // boot with minimal power output
+  _MCP4725.setVoltage(4095, false);            // boot with minimal power output
 }
 
 // Applies DC voltage from 0..Vcc at pin "OUT" on MCP4725 breakout board
@@ -137,7 +169,7 @@ void PID_Ctrl::_update(double value, double value_set) {
   _valueLast =  value;
 
   // ∫e(t)dt
-  if (_error  <= 10) {      // only integrate shortly before reaching e(t) = 0
+  if (_error  <= 10) {        // only integrate shortly before reaching e(t) = 0
     _errorInt += _error*_dt;
     _errorInt  = constrain(_errorInt, 0, 1/_i);
   }
@@ -224,10 +256,10 @@ void Heater::update() {
 // Sets DAC pin "OUT" to DC voltage according to PID-controller
 void Heater::regulate() {
 
-  if (state == ON) {
+  if (_running) {
 
     // TODO: Set ideal PID consts for each mode
-    mode == TEMP_MODE
+    _mode == TEMP_MODE
       ? pid.regulate(temperature, temperature_set)
       : pid.regulate(power, power_set);
     sensor.setPrecision(LOW);
@@ -246,7 +278,7 @@ void Heater::calibrate() {
 
   pid_calibration
     .attach(&dac)
-    .setPID(1.0, 0.0, 0.0);                             // TODO: Manual tuning
+    .setPID(1.0, 0.0, 0.0);                               // TODO: Manual tuning
 
   sensor.setPrecision(HIGH);
 
@@ -282,7 +314,6 @@ void Heater::calibrate() {
 
 const uint8_t Encoder::_stateMachine[7][4] = {
 
-  // state machine naturally debounces encoder
   { START,    CW_BEGIN,  CCW_BEGIN, START       },
   { CW_NEXT,  START,     CW_FINAL,  START | CW  },
   { CW_NEXT,  CW_BEGIN,  START,     START       },
@@ -292,21 +323,25 @@ const uint8_t Encoder::_stateMachine[7][4] = {
   { CCW_NEXT, CCW_FINAL, CCW_BEGIN, START       }
 };
 
-Encoder::Encoder(uint8_t CLK, uint8_t DT) {
+Encoder::Encoder(uint8_t CLK, uint8_t DT, cmd_t cw, cmd_t ccw) {
 
   _pin        = CLK;
-  pinMode     (_pin,  INPUT);
-  digitalWrite(_pin,  HIGH);
+  pinMode     (_pin, INPUT);
+  digitalWrite(_pin, HIGH);
 
   _pin2       = DT;
   pinMode     (_pin2, INPUT);
   digitalWrite(_pin2, HIGH);
+
+  _command    = cw;
+  _commandCCW = ccw;
 
   _state = START;
 }
 
 uint8_t Encoder::read() {
 
+  // state machine naturally debounces encoder
   uint8_t stateTemp = (digitalRead(_pin) << 1) | digitalRead(_pin2);
   _state = _stateMachine[_state & 0xf][stateTemp];
 
@@ -315,12 +350,14 @@ uint8_t Encoder::read() {
 
 // - - - - -
 
-Button::Button(uint8_t pin) {
+Button::Button(uint8_t pin, cmd_t c) {
 
   _pin = pin;
 
   pinMode     (_pin, INPUT);
   digitalWrite(_pin, LOW);
+
+  _command = c;
 
   _state = digitalRead(_pin);
 }
@@ -373,23 +410,65 @@ vector<Encoder> Input::_encoders;
 vector<Button>  Input::_buttons;
 vector<Switch>  Input::_switches;
 
-vector<task_t>  Input::_tasks;
+vector<cmd_t>   Input::_commands;
 
 Input::Input() {
 
 }
 
+void Input::_ISR_encoder() {
+
+  uint8_t state = 0;
+
+  for (Encoder enc : _encoders) {
+
+    state = enc.read();
+
+    switch (state) {
+      case Encoder::CW:  _addCommand(enc.getCommand());    break;
+      case Encoder::CCW: _addCommand(enc.getCommandCCW()); break;
+      default: break;
+    }
+  }
+}
+
+void Input::_ISR_button() {
+
+  uint8_t state = 0;
+
+  for (Button btn : _buttons) {
+
+    state = btn.read();
+
+    switch (state) {
+      case Button::DOWN: _addCommand(btn.getCommand()); break;
+      default: break;
+    }
+  }
+}
+
+void Input::_handleCommand(cmd_t t) {
+
+  switch (t) {                 // TODO: Implement functionality in _handleTask()
+    case UP:     Serial.println("+1"); break;
+    case DOWN:   Serial.println("-1"); break;
+    case ENTER:  Serial.println( "0"); break;
+    case ENTER2: Serial.println("00"); break;
+    default:     break;
+  }
+}
+
 void Input::add(Encoder enc) {
 
   _encoders.push_back(enc);
-  attachInterrupt(_encoders.back().getPin(),  _isr, CHANGE);
-  attachInterrupt(_encoders.back().getPin2(), _isr, CHANGE);
+  attachInterrupt(_encoders.back().getPin(),  _ISR_encoder, CHANGE);
+  attachInterrupt(_encoders.back().getPin2(), _ISR_encoder, CHANGE);
 }
 
 void Input::add(Button btn) {
 
   _buttons.push_back(btn);
-  attachInterrupt(_buttons.back().getPin(), _isr, CHANGE);
+  attachInterrupt(_buttons.back().getPin(), _ISR_button, CHANGE);
 }
 
 void Input::add(Switch sw) {
@@ -397,35 +476,11 @@ void Input::add(Switch sw) {
   _switches.push_back(sw);
 }
 
-void Input::_isr(){
-
-  for (Encoder enc : _encoders) {
-
-    enc.read();
-  }
-
-  for (Button btn : _buttons) {
-
-    btn.read();
-  }
-}
-
-void Input::handle(task_t t) {
-
-  switch (t) {
-    case UP:    break;
-    case DOWN:  break;
-    case ENTER: break;
-    case HOLD:  break;
-    default:    break;
-  }
-}
-
 void Input::update() {
 
   for (Switch sw : _switches) { sw.read(); }
-  for (task_t t  : _tasks)    { handle(t); }
-  _tasks.clear();
+  for (cmd_t  c  : _commands) { _handleCommand(c); }
+  _commands.clear();
 }
 
 // --------------------------------- Input -------------------------------------
@@ -464,8 +519,8 @@ Vaporizer::Vaporizer() {
 // Needs to be called lastly in Setup() to overwrite Wire (I2C) settings
 void Vaporizer::begin(uint8_t scl, uint8_t sda) {
 
-  Wire.begin(sda, scl);                    // Select I2C pins
-  Wire.setClock(WIRE_FREQ);                // Faster I2C transmission (800kHz)
+  Wire.begin(sda, scl);                      // Select I2C pins
+  Wire.setClock(WIRE_FREQ);                  // Faster I2C transmission (800kHz)
   analogWriteRange(PWM_RANGE);
   analogWriteFreq(PWM_FREQ);
 }
@@ -476,7 +531,7 @@ void Vaporizer::run(uint8_t tickrate) {
   heater.update();
   heater.regulate();
   input.update();
-  timer.tickRate(tickrate);
+  timer.forceTickRate(tickrate);
 }
 
 // ------------------------------- VAPORIZER -----------------------------------

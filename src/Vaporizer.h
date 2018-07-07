@@ -67,38 +67,67 @@
 
 
 
-enum operation_t { TEMP_MODE, POWER_MODE };
-enum state_t     { OFF, ON };
-enum task_t      { UP, DOWN, ENTER, HOLD };
+typedef void(*fptr_t)(void);
+
+enum op_t  { TEMP_MODE, POWER_MODE };
+enum cmd_t { IDLE, UP, DOWN, ENTER, ENTER2 };
 
 
 
 
 // =================================== TIMER ===================================
 
+struct Stopwatch {
+
+ private:
+
+  uint32_t _time;
+
+ public:
+
+  static uint32_t lifetime;
+
+  Stopwatch (void) { _time    = micros();         }
+  ~Stopwatch(void) { lifetime = micros() - _time; }
+
+  void     reset  (void)       { _time = micros();        }
+  uint32_t getTime(void) const { return micros() - _time; }
+};
+
+struct Task {
+
+  float    tickRate;
+  uint32_t lastExecute;
+  fptr_t   execute;
+
+  Task(fptr_t, float);
+};
+
 struct Timer {
 
  private:
 
-  uint32_t _tick, _time, _lastWait, _lastTick;
+  uint32_t _tick;
+
+  static vector<Task> _tasks;
+  static float        _tickrate;
+  static uint32_t     _lastTick, _lastWait, _deltaTime;
+  static bool         _running;
 
  public:
 
-  Timer (void);
-  ~Timer(void);
+  Timer(void);
 
-  static uint32_t lifetime;
-
-  void waitUntil(uint32_t);
-
-  void  tickRate (uint8_t);
-  float getTickRate(void);
-
-  void     tick   (void)       { _tick++; }
+  void     tick   (void)       { _tick++;      }
   uint32_t getTick(void) const { return _tick; }
 
-  void     reset  (void)       { _time = micros(); }
-  uint32_t getTime(void) const { return micros() - _time; }
+  static void add (fptr_t, float);
+  static void run (void);
+  static void stop(void) { _running = false; };
+
+  static void     waitUntil    (uint32_t);
+  static void     forceTickRate(float);
+  static uint32_t getTickRate  (void) { return _tickrate; }
 };
 
 // ----------------------------------- TIMER -----------------------------------
@@ -206,6 +235,8 @@ class PID_Ctrl {
 class Heater {
 
   double _TCR, _res20, _resCable;
+  bool   _running = false;
+  op_t   _mode    = TEMP_MODE;
 
  public:
 
@@ -216,9 +247,6 @@ class Heater {
   double   voltage, current, resistance, power, temperature;
   uint16_t power_set = 10, temperature_set = 200;
 
-  state_t     state = OFF;
-  operation_t mode  = TEMP_MODE;
-
   Heater(void);
 
   Heater& setRes20   (double res) { _res20    = res; return *this; }
@@ -228,10 +256,11 @@ class Heater {
   Heater& setTemp (uint16_t t) { temperature_set = t; return *this; }
   Heater& setPower(uint16_t p) { power_set       = p; return *this; }
 
-  Heater& setMode(operation_t m) { mode = m; return *this; }
+  Heater& setMode(op_t m) { _mode = m; return *this; }
 
-  Heater& on (void) { state = ON;  return *this; }
-  Heater& off(void) { state = OFF; return *this; }
+  Heater& on    (void) { _running = true;      return *this; }
+  Heater& off   (void) { _running = false;     return *this; }
+  Heater& toggle(void) { _running = !_running; return *this; }
 
   void update   (void);
   void regulate (void);
@@ -249,14 +278,15 @@ struct Controls {
 
  protected:
 
-  uint8_t  _state, _pin;
-  uint32_t _lastRead;
+  uint8_t _state, _pin;
+  cmd_t   _command;
 
  public:
 
   enum state_t { UP, DOWN };
 
-  uint8_t getPin(void) const { return _pin; }
+  uint8_t getPin    (void) const { return _pin;     }
+  cmd_t   getCommand(void) const { return _command; }
 
   virtual uint8_t read(void) = 0;
 };
@@ -266,8 +296,9 @@ struct Encoder : public Controls {
 
  private:
 
-  uint8_t              _pin2;
   static const uint8_t _stateMachine[7][4];
+  uint8_t              _pin2;
+  cmd_t                _commandCCW;
 
  public:
 
@@ -277,9 +308,10 @@ struct Encoder : public Controls {
     CW = 0x10, CCW = 0x20
   };
 
-  Encoder(uint8_t, uint8_t);
+  Encoder(uint8_t, uint8_t, cmd_t, cmd_t);
 
-  uint8_t getPin2(void) const { return _pin2; }
+  uint8_t getPin2      (void) const { return _pin2;       }
+  cmd_t   getCommandCCW(void) const { return _commandCCW; }
 
   uint8_t read(void);
 };
@@ -289,9 +321,11 @@ struct Button : public Controls {
 
  private:
 
+  uint32_t _lastRead;
+
  public:
 
-  Button(uint8_t);
+  Button(uint8_t, cmd_t);
 
   uint8_t read(void);
 };
@@ -301,7 +335,8 @@ struct Switch : public Controls {
 
  private:
 
-  bool *_ptr = NULL;
+  uint32_t _lastRead;
+  bool    *_ptr = NULL;
 
  public:
 
@@ -328,20 +363,23 @@ class Input {
   static vector<Button>  _buttons;
   static vector<Switch>  _switches;
 
-  static vector<task_t>  _tasks;
+  static vector<cmd_t>   _commands;
 
-  static void _isr(void);
+  static void _ISR_encoder(void);
+  static void _ISR_button (void);
+
+  static void _addCommand   (cmd_t c) { _commands.push_back(c); }
+  static void _handleCommand(cmd_t);
 
  public:
 
   Input(void);
 
-  void add(Encoder);
-  void add(Button);
-  void add(Switch);
+  static void add(Encoder);
+  static void add(Button);
+  static void add(Switch);
 
-  void handle(task_t);
-  void update(void);
+  static void update(void);
 };
 
 // ----------------------------------- INPUT -----------------------------------
