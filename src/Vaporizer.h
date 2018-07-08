@@ -273,9 +273,9 @@ class Heater {
 
 
 
-// ================================== CONTROLS =================================
+// =================================== INPUT ===================================
 
-struct Controls {
+struct Input {
 
  protected:
 
@@ -285,7 +285,7 @@ struct Controls {
 
   enum state_t { UP, DOWN };
 
-  fptr_t  command;
+  fptr_t command;
 
   uint8_t getPin(void) const { return _pin; }
 
@@ -293,7 +293,7 @@ struct Controls {
 };
 
 
-struct Encoder : public Controls {
+struct Encoder : public Input {
 
  private:
 
@@ -318,7 +318,7 @@ struct Encoder : public Controls {
 };
 
 
-struct Button : public Controls {
+struct Button : public Input {
 
  private:
 
@@ -332,7 +332,7 @@ struct Button : public Controls {
 };
 
 
-struct Switch : public Controls {
+struct Switch : public Input {
 
  private:
 
@@ -349,14 +349,14 @@ struct Switch : public Controls {
   uint8_t read(void);
 };
 
-// ---------------------------------- CONTROLS ---------------------------------
+// ----------------------------------- INPUT -----------------------------------
 
 
 
 
-// =================================== INPUT ===================================
+// ================================= CONTROLS ==================================
 
-class Input {
+class Ctrl {
 
  private:
 
@@ -371,7 +371,7 @@ class Input {
 
  public:
 
-  Input(void);
+  Ctrl(void);
 
   static void add(Encoder);
   static void add(Button);
@@ -380,7 +380,7 @@ class Input {
   static void update(void);
 };
 
-// ----------------------------------- INPUT -----------------------------------
+// --------------------------------- CONTROLS ----------------------------------
 
 
 
@@ -428,7 +428,7 @@ class Vaporizer {
 
   Timer  timer;
   Heater heater;
-  Input  input;
+  Ctrl   controls;
   GUI    gui;
 
   Vaporizer(void);

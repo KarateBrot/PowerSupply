@@ -332,7 +332,7 @@ void Heater::calibrate() {
 
 
 
-// ================================ CONTROLS ===================================
+// ================================ Input ===================================
 
 const uint8_t Encoder::_stateMachine[7][4] = {
 
@@ -423,24 +423,24 @@ uint8_t Switch::read() {
   return _state;
 }
 
-// -------------------------------- CONTROLS -----------------------------------
+// -------------------------------- Input -----------------------------------
 
 
 
 
-// ================================= Input =====================================
+// ================================= Controls =====================================
 
-vector<Encoder> Input::_encoders;
-vector<Button>  Input::_buttons;
-vector<Switch>  Input::_switches;
+vector<Encoder> Ctrl::_encoders;
+vector<Button>  Ctrl::_buttons;
+vector<Switch>  Ctrl::_switches;
 
-vector<fptr_t>  Input::_commands;
+vector<fptr_t>  Ctrl::_commands;
 
-Input::Input() {
+Ctrl::Ctrl() {
 
 }
 
-void Input::_ISR_encoder() {
+void Ctrl::_ISR_encoder() {
 
   uint8_t state = 0;
 
@@ -456,7 +456,7 @@ void Input::_ISR_encoder() {
   }
 }
 
-void Input::_ISR_button() {
+void Ctrl::_ISR_button() {
 
   uint8_t state, size;
 
@@ -477,32 +477,32 @@ void Input::_ISR_button() {
   }
 }
 
-void Input::add(Encoder enc) {
+void Ctrl::add(Encoder enc) {
 
   _encoders.push_back(enc);
   attachInterrupt(_encoders.back().getPin(),  _ISR_encoder, CHANGE);
   attachInterrupt(_encoders.back().getPin2(), _ISR_encoder, CHANGE);
 }
 
-void Input::add(Button btn) {
+void Ctrl::add(Button btn) {
 
   _buttons.push_back(btn);
   attachInterrupt(_buttons.back().getPin(), _ISR_button, CHANGE);
 }
 
-void Input::add(Switch sw) {
+void Ctrl::add(Switch sw) {
 
   _switches.push_back(sw);
 }
 
-void Input::update() {
+void Ctrl::update() {
 
   for (Switch sw  : _switches) { sw.read(); }
   for (fptr_t cmd : _commands) { cmd();     }
   _commands.clear();
 }
 
-// --------------------------------- Input -------------------------------------
+// --------------------------------- Controls -------------------------------------
 
 
 
@@ -549,7 +549,7 @@ void Vaporizer::run(uint8_t tickrate) {
   timer.tick();
   heater.update();
   heater.regulate();
-  input.update();
+  controls.update();
   timer.forceTickRate(tickrate);
 }
 

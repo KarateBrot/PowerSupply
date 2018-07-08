@@ -23,7 +23,7 @@ void setup() {
 
   Serial.begin(9600);
 
-  vape.input.add(Button(D6, test1));
+  vape.controls.add(Button(D6, test1));
 
   vape.begin(I2C_SCL, I2C_SDA);
 }
