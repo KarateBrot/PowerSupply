@@ -15,8 +15,11 @@
 
 
 Vaporizer vape;
+uint32_t  test1, test2;
 
-uint32_t test, lastTest;
+void loop1() { test1++; Serial.print(test1); Serial.print("-"); Serial.println(test2); }
+void loop2() { test2++; Serial.print(test1); Serial.print(" "); Serial.println(test2); }
+void loop3() { Serial.println("-----"); }
 
 
 void setup() {
@@ -25,16 +28,18 @@ void setup() {
 
   vape.begin(I2C_SCL, I2C_SDA);
 
-  vape.timer.add(loop, 1);
+  vape.timer.add(loop1,       0.3  );
+  vape.timer.add(loop2,       0.5  );
+  vape.timer.add(loop3,       0.1  );
+  vape.timer.add(Timer::stop, 0.025);
+
   vape.timer.run();
 }
 
 
 void loop() {
 
-  uint32_t t = micros();
-  Serial.println((uint32_t)(t - lastTest)/1000000.0, 9);
-  lastTest = t;
+
 }
 
 //----------------------------------------------------------------------------//

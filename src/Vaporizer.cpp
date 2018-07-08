@@ -25,17 +25,22 @@ Task::Task(fptr_t f, float tps) {
 }
 
 vector<Task> Timer::_tasks;
-float        Timer::_tickrate  = 0.0f;
-uint32_t     Timer::_lastTick  = micros();
-uint32_t     Timer::_lastWait  = micros();
-uint32_t     Timer::_deltaTime = 0;
-bool         Timer::_running   = true;
+bool         Timer::_running       = true;
+float        Timer::_tickrate      = 0.0f;
+uint32_t     Timer::_lastTick      = 0;
+uint32_t     Timer::_lastWait      = 0;
+uint32_t     Timer::_lastWaitUntil = 0;
+uint32_t     Timer::_deltaTime     = 0;
 
 Timer::Timer() {
 
-  _tick     = 0;
-  _lastWait = micros();
-  _lastTick = micros();
+  _tick = 0;
+
+  uint32_t t = micros();
+
+  _lastTick      = t;
+  _lastWait      = t;
+  _lastWaitUntil = t;
 }
 
 void Timer::add(fptr_t f, float tps) {
@@ -45,8 +50,16 @@ void Timer::add(fptr_t f, float tps) {
 
 void Timer::run() {
 
-  _running = true;
+  // Initialization
+  _running       = true;
+  uint8_t  size  = _tasks.size();
+  uint32_t timer = micros();
+  for (size_t n  = 0; n < size; n++) { _tasks[n].lastExecute = timer; }
+  _lastTick      = timer;
+  _lastWait      = timer;
+  _lastWaitUntil = timer;
 
+  // Infinite loop until Timer::stop() is called
   while (_running) {
 
     uint8_t  size = _tasks.size();
@@ -55,28 +68,32 @@ void Timer::run() {
 
       Task &task = _tasks[n];
       _deltaTime = (uint32_t)(1000000.0f/task.tickRate);
-      uint32_t t = micros();
+      timer      = micros();
 
-      if ((uint32_t)(t - task.lastExecute) >= _deltaTime) {
+      if ((uint32_t)(timer - task.lastExecute) >= _deltaTime) {
+        task.lastExecute = timer;
         task.execute();
-        task.lastExecute = t;
       }
     }
 
-    uint32_t t = micros();
-    _tickrate  = 1000000.0f/(float)(uint32_t)(t - _lastTick);
-    _lastTick  = t;
+    timer      = micros();
+    _tickrate  = 1000000.0f/(float)(uint32_t)(timer - _lastTick);
+    _lastTick  = timer;
 
     yield();
   }
 }
 
+void Timer::wait(uint32_t timer) {
+
+  _lastWait = micros();
+  while ((uint32_t)(micros() - _lastWait) < timer) { yield(); }
+}
+
 void Timer::waitUntil(uint32_t timer) {
 
-  uint32_t t = micros();
-
-  while ((uint32_t)(t - _lastWait) < timer) { yield(); }
-  _lastWait = t;
+  while ((uint32_t)(micros() - _lastWaitUntil) < timer) { yield(); }
+  _lastWaitUntil = micros();
 }
 
 void Timer::forceTickRate(float tps) {
@@ -372,8 +389,8 @@ uint8_t Button::read() {
   // easy debouncing (1000/50 button state changes per second max.)
   if ((uint32_t)(millis() - _lastRead) >= 50) {
 
-    _state    = digitalRead(_pin);
     _lastRead = millis();
+    _state    = digitalRead(_pin);
   }
 
   return _state;
@@ -396,9 +413,9 @@ uint8_t Switch::read() {
   // easy debouncing (1000/50 switch state changes per second max.)
   if ((uint32_t)(millis() - _lastRead) >= 50) {
 
+    _lastRead = millis();
     _state    = digitalRead(_pin);
    *_ptr      = _state;
-    _lastRead = millis();
   }
 
   return _state;

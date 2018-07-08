@@ -20,8 +20,8 @@
 //----------------------------------------------------------------------------//
   #include <Adafruit_INA219.h>                // Current & voltage sensor     //
   #include <Adafruit_MCP4725.h>               // Digital to analog converter  //
-  #include <Adafruit_GFX.h>                   // Graphics engine              //
   #include <Adafruit_SSD1306.h>               // Display driver               //
+  #include <Adafruit_GFX.h>                   // Graphics engine              //
 //----------------------------------------------------------------------------//
   #include <vector>                                                           //
     using namespace std;                                                      //
@@ -110,9 +110,9 @@ struct Timer {
   uint32_t _tick;
 
   static vector<Task> _tasks;
-  static float        _tickrate;
-  static uint32_t     _lastTick, _lastWait, _deltaTime;
   static bool         _running;
+  static float        _tickrate;
+  static uint32_t     _lastTick, _lastWait, _lastWaitUntil, _deltaTime;
 
  public:
 
@@ -125,6 +125,7 @@ struct Timer {
   static void run (void);
   static void stop(void) { _running = false; };
 
+  static void     wait         (uint32_t);
   static void     waitUntil    (uint32_t);
   static void     forceTickRate(float);
   static uint32_t getTickRate  (void) { return _tickrate; }
