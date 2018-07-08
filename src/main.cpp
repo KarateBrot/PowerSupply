@@ -16,7 +16,8 @@
 
 Vaporizer vape;
 
-uint8_t test, lastTest;
+uint32_t test, lastTest;
+
 
 void setup() {
 
@@ -24,18 +25,16 @@ void setup() {
 
   vape.begin(I2C_SCL, I2C_SDA);
 
-  vape.timer.add(loop, 10);
+  vape.timer.add(loop, 1);
   vape.timer.run();
 }
 
 
 void loop() {
 
-  if ((uint8_t)(test - lastTest) >= 1) {
-    Serial.println(test);
-    lastTest = test;
-  }
-  test++;
+  uint32_t t = micros();
+  Serial.println((uint32_t)(t - lastTest)/1000000.0, 9);
+  lastTest = t;
 }
 
 //----------------------------------------------------------------------------//

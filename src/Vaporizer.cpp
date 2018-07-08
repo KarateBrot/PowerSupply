@@ -49,21 +49,23 @@ void Timer::run() {
 
   while (_running) {
 
-    uint8_t size = _tasks.size();
+    uint8_t  size = _tasks.size();
 
     for (size_t n = 0; n < size; n++) {
 
       Task &task = _tasks[n];
       _deltaTime = (uint32_t)(1000000.0f/task.tickRate);
+      uint32_t t = micros();
 
-      if ((uint32_t)(micros() - task.lastExecute) >= _deltaTime) {
+      if ((uint32_t)(t - task.lastExecute) >= _deltaTime) {
         task.execute();
-        task.lastExecute = micros();
+        task.lastExecute = t;
       }
     }
 
-    _tickrate = 1000000.0f/(float)(micros() - _lastTick);
-    _lastTick = micros();
+    uint32_t t = micros();
+    _tickrate  = 1000000.0f/(float)(uint32_t)(t - _lastTick);
+    _lastTick  = t;
 
     yield();
   }
@@ -71,8 +73,10 @@ void Timer::run() {
 
 void Timer::waitUntil(uint32_t timer) {
 
-  while ((uint32_t)(micros() - _lastWait) < timer) { yield(); }
-  _lastWait = micros();
+  uint32_t t = micros();
+
+  while ((uint32_t)(t - _lastWait) < timer) { yield(); }
+  _lastWait = t;
 }
 
 void Timer::forceTickRate(float tps) {
@@ -161,8 +165,9 @@ void PID_Ctrl::_update(double value, double value_set) {
   _error = value_set - value;
 
   // dt
-  _dt       = ((uint32_t)(micros() - _timeLast))/1000000.0;
-  _timeLast = micros();
+  uint32_t t = micros();
+  _dt        = (uint32_t)(t - _timeLast)/1000000.0;
+  _timeLast  = t;
 
   // de(t)/dt
   _errorDiff = (value - _valueLast)/_dt;
@@ -516,7 +521,7 @@ Vaporizer::Vaporizer() {
 
 }
 
-// Needs to be called lastly in Setup() to overwrite Wire (I2C) settings
+// Needs to be called as late as possible in Setup() to overwrite Wire (I2C) settings
 void Vaporizer::begin(uint8_t scl, uint8_t sda) {
 
   Wire.begin(sda, scl);                      // Select I2C pins
