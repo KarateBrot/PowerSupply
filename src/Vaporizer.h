@@ -280,14 +280,14 @@ struct Controls {
  protected:
 
   uint8_t _state, _pin;
-  cmd_t   _command;
 
  public:
 
   enum state_t { UP, DOWN };
 
-  uint8_t getPin    (void) const { return _pin;     }
-  cmd_t   getCommand(void) const { return _command; }
+  fptr_t  command;
+
+  uint8_t getPin(void) const { return _pin; }
 
   virtual uint8_t read(void) = 0;
 };
@@ -299,7 +299,6 @@ struct Encoder : public Controls {
 
   static const uint8_t _stateMachine[7][4];
   uint8_t              _pin2;
-  cmd_t                _commandCCW;
 
  public:
 
@@ -309,10 +308,11 @@ struct Encoder : public Controls {
     CW = 0x10, CCW = 0x20
   };
 
-  Encoder(uint8_t, uint8_t, cmd_t, cmd_t);
+  fptr_t commandCCW;
 
-  uint8_t getPin2      (void) const { return _pin2;       }
-  cmd_t   getCommandCCW(void) const { return _commandCCW; }
+  Encoder(uint8_t, uint8_t, fptr_t, fptr_t);
+
+  uint8_t getPin2(void) const { return _pin2; }
 
   uint8_t read(void);
 };
@@ -326,7 +326,7 @@ struct Button : public Controls {
 
  public:
 
-  Button(uint8_t, cmd_t);
+  Button(uint8_t, fptr_t);
 
   uint8_t read(void);
 };
@@ -364,13 +364,10 @@ class Input {
   static vector<Button>  _buttons;
   static vector<Switch>  _switches;
 
-  static vector<cmd_t>   _commands;
+  static vector<fptr_t>  _commands;
 
   static void _ISR_encoder(void);
   static void _ISR_button (void);
-
-  static void _addCommand   (cmd_t c) { _commands.push_back(c); }
-  static void _handleCommand(cmd_t);
 
  public:
 

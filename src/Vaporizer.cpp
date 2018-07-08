@@ -345,7 +345,7 @@ const uint8_t Encoder::_stateMachine[7][4] = {
   { CCW_NEXT, CCW_FINAL, CCW_BEGIN, START       }
 };
 
-Encoder::Encoder(uint8_t CLK, uint8_t DT, cmd_t cw, cmd_t ccw) {
+Encoder::Encoder(uint8_t CLK, uint8_t DT, fptr_t cw, fptr_t ccw) {
 
   _pin        = CLK;
   pinMode     (_pin, INPUT);
@@ -355,8 +355,8 @@ Encoder::Encoder(uint8_t CLK, uint8_t DT, cmd_t cw, cmd_t ccw) {
   pinMode     (_pin2, INPUT);
   digitalWrite(_pin2, HIGH);
 
-  _command    = cw;
-  _commandCCW = ccw;
+  command    = cw;
+  commandCCW = ccw;
 
   _state = START;
 }
@@ -372,22 +372,24 @@ uint8_t Encoder::read() {
 
 // - - - - -
 
-Button::Button(uint8_t pin, cmd_t c) {
+Button::Button(uint8_t pin, fptr_t c) {
 
   _pin = pin;
 
   pinMode     (_pin, INPUT);
   digitalWrite(_pin, LOW);
 
-  _command = c;
+  command = c;
 
   _state = digitalRead(_pin);
 }
 
 uint8_t Button::read() {
 
+  _state = 0xFF;
+
   // easy debouncing (1000/50 button state changes per second max.)
-  if ((uint32_t)(millis() - _lastRead) >= 50) {
+  if ((uint32_t)(millis() - _lastRead) >= 30) {
 
     _lastRead = millis();
     _state    = digitalRead(_pin);
@@ -411,7 +413,7 @@ Switch::Switch(uint8_t pin) {
 uint8_t Switch::read() {
 
   // easy debouncing (1000/50 switch state changes per second max.)
-  if ((uint32_t)(millis() - _lastRead) >= 50) {
+  if ((uint32_t)(millis() - _lastRead) >= 70) {
 
     _lastRead = millis();
     _state    = digitalRead(_pin);
@@ -432,7 +434,7 @@ vector<Encoder> Input::_encoders;
 vector<Button>  Input::_buttons;
 vector<Switch>  Input::_switches;
 
-vector<cmd_t>   Input::_commands;
+vector<fptr_t>  Input::_commands;
 
 Input::Input() {
 
@@ -447,8 +449,8 @@ void Input::_ISR_encoder() {
     state = enc.read();
 
     switch (state) {
-      case Encoder::CW:  _addCommand(enc.getCommand());    break;
-      case Encoder::CCW: _addCommand(enc.getCommandCCW()); break;
+      case Encoder::CW:  _commands.push_back(enc.command);    break;
+      case Encoder::CCW: _commands.push_back(enc.commandCCW); break;
       default: break;
     }
   }
@@ -456,27 +458,22 @@ void Input::_ISR_encoder() {
 
 void Input::_ISR_button() {
 
-  uint8_t state = 0;
+  uint8_t state, size;
 
-  for (Button btn : _buttons) {
+  size = _buttons.size();
 
-    state = btn.read();
+  for (size_t n = 0; n < size; n++) {
 
-    switch (state) {
-      case Button::DOWN: _addCommand(btn.getCommand()); break;
-      default: break;
+    Button &btn = _buttons[n];
+    state       = btn.read();
+
+    // Ignore bounces (state == 0xFF)
+    if (state != 0xFF) {
+      switch (state) {
+        case Button::DOWN: _commands.push_back(btn.command); break;
+        default: break;
+      }
     }
-  }
-}
-
-void Input::_handleCommand(cmd_t t) {
-
-  switch (t) {                 // TODO: Implement functionality in _handleTask()
-    case UP:     Serial.println("+1"); break;
-    case DOWN:   Serial.println("-1"); break;
-    case ENTER:  Serial.println( "0"); break;
-    case ENTER2: Serial.println("00"); break;
-    default:     break;
   }
 }
 
@@ -500,8 +497,8 @@ void Input::add(Switch sw) {
 
 void Input::update() {
 
-  for (Switch sw : _switches) { sw.read(); }
-  for (cmd_t  c  : _commands) { _handleCommand(c); }
+  for (Switch sw  : _switches) { sw.read(); }
+  for (fptr_t cmd : _commands) { cmd();     }
   _commands.clear();
 }
 
