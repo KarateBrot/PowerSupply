@@ -16,11 +16,7 @@
 
 Vaporizer vape;
 
-
-uint8_t test1, test2;
-
-void func1() { Serial.print(test1); Serial.print(" "); Serial.println(test2); test1++; }
-void func2() { Serial.print(test1); Serial.print(" "); Serial.println(test2); test2++; }
+uint8_t test, lastTest;
 
 void setup() {
 
@@ -28,16 +24,18 @@ void setup() {
 
   vape.begin(I2C_SCL, I2C_SDA);
 
-  vape.timer.add(func1,        3  );
-  vape.timer.add(func2,        5  );
-  vape.timer.add(Timer::stop,  0.1);
-
+  vape.timer.add(loop, 10);
   vape.timer.run();
 }
 
 
 void loop() {
 
+  if ((uint8_t)(test - lastTest) >= 1) {
+    Serial.println(test);
+    lastTest = test;
+  }
+  test++;
 }
 
 //----------------------------------------------------------------------------//

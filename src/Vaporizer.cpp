@@ -56,7 +56,7 @@ void Timer::run() {
       Task &task = _tasks[n];
       _deltaTime = (uint32_t)(1000000.0f/task.tickRate);
 
-      if (micros() - task.lastExecute > _deltaTime) {
+      if ((uint32_t)(micros() - task.lastExecute) >= _deltaTime) {
         task.execute();
         task.lastExecute = micros();
       }
@@ -71,7 +71,7 @@ void Timer::run() {
 
 void Timer::waitUntil(uint32_t timer) {
 
-  while (micros() - _lastWait < timer) { yield(); }
+  while ((uint32_t)(micros() - _lastWait) < timer) { yield(); }
   _lastWait = micros();
 }
 
@@ -161,8 +161,8 @@ void PID_Ctrl::_update(double value, double value_set) {
   _error = value_set - value;
 
   // dt
-  _dt       = (micros() - _timeLast)/1000000.0;
-  _timeLast =  micros();
+  _dt       = ((uint32_t)(micros() - _timeLast))/1000000.0;
+  _timeLast = micros();
 
   // de(t)/dt
   _errorDiff = (value - _valueLast)/_dt;
@@ -365,7 +365,7 @@ Button::Button(uint8_t pin, cmd_t c) {
 uint8_t Button::read() {
 
   // easy debouncing (1000/50 button state changes per second max.)
-  if (millis() - _lastRead >= 50) {
+  if ((uint32_t)(millis() - _lastRead) >= 50) {
 
     _state    = digitalRead(_pin);
     _lastRead = millis();
@@ -389,7 +389,7 @@ Switch::Switch(uint8_t pin) {
 uint8_t Switch::read() {
 
   // easy debouncing (1000/50 switch state changes per second max.)
-  if (millis() - _lastRead >= 50) {
+  if ((uint32_t)(millis() - _lastRead) >= 50) {
 
     _state    = digitalRead(_pin);
    *_ptr      = _state;
