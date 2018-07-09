@@ -388,8 +388,11 @@ uint8_t Button::read() {
 
   _state = 0xFF;
 
-  // easy debouncing (1000/50 button state changes per second max.)
-  if ((uint32_t)(millis() - _lastRead) >= 30) {
+  // Button debouncing is a combination of (1)hardware and (2)software debouncing
+  // (1) Low-pass filter: R = 10kΩ | C = 10nF | τ = R*C = 0.0001s
+  //    ──► Capacitor (103) parallel to button and pulldown resistor at button(-)
+  // (2) In addition: easy debouncing to ignore remaining jitters
+  if ((uint32_t)(millis() - _lastRead) >= BUTTON_DEBOUNCE_TIME) {
 
     _lastRead = millis();
     _state    = digitalRead(_pin);
@@ -412,8 +415,8 @@ Switch::Switch(uint8_t pin) {
 
 uint8_t Switch::read() {
 
-  // easy debouncing (1000/50 switch state changes per second max.)
-  if ((uint32_t)(millis() - _lastRead) >= 70) {
+  // easy debouncing (1000/BUTTON_DEBOUNCE_TIME switch state changes per second max.)
+  if ((uint32_t)(millis() - _lastRead) >= BUTTON_DEBOUNCE_TIME) {
 
     _lastRead = millis();
     _state    = digitalRead(_pin);
