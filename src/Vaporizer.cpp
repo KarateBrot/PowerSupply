@@ -68,11 +68,10 @@ void Timer::run() {
 
       Task &task = _tasks[n];
       _deltaTime = (uint32_t)(1000000.0f/task.tickRate);
-      timer      = micros();
 
-      if ((uint32_t)(timer - task.lastExecute) >= _deltaTime) {
-        task.lastExecute = timer;
+      if ((uint32_t)(micros() - task.lastExecute) >= _deltaTime) {
         task.execute();
+        task.lastExecute += _deltaTime;
       }
     }
 
