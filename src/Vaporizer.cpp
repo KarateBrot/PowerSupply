@@ -13,28 +13,27 @@
 
 
 
-// ================================= TIMER =====================================
+// =============================== SCHEDULER ===================================
 
 uint32_t Stopwatch::lifetime = 0;
 
 Task::Task(fptr_t f, float tps) {
 
-  execute      = f;
-  tickRate     = tps;
-  lastExecute  = micros();
+  execute       = f;
+  tps != 0
+    ? deltaTime = (uint32_t)(1000000.0f/tps)
+    : deltaTime = 0.0f;
+  lastExecute   = micros();
 }
 
-vector<Task> Timer::_tasks;
-bool         Timer::_running       = true;
-float        Timer::_tickrate      = 0.0f;
-uint32_t     Timer::_lastTick      = 0;
-uint32_t     Timer::_lastWait      = 0;
-uint32_t     Timer::_lastWaitUntil = 0;
-uint32_t     Timer::_deltaTime     = 0;
+vector<Task> Scheduler::_tasks;
+bool         Scheduler::_running       = true;
+float        Scheduler::_tickrate      = 0.0f;
+uint32_t     Scheduler::_lastTick      = 0;
+uint32_t     Scheduler::_lastWait      = 0;
+uint32_t     Scheduler::_lastWaitUntil = 0;
 
-Timer::Timer() {
-
-  _tick = 0;
+Scheduler::Scheduler() {
 
   uint32_t t = micros();
 
@@ -43,12 +42,12 @@ Timer::Timer() {
   _lastWaitUntil = t;
 }
 
-void Timer::add(fptr_t f, float tps) {
+void Scheduler::add(fptr_t f, float tps) {
 
   _tasks.push_back(Task(f, tps));
 }
 
-void Timer::run() {
+void Scheduler::run() {
 
   // Initialization
   _running       = true;
@@ -59,48 +58,48 @@ void Timer::run() {
   _lastWait      = timer;
   _lastWaitUntil = timer;
 
-  // Infinite loop until Timer::stop() is called
+  // Infinite loop until Scheduler::stop() is called
   while (_running) {
 
-    uint8_t  size = _tasks.size();
+    size = _tasks.size();
 
     for (size_t n = 0; n < size; n++) {
 
       Task &task = _tasks[n];
-      _deltaTime = (uint32_t)(1000000.0f/task.tickRate);
+      timer      = micros();
 
-      if ((uint32_t)(micros() - task.lastExecute) >= _deltaTime) {
+      if ((uint32_t)(timer - task.lastExecute) >= task.deltaTime) {
         task.execute();
-        task.lastExecute += _deltaTime;
+        task.lastExecute += task.deltaTime;
       }
     }
 
-    timer      = micros();
-    _tickrate  = 1000000.0f/(float)(uint32_t)(timer - _lastTick);
-    _lastTick  = timer;
+    timer     = micros();
+    _tickrate = 1000000.0f/(float)(uint32_t)(timer - _lastTick);
+    _lastTick = timer;
 
     yield();
   }
 }
 
-void Timer::wait(uint32_t timer) {
+void Scheduler::wait(uint32_t timer) {
 
   _lastWait = micros();
   while ((uint32_t)(micros() - _lastWait) < timer) { yield(); }
 }
 
-void Timer::waitUntil(uint32_t timer) {
+void Scheduler::waitUntil(uint32_t timer) {
 
   while ((uint32_t)(micros() - _lastWaitUntil) < timer) { yield(); }
   _lastWaitUntil = micros();
 }
 
-void Timer::forceTickRate(float tps) {
+void Scheduler::forceTickRate(float tps) {
 
   waitUntil( (uint32_t)(1000000.0f/tps + 0.5f) );
 }
 
-// --------------------------------- TIMER -------------------------------------
+// ------------------------------- SCHEDULER -----------------------------------
 
 
 
@@ -331,7 +330,7 @@ void Heater::calibrate() {
 
 
 
-// ================================ Input ===================================
+// ================================= Input ====================================
 
 const uint8_t Encoder::_stateMachine[7][4] = {
 
@@ -425,12 +424,12 @@ uint8_t Switch::read() {
   return _state;
 }
 
-// -------------------------------- Input -----------------------------------
+// --------------------------------- Input -------------------------------------
 
 
 
 
-// ================================= Controls =====================================
+// ================================ Controls ===================================
 
 vector<Encoder> Ctrl::_encoders;
 vector<Button>  Ctrl::_buttons;
@@ -504,7 +503,7 @@ void Ctrl::update() {
   _commands.clear();
 }
 
-// --------------------------------- Controls -------------------------------------
+// -------------------------------- Controls -----------------------------------
 
 
 
@@ -548,11 +547,11 @@ void Vaporizer::begin(uint8_t scl, uint8_t sda) {
 
 void Vaporizer::run(uint8_t tickrate) {
 
-  timer.tick();
+  watch.tick();
   heater.update();
   heater.regulate();
   controls.update();
-  timer.forceTickRate(tickrate);
+  scheduler.forceTickRate(tickrate);
 }
 
 // ------------------------------- VAPORIZER -----------------------------------

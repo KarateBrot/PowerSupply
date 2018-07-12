@@ -77,13 +77,13 @@ enum cmd_t { IDLE, UP, DOWN, ENTER, ENTER2 };
 
 
 
-// =================================== TIMER ===================================
+// ================================= STOPWATCH =================================
 
 struct Stopwatch {
 
  private:
 
-  uint32_t _time;
+  uint32_t _time, _tick;
 
  public:
 
@@ -94,46 +94,51 @@ struct Stopwatch {
 
   void     reset  (void)       { _time = micros();        }
   uint32_t getTime(void) const { return micros() - _time; }
+
+  void     tick   (void)       { _tick++;      }
+  uint32_t getTick(void) const { return _tick; }
 };
+
+// --------------------------------- STOPWATCH ---------------------------------
+
+
+
+
+// ================================= SCHEDULER =================================
 
 struct Task {
 
-  float    tickRate;
-  uint32_t lastExecute;
+  uint32_t lastExecute, deltaTime;
   fptr_t   execute;
 
   Task(fptr_t, float);
 };
 
-struct Timer {
+struct Scheduler {
 
  private:
-
-  uint32_t _tick;
 
   static vector<Task> _tasks;
   static bool         _running;
   static float        _tickrate;
-  static uint32_t     _lastTick, _lastWait, _lastWaitUntil, _deltaTime;
+  static uint32_t     _lastTick, _lastWait, _lastWaitUntil;
 
  public:
 
-  Timer(void);
-
-  void     tick   (void)       { _tick++;      }
-  uint32_t getTick(void) const { return _tick; }
+  Scheduler(void);
 
   static void add (fptr_t, float);
   static void run (void);
   static void stop(void) { _running = false; };
 
-  static void     wait         (uint32_t);
-  static void     waitUntil    (uint32_t);
-  static void     forceTickRate(float);
-  static uint32_t getTickRate  (void) { return _tickrate; }
+  static void wait         (uint32_t);
+  static void waitUntil    (uint32_t);
+  static void forceTickRate(float);
+
+  static uint32_t getTickRate(void) { return _tickrate; }
 };
 
-// ----------------------------------- TIMER -----------------------------------
+// --------------------------------- SCHEDULER ---------------------------------
 
 
 
@@ -391,7 +396,7 @@ class GUI {
 
  protected:
 
-  static Timer timer;
+
 
  public:
 
@@ -428,10 +433,11 @@ class Vaporizer {
 
  public:
 
-  Timer  timer;
-  Heater heater;
-  Ctrl   controls;
-  GUI    gui;
+  Stopwatch watch;
+  Scheduler scheduler;
+  Heater    heater;
+  Ctrl      controls;
+  GUI       gui;
 
   Vaporizer(void);
 
