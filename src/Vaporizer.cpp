@@ -13,6 +13,27 @@
 
 
 
+// Exponential smoothing (simulates capacitor)
+void Tools::smoothExp(double &x, double val, uint32_t sampleTime, uint32_t timeConst)
+{
+  double weight = 1 - exp(-1.0*sampleTime/timeConst);
+  x = (1-weight)*x + weight*val;
+}
+
+// Hysteresis (simulates Inverting Schmitt Trigger)
+bool Tools::trigger(bool &trigger, double val, float lim_lower, float lim_upper)
+{
+  bool trigger_last = trigger;
+
+  if (val >= lim_upper) { trigger = true;  } else
+  if (val <  lim_lower) { trigger = false; }
+
+  if (trigger_last != trigger) { return true; } else { return false; }
+}
+
+
+
+
 // =============================== SCHEDULER ===================================
 
 uint32_t Stopwatch::lifetime = 0;
@@ -121,7 +142,10 @@ void Sensor_Power::setPrecision(bool b) {
 double Sensor_Power::getCurrent() {
 
   // Current [mA]
-  return _INA219.getCurrent_mA()*2.0;              // R050 instead of R100 shunt
+  // R050 instead of R100 shunt resistor (R050: R = 50mΩ | R100: R = 100mΩ)
+  // We need to know the actual current flow for a 50mΩ shunt (I050 = U/R050)
+  // I050 = U/R050 = U/(0.5*R100) = 2*U/R100 = 2*I100 ─► 2*getCurrent_mA()
+  return _INA219.getCurrent_mA()*2.0;
 }
 
 double Sensor_Power::getVoltage() {
@@ -540,6 +564,7 @@ Vaporizer::Vaporizer() {
 void Vaporizer::begin(uint8_t scl, uint8_t sda) {
 
   Wire.begin(sda, scl);                      // Select I2C pins
+  gui.display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // FIXME: Can I somehow get rid of this line? (What is going into the Wire constructor in Adafruit lib?)
   Wire.setClock(WIRE_FREQ);                  // Faster I2C transmission (800kHz)
   analogWriteRange(PWM_RANGE);
   analogWriteFreq(PWM_FREQ);

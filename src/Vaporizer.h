@@ -77,6 +77,15 @@ enum cmd_t { IDLE, UP, DOWN, ENTER, ENTER2 };
 
 
 
+namespace Tools {
+
+  void smoothExp(double &, double, uint32_t, uint32_t);
+  bool trigger  (bool &,   double, float,    float);
+}
+
+
+
+
 // ================================= STOPWATCH =================================
 
 struct Stopwatch {
@@ -290,8 +299,7 @@ struct Input {
 
  public:
 
-  enum state_t { UP, DOWN };
-
+  enum   state_t { UP, DOWN };
   fptr_t command;
 
   uint8_t getPin(void) const { return _pin; }
@@ -302,7 +310,7 @@ struct Input {
 
 struct Encoder : public Input {
 
- private:
+ protected:
 
   static const uint8_t _stateMachine[7][4];
   uint8_t              _pin2;
@@ -310,7 +318,6 @@ struct Encoder : public Input {
  public:
 
   enum state_t {
-
     START, CW_FINAL, CW_BEGIN, CW_NEXT, CCW_BEGIN, CCW_FINAL, CCW_NEXT,
     CW = 0x10, CCW = 0x20
   };
@@ -320,14 +327,13 @@ struct Encoder : public Input {
   Encoder(uint8_t, uint8_t, fptr_t, fptr_t);
 
   uint8_t getPin2(void) const { return _pin2; }
-
   uint8_t read(void);
 };
 
 
 struct Button : public Input {
 
- private:
+ protected:
 
   uint32_t _lastRead;
 
@@ -443,6 +449,7 @@ class Vaporizer {
 
   void begin(uint8_t, uint8_t);
   void run  (uint8_t);
+  void run  (void) { run(30); }
 
   static String version(void) { return V_FIRMWARE_VERSION; }
 };
