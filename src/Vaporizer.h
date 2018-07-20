@@ -217,7 +217,7 @@ class PID_Ctrl {
 
   double _p, _error, _i, _errorInt, _d, _errorDiff;
   double _dt, _timeLast, _valueLast;
-  DAC   *_dacPtr = NULL;
+  DAC   *_dacPtr;
 
   void   _update(double, double);
 
@@ -225,13 +225,13 @@ class PID_Ctrl {
 
   PID_Ctrl(void);
 
-  PID_Ctrl& attach(DAC* d) { _dacPtr = d;    return *this; };
-  PID_Ctrl& detach(void)   { _dacPtr = NULL; return *this; };
+  void attach(DAC* d) { _dacPtr = d;    };
+  void detach(void)   { _dacPtr = NULL; };
 
-  PID_Ctrl& setP  (double p) { _p = p; return *this; }
-  PID_Ctrl& setI  (double i) { _i = i; return *this; }
-  PID_Ctrl& setD  (double d) { _d = d; return *this; }
-  PID_Ctrl& setPID(double p, double i, double d) { _p = p; _i = i; _d = d; return *this; }
+  void setPID(double p, double i, double d) { _p = p; _i = i; _d = d; }
+  PID_Ctrl& setP(double p) { _p = p; return *this; }
+  PID_Ctrl& setI(double i) { _i = i; return *this; }
+  PID_Ctrl& setD(double d) { _d = d; return *this; }
 
   vector<double> getPID(void) const;
 
@@ -266,18 +266,18 @@ class Heater {
 
   Heater(void);
 
-  Heater& setRes20   (double res) { _res20    = res; return *this; }
-  Heater& setResCable(double res) { _resCable = res; return *this; }
-  Heater& setTCR     (double tcr) { _TCR      = tcr; return *this; }
+  void setRes20   (double res) { _res20    = res; }
+  void setResCable(double res) { _resCable = res; }
+  void setTCR     (double tcr) { _TCR      = tcr; }
 
-  Heater& setTemp (uint16_t t) { temperature_set = t; return *this; }
-  Heater& setPower(uint16_t p) { power_set       = p; return *this; }
+  void setTemp (uint16_t t) { temperature_set = t; }
+  void setPower(uint16_t p) { power_set       = p; }
 
-  Heater& setMode(op_t m) { _mode = m; return *this; }
+  void setMode(op_t m) { _mode = m; }
 
-  Heater& on    (void) { _running = true;      return *this; }
-  Heater& off   (void) { _running = false;     return *this; }
-  Heater& toggle(void) { _running = !_running; return *this; }
+  void on    (void) { _running = true;      }
+  void off   (void) { _running = false;     }
+  void toggle(void) { _running = !_running; }
 
   void update   (void);
   void regulate (void);
@@ -310,10 +310,15 @@ struct Input {
 
 struct Encoder : public Input {
 
- protected:
+  friend class Controls;
 
-  static const uint8_t _stateMachine[7][4];
-  uint8_t              _pin2;
+ private:
+
+  uint8_t                _pin2;
+  static vector<Encoder> _buffer;
+  static const uint8_t   _stateMachine[7][4];
+
+  static void _ISR(void);
 
  public:
 
@@ -333,9 +338,14 @@ struct Encoder : public Input {
 
 struct Button : public Input {
 
- protected:
+  friend class Controls;
 
-  uint32_t _lastRead;
+ private:
+
+  uint32_t               _lastRead;
+  static vector<Button>  _buffer;
+
+  static void _ISR(void);
 
  public:
 
@@ -347,17 +357,17 @@ struct Button : public Input {
 
 struct Switch : public Input {
 
+  friend class Controls;
+
  private:
 
-  uint32_t _lastRead;
-  bool    *_ptr = NULL;
+  bool                  *_ptr;
+  uint32_t               _lastRead;
+  static vector<Switch>  _buffer;
 
  public:
 
-  Switch(uint8_t);
-
-  void attach(bool* var) { _ptr = var;  }
-  void detach(void)      { _ptr = NULL; }
+  Switch(uint8_t, bool*);
 
   uint8_t read(void);
 };
@@ -369,22 +379,19 @@ struct Switch : public Input {
 
 // ================================= CONTROLS ==================================
 
-class Ctrl {
+class Controls {
+
+  friend class Encoder;
+  friend class Button;
+  friend class Switch;
 
  private:
 
-  static vector<Encoder> _encoders;
-  static vector<Button>  _buttons;
-  static vector<Switch>  _switches;
-
-  static vector<fptr_t>  _commands;
-
-  static void _ISR_encoder(void);
-  static void _ISR_button (void);
+  static vector<fptr_t> _commands;
 
  public:
 
-  Ctrl(void);
+  Controls(void);
 
   static void add(Encoder);
   static void add(Button);
@@ -400,34 +407,18 @@ class Ctrl {
 
 class GUI {
 
- protected:
+ private:
 
 
 
  public:
 
-  static Adafruit_SSD1306 display;
+  Adafruit_SSD1306 display;
 
   GUI(void);
 
   void draw (void);
   void clear(void);
-};
-
-
-
-
-class Settings : public GUI {
-
-
-};
-
-
-
-
-class Infoscreen : public GUI {
-
-
 };
 
 
@@ -442,7 +433,7 @@ class Vaporizer {
   Stopwatch watch;
   Scheduler scheduler;
   Heater    heater;
-  Ctrl      controls;
+  Controls  controls;
   GUI       gui;
 
   Vaporizer(void);

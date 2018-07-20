@@ -259,9 +259,8 @@ Heater::Heater() {
   resistance  = HEATER_RES20;
   temperature = 20.0;
 
-  pid
-    .attach(&dac)
-    .setPID(PID_P, PID_I, PID_D);
+  pid.attach(&dac);
+  pid.setPID(PID_P, PID_I, PID_D);
 }
 
 void Heater::update() {
@@ -320,9 +319,8 @@ void Heater::calibrate() {
 
   PID_Ctrl pid_calibration;
 
-  pid_calibration
-    .attach(&dac)
-    .setPID(1.0, 0.0, 0.0);                               // TODO: Manual tuning
+  pid_calibration.attach(&dac);
+  pid_calibration.setPID(1.0, 0.0, 0.0);                  // TODO: Manual tuning
 
   sensor.setPrecision(HIGH);
 
@@ -356,6 +354,8 @@ void Heater::calibrate() {
 
 // ================================= Input ====================================
 
+vector<Encoder> Encoder::_buffer;
+
 const uint8_t Encoder::_stateMachine[7][4] = {
 
   { START,    CW_BEGIN,  CCW_BEGIN, START       },
@@ -369,18 +369,34 @@ const uint8_t Encoder::_stateMachine[7][4] = {
 
 Encoder::Encoder(uint8_t CLK, uint8_t DT, fptr_t cw, fptr_t ccw) {
 
-  _pin        = CLK;
-  pinMode     (_pin, INPUT);
-  digitalWrite(_pin, HIGH);
+  _pin = CLK;
+  pinMode(_pin, INPUT);
+  digitalWrite(_pin, LOW);
 
-  _pin2       = DT;
-  pinMode     (_pin2, INPUT);
-  digitalWrite(_pin2, HIGH);
+  _pin2 = DT;
+  pinMode(_pin2, INPUT);
+  digitalWrite(_pin2, LOW);
 
   command    = cw;
   commandCCW = ccw;
 
   _state = START;
+}
+
+void Encoder::_ISR() {
+
+  uint8_t state = 0;
+
+  for (Encoder enc : _buffer) {
+
+    state = enc.read();
+
+    switch (state) {
+      case CW:  Controls::_commands.push_back(enc.command);    break;
+      case CCW: Controls::_commands.push_back(enc.commandCCW); break;
+      default:  break;
+    }
+  }
 }
 
 uint8_t Encoder::read() {
@@ -394,6 +410,8 @@ uint8_t Encoder::read() {
 
 // - - - - -
 
+vector<Button>  Button::_buffer;
+
 Button::Button(uint8_t pin, fptr_t c) {
 
   _pin = pin;
@@ -404,6 +422,27 @@ Button::Button(uint8_t pin, fptr_t c) {
   command = c;
 
   _state = digitalRead(_pin);
+}
+
+void Button::_ISR() {
+
+  uint8_t state, size;
+
+  size = _buffer.size();
+
+  for (size_t n = 0; n < size; n++) {
+
+    Button &btn = _buffer[n];
+    state       = btn.read();
+
+    // Ignore bounces (state == 0xFF)
+    if (state != 0xFF) {
+      switch (state) {
+        case DOWN: Controls::_commands.push_back(btn.command); break;
+        default:   break;
+      }
+    }
+  }
 }
 
 uint8_t Button::read() {
@@ -425,8 +464,11 @@ uint8_t Button::read() {
 
 // - - - - -
 
-Switch::Switch(uint8_t pin) {
+vector<Switch>  Switch::_buffer;
 
+Switch::Switch(uint8_t pin, bool *ptr) {
+
+  _ptr = ptr;
   _pin = pin;
 
   pinMode     (_pin, INPUT);
@@ -455,75 +497,37 @@ uint8_t Switch::read() {
 
 // ================================ Controls ===================================
 
-vector<Encoder> Ctrl::_encoders;
-vector<Button>  Ctrl::_buttons;
-vector<Switch>  Ctrl::_switches;
+vector<fptr_t>  Controls::_commands;
 
-vector<fptr_t>  Ctrl::_commands;
-
-Ctrl::Ctrl() {
+Controls::Controls() {
 
 }
 
-void Ctrl::_ISR_encoder() {
+void Controls::add(Encoder enc) {
 
-  uint8_t state = 0;
-
-  for (Encoder enc : _encoders) {
-
-    state = enc.read();
-
-    switch (state) {
-      case Encoder::CW:  _commands.push_back(enc.command);    break;
-      case Encoder::CCW: _commands.push_back(enc.commandCCW); break;
-      default: break;
-    }
-  }
+  Encoder::_buffer.push_back(enc);
+  uint8_t pin  = digitalPinToInterrupt(Encoder::_buffer.back().getPin() );
+  uint8_t pin2 = digitalPinToInterrupt(Encoder::_buffer.back().getPin2());
+  attachInterrupt(pin,  Encoder::_ISR, CHANGE);
+  attachInterrupt(pin2, Encoder::_ISR, CHANGE);
 }
 
-void Ctrl::_ISR_button() {
+void Controls::add(Button btn) {
 
-  uint8_t state, size;
-
-  size = _buttons.size();
-
-  for (size_t n = 0; n < size; n++) {
-
-    Button &btn = _buttons[n];
-    state       = btn.read();
-
-    // Ignore bounces (state == 0xFF)
-    if (state != 0xFF) {
-      switch (state) {
-        case Button::DOWN: _commands.push_back(btn.command); break;
-        default: break;
-      }
-    }
-  }
+  Button::_buffer.push_back(btn);
+  uint8_t pin = digitalPinToInterrupt(Button::_buffer.back().getPin());
+  attachInterrupt(pin, Button::_ISR, CHANGE);
 }
 
-void Ctrl::add(Encoder enc) {
+void Controls::add(Switch sw) {
 
-  _encoders.push_back(enc);
-  attachInterrupt(_encoders.back().getPin(),  _ISR_encoder, CHANGE);
-  attachInterrupt(_encoders.back().getPin2(), _ISR_encoder, CHANGE);
+  Switch::_buffer.push_back(sw);
 }
 
-void Ctrl::add(Button btn) {
+void Controls::update() {
 
-  _buttons.push_back(btn);
-  attachInterrupt(_buttons.back().getPin(), _ISR_button, CHANGE);
-}
-
-void Ctrl::add(Switch sw) {
-
-  _switches.push_back(sw);
-}
-
-void Ctrl::update() {
-
-  for (Switch sw  : _switches) { sw.read(); }
-  for (fptr_t cmd : _commands) { cmd();     }
+  for (Switch sw  : Switch::_buffer) { sw.read(); }
+  for (fptr_t cmd : _commands)       { cmd();     }
   _commands.clear();
 }
 
@@ -533,8 +537,6 @@ void Ctrl::update() {
 
 
 // ================================== GUI ======================================
-
-Adafruit_SSD1306 GUI::display;
 
 GUI::GUI() {
 

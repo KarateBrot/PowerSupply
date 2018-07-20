@@ -55,14 +55,14 @@ void setup() {
   vape.controls.add(Encoder(D4, D5, left, right));
   vape.controls.add(Button(D6, enter));
 
-  vape.scheduler.add(Ctrl::update, 30);
+  vape.scheduler.add(Controls::update, 30);
 
   // vape.scheduler.add( func1, 1 );
   // vape.scheduler.add( func2, 2 );
   // vape.scheduler.add( func3, 4 );
   // vape.scheduler.add( func4, 8 );
   // vape.scheduler.add( func5, 16 );
-  // vape.scheduler.add( draw,  60  );
+  // vape.scheduler.add( draw,  60 );
   // vape.scheduler.add(Scheduler::stop, 1/10.0f);
 
   vape.scheduler.run();
