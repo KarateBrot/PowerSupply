@@ -117,10 +117,11 @@ struct Stopwatch {
 
 struct Task {
 
-  uint32_t lastExecute, deltaTime;
+  String   name;
   fptr_t   execute;
+  uint32_t lastExecute, deltaTime;
 
-  Task(fptr_t, float);
+  Task(String, fptr_t, float);
 };
 
 struct Scheduler {
@@ -136,9 +137,14 @@ struct Scheduler {
 
   Scheduler(void);
 
-  static void add (fptr_t, float);
-  static void run (void);
-  static void stop(void) { _running = false; };
+  static void add   (String, fptr_t, float);
+  static void add   (fptr_t, float);
+  static void remove(String);
+
+  static void clear (void) { _tasks.clear(); }
+
+  static void run   (void);
+  static void stop  (void) { _running = false; };
 
   static void wait         (uint32_t);
   static void waitUntil    (uint32_t);
@@ -417,7 +423,7 @@ class GUI {
 
   GUI(void);
 
-  void draw (void);
+  void draw (void) {  };
   void clear(void);
 };
 

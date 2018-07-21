@@ -38,9 +38,11 @@ bool Tools::trigger(bool &trigger, double val, float lim_lower, float lim_upper)
 
 uint32_t Stopwatch::lifetime = 0;
 
-Task::Task(fptr_t f, float tps) {
+Task::Task(String taskName, fptr_t f, float tps) {
 
+  name          = taskName;
   execute       = f;
+
   tps != 0
     ? deltaTime = (uint32_t)(1000000.0f/tps)
     : deltaTime = 0.0f;
@@ -63,9 +65,22 @@ Scheduler::Scheduler() {
   _lastWaitUntil = t;
 }
 
+void Scheduler::add(String taskName, fptr_t f, float tps) {
+
+  _tasks.push_back(Task(taskName, f, tps));
+}
+
 void Scheduler::add(fptr_t f, float tps) {
 
-  _tasks.push_back(Task(f, tps));
+  _tasks.push_back(Task("", f, tps));
+}
+
+void Scheduler::remove(String taskName) {
+
+  for (size_t n = 0; n < _tasks.size(); n++) {
+
+    if (_tasks[n].name == taskName) { _tasks.erase(_tasks.begin()+n); }
+  }
 }
 
 void Scheduler::run() {
