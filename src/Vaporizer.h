@@ -24,9 +24,10 @@
   #include <Adafruit_GFX.h>                   // Graphics engine              //
 //----------------------------------------------------------------------------//
   #include <vector>                                                           //
-    using namespace std;                                                      //
 //----------------------------------------------------------------------------//
-  #include <img/splash.h>                                                     //
+  #include "Stopwatch.h"                                                      //
+  #include "Scheduler.h"                                                      //
+  #include "img/splash.h"                                                     //
 //----------------------------------------------------------------------------//
 //############################################################################//
 
@@ -39,7 +40,7 @@
 //----------------------------------------------------------------------------//
   #define WIRE_FREQ               800000L                                     //
   #define PWM_RANGE               1023                                        //
-  #define PWM_FREQ                4000        // Max: CPU_CLOCK / PWM_RANGE   //                             //
+  #define PWM_FREQ                4000        // Max: CPU_CLOCK / PWM_RANGE   //
 //----------------------------------------------------------------------------//
   #define HEATER_TCR              SS316                                       //
 //----------------------------------------------------------------------------//
@@ -61,6 +62,12 @@
   #ifndef HEATER_RESCABLE                                                     //
     #define HEATER_RESCABLE       0.27        // Resistance of cable          //
   #endif                                                                      //
+//                                                                            //
+  #define HEATER_TEMP_MIN         0           // !<0 because Temp is unsigned //
+  #define HEATER_TEMP_MAX       230                                           //
+//                                                                            //
+  #define HEATER_POWER_MIN        0           // !<0 because Power is unsignd //
+  #define HEATER_POWER_MAX       40                                           //
 //----------------------------------------------------------------------------//
   #define BUTTON_DEBOUNCE_TIME   50           // Debounce interval in ms      //
 //----------------------------------------------------------------------------//
@@ -72,88 +79,14 @@
 typedef void(*fptr_t)(void);
 
 enum op_t  { TEMP_MODE, POWER_MODE };
-enum cmd_t { IDLE, UP, DOWN, ENTER, ENTER2 };
-
-
-
 
 namespace Tools {
 
-  void smoothExp(double &, double, uint32_t, uint32_t);
-  bool trigger  (bool &,   double, float,    float);
+  void smoothExp(double &, double, uint32_t, uint32_t); // Exponential moving average
+  bool trigger  (bool &,   double, float,    float);    // Inverted Schmitt Trigger
+
+  template <typename T, typename U> void trim(T &, U, U);
 }
-
-
-
-
-// ================================= STOPWATCH =================================
-
-struct Stopwatch {
-
- private:
-
-  uint32_t _time, _tick;
-
- public:
-
-  static uint32_t lifetime;
-
-  Stopwatch (void) { _time    = micros();         }
-  ~Stopwatch(void) { lifetime = micros() - _time; }
-
-  void     reset  (void)       { _time = micros();        }
-  uint32_t getTime(void) const { return micros() - _time; }
-
-  void     tick   (void)       { _tick++;      }
-  uint32_t getTick(void) const { return _tick; }
-};
-
-// --------------------------------- STOPWATCH ---------------------------------
-
-
-
-
-// ================================= SCHEDULER =================================
-
-struct Task {
-
-  String   name;
-  fptr_t   execute;
-  uint32_t lastExecute, deltaTime;
-
-  Task(String, fptr_t, float);
-};
-
-struct Scheduler {
-
- private:
-
-  static vector<Task> _tasks;
-  static bool         _running;
-  static float        _tickrate;
-  static uint32_t     _lastTick, _lastWait, _lastWaitUntil;
-
- public:
-
-  Scheduler(void);
-
-  static void add   (String, fptr_t, float);
-  static void add   (fptr_t, float);
-  static void remove(String);
-
-  static void clear (void) { _tasks.clear(); }
-
-  static void run   (void);
-  static void stop  (void) { _running = false; };
-
-  static void wait         (uint32_t);
-  static void waitUntil    (uint32_t);
-  static void forceTickRate(float);
-
-  static uint32_t getTickRate(void) { return _tickrate; }
-};
-
-// --------------------------------- SCHEDULER ---------------------------------
 
 
 
@@ -232,14 +165,14 @@ class PID_Ctrl {
   PID_Ctrl(void);
 
   void attach(DAC* d) { _dacPtr = d;    };
-  void detach(void)   { _dacPtr = NULL; };
+  void detach(void)   { _dacPtr = nullptr; };
 
   void setPID(double p, double i, double d) { _p = p; _i = i; _d = d; }
   PID_Ctrl& setP(double p) { _p = p; return *this; }
   PID_Ctrl& setI(double i) { _i = i; return *this; }
   PID_Ctrl& setD(double d) { _d = d; return *this; }
 
-  vector<double> getPID(void) const;
+  std::vector<double> getPID(void) const;
 
   //TODO: Implement functions to quantify control performance (L1/L2-Standard)
 
@@ -257,9 +190,10 @@ class PID_Ctrl {
 
 class Heater {
 
-  double _TCR, _res20, _resCable;
-  bool   _running = false;
-  op_t   _mode    = TEMP_MODE;
+  bool     _running;
+  double   _TCR, _res20, _resCable;
+  op_t     _mode = TEMP_MODE;
+  uint16_t _power_set = 10, _temperature_set = 200;
 
  public:
 
@@ -267,8 +201,7 @@ class Heater {
   DAC          dac;
   PID_Ctrl     pid;
 
-  double   voltage, current, resistance, power, temperature;
-  uint16_t power_set = 10, temperature_set = 200;
+  double voltage, current, resistance, power, temperature;
 
   Heater(void);
 
@@ -276,10 +209,10 @@ class Heater {
   void setResCable(double res) { _resCable = res; }
   void setTCR     (double tcr) { _TCR      = tcr; }
 
-  void setTemp (uint16_t t) { temperature_set = t; }
-  void setPower(uint16_t p) { power_set       = p; }
-
-  void setMode(op_t m) { _mode = m; }
+  void setMode  (op_t     m) { _mode            = m; }
+  void setTemp  (uint16_t t) { _temperature_set = t; }
+  void setPower (uint16_t p) { _power_set       = p; }
+  void increment(int16_t);
 
   void on    (void) { _running = true;      }
   void off   (void) { _running = false;     }
@@ -298,6 +231,8 @@ class Heater {
 // =================================== INPUT ===================================
 
 struct Input {
+
+  friend class Controls;
 
  protected:
 
@@ -320,9 +255,9 @@ struct Encoder : public Input {
 
  private:
 
-  uint8_t                _pin2;
-  static vector<Encoder> _buffer;
-  static const uint8_t   _stateMachine[7][4];
+  static std::vector<Encoder> _buffer;
+  static const uint8_t        _stateMachine[7][4];
+  uint8_t                     _pin2;
 
   static void _ISR(void);
 
@@ -348,8 +283,8 @@ struct Button : public Input {
 
  private:
 
-  uint32_t               _lastRead;
-  static vector<Button>  _buffer;
+  static std::vector<Button> _buffer;
+  uint32_t                   _lastRead;
 
   static void _ISR(void);
 
@@ -367,9 +302,9 @@ struct Switch : public Input {
 
  private:
 
-  bool                  *_ptr;
-  uint32_t               _lastRead;
-  static vector<Switch>  _buffer;
+  static std::vector<Switch> _buffer;
+  bool                      *_ptr;
+  uint32_t                   _lastRead;
 
  public:
 
@@ -393,7 +328,7 @@ class Controls {
 
  private:
 
-  static vector<fptr_t> _commands;
+  static std::vector<fptr_t> _commands;
 
  public:
 
@@ -411,36 +346,17 @@ class Controls {
 
 
 
-class GUI {
-
- private:
-
-
-
- public:
-
-  Adafruit_SSD1306 display;
-
-  GUI(void);
-
-  void draw (void) {  };
-  void clear(void);
-};
-
-
-
-
 // ================================= VAPORIZER =================================
 
 class Vaporizer {
 
  public:
 
+  static Scheduler scheduler;
+
   Stopwatch watch;
-  Scheduler scheduler;
   Heater    heater;
   Controls  controls;
-  GUI       gui;
 
   Vaporizer(void);
 

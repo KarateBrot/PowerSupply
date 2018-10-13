@@ -8,7 +8,7 @@
 //############################################################################//
 
 
-#include <Vaporizer.h>
+#include "Vaporizer.h"
 
 
 
@@ -31,111 +31,13 @@ bool Tools::trigger(bool &trigger, double val, float lim_lower, float lim_upper)
   if (trigger_last != trigger) { return true; } else { return false; }
 }
 
+// Constrains (and modifies) a value according to lower and upper limit
+template <typename T, typename U>
+void Tools::trim(T &val, U lim_lower, U lim_upper) {
 
-
-
-// =============================== SCHEDULER ===================================
-
-uint32_t Stopwatch::lifetime = 0;
-
-Task::Task(String taskName, fptr_t f, float tps) {
-
-  name          = taskName;
-  execute       = f;
-
-  tps != 0
-    ? deltaTime = (uint32_t)(1000000.0f/tps)
-    : deltaTime = 0.0f;
-  lastExecute   = micros();
+  if (val < lim_lower) { val = lim_lower; } else
+  if (val > lim_upper) { val = lim_upper; }
 }
-
-vector<Task> Scheduler::_tasks;
-bool         Scheduler::_running       = true;
-float        Scheduler::_tickrate      = 0.0f;
-uint32_t     Scheduler::_lastTick      = 0;
-uint32_t     Scheduler::_lastWait      = 0;
-uint32_t     Scheduler::_lastWaitUntil = 0;
-
-Scheduler::Scheduler() {
-
-  uint32_t t = micros();
-
-  _lastTick      = t;
-  _lastWait      = t;
-  _lastWaitUntil = t;
-}
-
-void Scheduler::add(String taskName, fptr_t f, float tps) {
-
-  _tasks.push_back(Task(taskName, f, tps));
-}
-
-void Scheduler::add(fptr_t f, float tps) {
-
-  _tasks.push_back(Task("", f, tps));
-}
-
-void Scheduler::remove(String taskName) {
-
-  for (size_t n = 0; n < _tasks.size(); n++) {
-
-    if (_tasks[n].name == taskName) { _tasks.erase(_tasks.begin()+n); }
-  }
-}
-
-void Scheduler::run() {
-
-  // Initialization
-  _running       = true;
-  uint8_t  size  = _tasks.size();
-  uint32_t timer = micros();
-  for (size_t n  = 0; n < size; n++) { _tasks[n].lastExecute = timer; }
-  _lastTick      = timer;
-  _lastWait      = timer;
-  _lastWaitUntil = timer;
-
-  // Infinite loop until Scheduler::stop() is called
-  while (_running) {
-
-    size = _tasks.size();
-
-    for (size_t n = 0; n < size; n++) {
-
-      Task &task = _tasks[n];
-      timer      = micros();
-
-      if ((uint32_t)(timer - task.lastExecute) >= task.deltaTime) {
-        task.execute();
-        task.lastExecute += task.deltaTime;
-      }
-    }
-
-    timer     = micros();
-    _tickrate = 1000000.0f/(float)(uint32_t)(timer - _lastTick);
-    _lastTick = timer;
-
-    yield();
-  }
-}
-
-void Scheduler::wait(uint32_t timer) {
-
-  _lastWait = micros();
-  while ((uint32_t)(micros() - _lastWait) < timer) { yield(); }
-}
-
-void Scheduler::waitUntil(uint32_t timer) {
-
-  while ((uint32_t)(micros() - _lastWaitUntil) < timer) { yield(); }
-  _lastWaitUntil = micros();
-}
-
-void Scheduler::forceTickRate(float tps) {
-
-  waitUntil( (uint32_t)(1000000.0f/tps + 0.5f) );
-}
-
-// ------------------------------- SCHEDULER -----------------------------------
 
 
 
@@ -234,9 +136,9 @@ void PID_Ctrl::_update(double value, double value_set) {
   }
 }
 
-vector<double> PID_Ctrl::getPID() const {
+std::vector<double> PID_Ctrl::getPID() const {
 
-  vector<double> v({_p, _i, _d});
+  std::vector<double> v({_p, _i, _d});
   return v;
 }
 
@@ -276,6 +178,26 @@ Heater::Heater() {
 
   pid.attach(&dac);
   pid.setPID(PID_P, PID_I, PID_D);
+}
+
+void Heater::increment(int16_t val) {
+
+  switch (_mode) {
+
+    case TEMP_MODE:
+
+      _temperature_set += val;
+      Tools::trim(_temperature_set, HEATER_TEMP_MIN, HEATER_TEMP_MAX);
+      break;
+
+    case POWER_MODE:
+
+      _power_set += val;
+      Tools::trim(_power_set, HEATER_POWER_MIN, HEATER_POWER_MAX);
+      break;
+
+    default: break;
+  }
 }
 
 void Heater::update() {
@@ -318,8 +240,8 @@ void Heater::regulate() {
 
     // TODO: Set ideal PID consts for each mode
     _mode == TEMP_MODE
-      ? pid.regulate(temperature, temperature_set)
-      : pid.regulate(power, power_set);
+      ? pid.regulate(temperature, _temperature_set)
+      : pid.regulate(power, _power_set);
     sensor.setPrecision(LOW);
 
   } else {
@@ -369,7 +291,7 @@ void Heater::calibrate() {
 
 // ================================= Input ====================================
 
-vector<Encoder> Encoder::_buffer;
+std::vector<Encoder> Encoder::_buffer;
 
 const uint8_t Encoder::_stateMachine[7][4] = {
 
@@ -425,7 +347,7 @@ uint8_t Encoder::read() {
 
 // - - - - -
 
-vector<Button>  Button::_buffer;
+std::vector<Button>  Button::_buffer;
 
 Button::Button(uint8_t pin, fptr_t c) {
 
@@ -479,7 +401,7 @@ uint8_t Button::read() {
 
 // - - - - -
 
-vector<Switch>  Switch::_buffer;
+std::vector<Switch>  Switch::_buffer;
 
 Switch::Switch(uint8_t pin, bool *ptr) {
 
@@ -512,7 +434,7 @@ uint8_t Switch::read() {
 
 // ================================ Controls ===================================
 
-vector<fptr_t>  Controls::_commands;
+std::vector<fptr_t>  Controls::_commands;
 
 Controls::Controls() {
 
@@ -551,37 +473,17 @@ void Controls::update() {
 
 
 
-// ================================== GUI ======================================
-
-GUI::GUI() {
-
-  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
-  display.setTextColor(WHITE);
-}
-
-void GUI::clear() {
-
-  display.clearDisplay();
-  display.display();
-}
-
-// ---------------------------------- GUI --------------------------------------
-
-
-
-
 // =============================== VAPORIZER ===================================
 
-Vaporizer::Vaporizer() {
+Scheduler Vaporizer::scheduler;
 
-
-}
+Vaporizer::Vaporizer() {}
 
 // Needs to be called as late as possible in Setup() to overwrite Wire (I2C) settings
 void Vaporizer::begin(uint8_t scl, uint8_t sda) {
 
   Wire.begin(sda, scl);                      // Select I2C pins
-  gui.display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // FIXME: Can I somehow get rid of this line? (What is going into the Wire constructor in Adafruit lib?)
+  // gui.display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // FIXME: Can I somehow get rid of this line? (What is going into the Wire constructor in Adafruit lib?)
   Wire.setClock(WIRE_FREQ);                  // Faster I2C transmission (800kHz)
   analogWriteRange(PWM_RANGE);
   analogWriteFreq(PWM_FREQ);

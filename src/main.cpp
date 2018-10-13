@@ -10,21 +10,29 @@
 
 //----------------------------------------------------------------------------//
 
-#include <Vaporizer.h>
+#include "Vaporizer.h"
 // #include <MegunoLinkInterface.h>
 
 Vaporizer vape;
 uint32_t  counter;
 
-
 void left () { Serial.println(--counter); }
 void right() { Serial.println(++counter); }
 void enter() { Serial.println("BANG");    }
-void test () { Scheduler::remove("");     }
-void counter1() {Serial.println(++counter);}
+void count() { Serial.println(++counter); }
+void del  () { vape.scheduler.stop();     }
+
+void info () {
+
+  Serial.println("- - - - - - - - -");
+  Serial.print  ("Runtime: ");
+  Serial.print  (Stopwatch::lifetime/1000.0, 3);
+  Serial.println(" ms");
+}
 
 
 void setup() {
+
 
   Serial.begin(9600);
 
@@ -33,9 +41,14 @@ void setup() {
   // vape.controls.add(Button(D6, enter));
 
   // vape.scheduler.add(Controls::update, 30);
-  vape.scheduler.add(counter1, 10);
-  vape.scheduler.add(test, 0.5);
+  vape.scheduler.add(count, 10);
+  vape.scheduler.add(del, 0.5);
+
+  Stopwatch *watch = new Stopwatch();
   vape.scheduler.run();
+  delete watch;
+
+  info();
 }
 
 
