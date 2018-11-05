@@ -18,15 +18,14 @@
 //----------------------------------------------------------------------------//
   #include <Arduino.h>                                                        //
 //----------------------------------------------------------------------------//
-  #include <Adafruit_INA219.h>                // Current & voltage sensor     //
-  #include <Adafruit_MCP4725.h>               // Digital to analog converter  //
-  #include <Adafruit_SSD1306.h>               // Display driver               //
-  #include <Adafruit_GFX.h>                   // Graphics engine              //
-//----------------------------------------------------------------------------//
   #include <vector>                                                           //
 //----------------------------------------------------------------------------//
   #include "Stopwatch.h"                                                      //
   #include "Scheduler.h"                                                      //
+  #include "Sensor.h"                                                         //
+  #include "DAC.h"                                                            //
+  #include "PID.h"                                                            //
+  #include "Controls.h"                                                       //
   #include "img/splash.h"                                                     //
 //----------------------------------------------------------------------------//
 //############################################################################//
@@ -37,10 +36,6 @@
 //############################################################################//
 //----------------------------------------------------------------------------//
   #define V_FIRMWARE_VERSION     "0.1-a"                                      //
-//----------------------------------------------------------------------------//
-  #define WIRE_FREQ               800000L                                     //
-  #define PWM_RANGE               1023                                        //
-  #define PWM_FREQ                4000        // Max: CPU_CLOCK / PWM_RANGE   //
 //----------------------------------------------------------------------------//
   #define HEATER_TCR              SS316                                       //
 //----------------------------------------------------------------------------//
@@ -69,141 +64,84 @@
   #define HEATER_POWER_MIN        0           // !<0 because Power is unsignd //
   #define HEATER_POWER_MAX       40                                           //
 //----------------------------------------------------------------------------//
-  #define BUTTON_DEBOUNCE_TIME   50           // Debounce interval in ms      //
-//----------------------------------------------------------------------------//
 //############################################################################//
-
-
 
 
 typedef void(*fptr_t)(void);
 
 enum op_t  { TEMP_MODE, POWER_MODE };
 
+
+
+
+// =================================== TOOLS ===================================
+
 namespace Tools {
 
   void smoothExp(double &, double, uint32_t, uint32_t); // Exponential moving average
   bool trigger  (bool &,   double, float,    float);    // Inverted Schmitt Trigger
 
+  void digitalWriteFast(uint8_t, bool);  // Set ESP8266 pins HIGH or LOW very fast
+
   template <typename T, typename U> void trim(T &, U, U);
 }
 
+// ----------------------------------- TOOLS -----------------------------------
 
 
 
-// ================================== SENSORS ==================================
 
-struct Sensor {
+// ================================= REGULATOR =================================
 
+class Regulator {
 
+protected:
+  bool     _running;
+  uint16_t _voltage_set, _current_set, _power_set;
+
+public:
+  static Sensor_Load sensor;
+  static PID         pid;
+  static DAC         dac;
+  
+  static double voltage, current, power;
+  
+  Regulator(void);
+  
+  static void update  (void);
+  static void regulate(double, double);
+
+  void on    (void) { _running = true;      }
+  void off   (void) { _running = false;     }
+  void toggle(void) { _running = !_running; }
+
+  void setVoltage(uint16_t v) { _voltage_set = v; }
+  void setCurrent(uint16_t c) { _current_set = c; }
+  void setPower  (uint16_t p) { _power_set   = p; }
 };
 
-
-struct Sensor_Power : public Sensor {
-
- private:
-
-  static Adafruit_INA219 _INA219;
-
- public:
-
-  Sensor_Power(void);
-
-  void setPrecision(bool);
-
-  double getCurrent(void);
-  double getVoltage(void);
-};
-
-
-struct Sensor_Ambient : public Sensor {
-
- private:
-
- public:
-
-  void read(void);
-};
-
-// ---------------------------------- SENSORS ----------------------------------
-
-
-
-
-// ==================================== DAC ====================================
-
-struct DAC {
-
- private:
-
-  static Adafruit_MCP4725 _MCP4725;
-
- public:
-
-  DAC(void);
-
-  void setOutput(uint16_t);
-};
-
-// ------------------------------------ DAC ------------------------------------
-
-
-
-
-// ==================================== PID ====================================
-
-class PID_Ctrl {
-
-  double _p, _error, _i, _errorInt, _d, _errorDiff;
-  double _dt, _timeLast, _valueLast;
-  DAC   *_dacPtr;
-
-  void   _update(double, double);
-
- public:
-
-  PID_Ctrl(void);
-
-  void attach(DAC* d) { _dacPtr = d;    };
-  void detach(void)   { _dacPtr = nullptr; };
-
-  void setPID(double p, double i, double d) { _p = p; _i = i; _d = d; }
-  PID_Ctrl& setP(double p) { _p = p; return *this; }
-  PID_Ctrl& setI(double i) { _i = i; return *this; }
-  PID_Ctrl& setD(double d) { _d = d; return *this; }
-
-  std::vector<double> getPID(void) const;
-
-  //TODO: Implement functions to quantify control performance (L1/L2-Standard)
-
-  double getOutput(void) const;
-  void   regulate (double, double);
-  void   autotune (void);
-};
-
-// ------------------------------------ PID ------------------------------------
+// --------------------------------- REGULATOR ---------------------------------
 
 
 
 
 // =================================== HEATER ==================================
 
-class Heater {
+class Heater : public Regulator {
 
-  bool     _running;
+protected:
   double   _TCR, _res20, _resCable;
   op_t     _mode = TEMP_MODE;
-  uint16_t _power_set = 10, _temperature_set = 200;
+  uint16_t _temperature_set = 200;
 
- public:
-
-  Sensor_Power sensor;
-  DAC          dac;
-  PID_Ctrl     pid;
-
-  double voltage, current, resistance, power, temperature;
+public:
+  static double resistance, temperature;
 
   Heater(void);
+  
+  void update   (void); 
+  void regulate (void);
+  void calibrate(void);
 
   void setRes20   (double res) { _res20    = res; }
   void setResCable(double res) { _resCable = res; }
@@ -211,165 +149,10 @@ class Heater {
 
   void setMode  (op_t     m) { _mode            = m; }
   void setTemp  (uint16_t t) { _temperature_set = t; }
-  void setPower (uint16_t p) { _power_set       = p; }
   void increment(int16_t);
-
-  void on    (void) { _running = true;      }
-  void off   (void) { _running = false;     }
-  void toggle(void) { _running = !_running; }
-
-  void update   (void);
-  void regulate (void);
-  void calibrate(void);
 };
 
 // ----------------------------------- HEATER ----------------------------------
-
-
-
-
-// =================================== INPUT ===================================
-
-struct Input {
-
-  friend class Controls;
-
- protected:
-
-  uint8_t _state, _pin;
-
- public:
-
-  enum   state_t { UP, DOWN };
-  fptr_t command;
-
-  uint8_t getPin(void) const { return _pin; }
-
-  virtual uint8_t read(void) = 0;
-};
-
-
-struct Encoder : public Input {
-
-  friend class Controls;
-
- private:
-
-  static std::vector<Encoder> _buffer;
-  static const uint8_t        _stateMachine[7][4];
-  uint8_t                     _pin2;
-
-  static void _ISR(void);
-
- public:
-
-  enum state_t {
-    START, CW_FINAL, CW_BEGIN, CW_NEXT, CCW_BEGIN, CCW_FINAL, CCW_NEXT,
-    CW = 0x10, CCW = 0x20
-  };
-
-  fptr_t commandCCW;
-
-  Encoder(uint8_t, uint8_t, fptr_t, fptr_t);
-
-  uint8_t getPin2(void) const { return _pin2; }
-  uint8_t read(void);
-};
-
-
-struct Button : public Input {
-
-  friend class Controls;
-
- private:
-
-  static std::vector<Button> _buffer;
-  uint32_t                   _lastRead;
-
-  static void _ISR(void);
-
- public:
-
-  Button(uint8_t, fptr_t);
-
-  uint8_t read(void);
-};
-
-
-struct Switch : public Input {
-
-  friend class Controls;
-
- private:
-
-  static std::vector<Switch> _buffer;
-  bool                      *_ptr;
-  uint32_t                   _lastRead;
-
- public:
-
-  Switch(uint8_t, bool*);
-
-  uint8_t read(void);
-};
-
-// ----------------------------------- INPUT -----------------------------------
-
-
-
-
-// ================================= CONTROLS ==================================
-
-class Controls {
-
-  friend class Encoder;
-  friend class Button;
-  friend class Switch;
-
- private:
-
-  static std::vector<fptr_t> _commands;
-
- public:
-
-  Controls(void);
-
-  static void add(Encoder);
-  static void add(Button);
-  static void add(Switch);
-
-  static void update(void);
-};
-
-// --------------------------------- CONTROLS ----------------------------------
-
-
-
-
-// ================================= VAPORIZER =================================
-
-class Vaporizer {
-
- public:
-
-  static Scheduler scheduler;
-
-  Stopwatch watch;
-  Heater    heater;
-  Controls  controls;
-
-  Vaporizer(void);
-
-  void begin(uint8_t, uint8_t);
-  void run  (uint8_t);
-  void run  (void) { run(30); }
-
-  static String version(void) { return V_FIRMWARE_VERSION; }
-};
-
-// --------------------------------- VAPORIZER ---------------------------------
-
-
 
 
 #endif // VAPORIZER_H

@@ -13,6 +13,8 @@
 
 
 
+// =================================== TOOLS ===================================
+
 // Exponential smoothing (simulates capacitor)
 void Tools::smoothExp(double &x, double val, uint32_t sampleTime, uint32_t timeConst)
 {
@@ -31,6 +33,14 @@ bool Tools::trigger(bool &trigger, double val, float lim_lower, float lim_upper)
   if (trigger_last != trigger) { return true; } else { return false; }
 }
 
+// Set ESP8266 pins HIGH or LOW very fast
+void Tools::digitalWriteFast(uint8_t pin, bool val) {
+
+  // Register for setting pin HIGH: PERIPHS_GPIO_BASEADDR + 4
+  // Register for setting pin LOW:  PERIPHS_GPIO_BASEADDR + 8
+  WRITE_PERI_REG(PERIPHS_GPIO_BASEADDR + 4*(val + 1), 1 << pin);
+}
+
 // Constrains (and modifies) a value according to lower and upper limit
 template <typename T, typename U>
 void Tools::trim(T &val, U lim_lower, U lim_upper) {
@@ -39,133 +49,60 @@ void Tools::trim(T &val, U lim_lower, U lim_upper) {
   if (val > lim_upper) { val = lim_upper; }
 }
 
+// ----------------------------------- TOOLS -----------------------------------
 
 
 
-// ================================= SENSOR ====================================
 
-Adafruit_INA219 Sensor_Power::_INA219;
+// ================================= REGULATOR =================================
 
-Sensor_Power::Sensor_Power() {
+Sensor_Load Regulator::sensor;
+PID         Regulator::pid;
+DAC         Regulator::dac;
 
-  _INA219.begin();
+double Regulator::voltage;
+double Regulator::current;
+double Regulator::power;
+
+Regulator::Regulator() {
+
+  pid.setPID(PID_P, PID_I, PID_D);
 }
 
-void Sensor_Power::setPrecision(bool b) {
-
-  b ? _INA219.setCalibration_16V_400mA() : _INA219.setCalibration_32V_2A();
-}
-
-double Sensor_Power::getCurrent() {
-
-  // Current [mA]
-  // R050 instead of R100 shunt resistor (R050: R = 50mΩ | R100: R = 100mΩ)
-  // We need to know the actual current flow for a 50mΩ shunt (I050 = U/R050)
-  // I050 = U/R050 = U/(0.5*R100) = 2*U/R100 = 2*I100 ─► 2*getCurrent_mA()
-  return _INA219.getCurrent_mA()*2.0;
-}
-
-double Sensor_Power::getVoltage() {
+void Regulator::update() {
 
   // Voltage [mV]
-  return _INA219.getBusVoltage_V()*1000.0;
+  voltage =
+    0.5*voltage +
+    0.5*sensor.getVoltage();
+
+  // Current [mA]
+  current =
+    0.5*current +
+    0.5*sensor.getCurrent();
+
+  // Power [W]
+  power =
+    0.5*power +
+    0.5*voltage*current/1000000.0;
 }
 
-// -------------------------------- SENSOR -------------------------------------
+void Regulator::regulate(double value, double value_set) {
 
-
-
-
-// ================================== DAC ======================================
-
-Adafruit_MCP4725 DAC::_MCP4725;
-
-DAC::DAC() {
-
-  _MCP4725.begin(0x62);
-  _MCP4725.setVoltage(4095, false);            // boot with minimal power output
+  pid.update(value, value_set);
+  uint16_t output = (uint16_t)( pid.getOutput()*4095.0 + 0.5 );
+  dac.setOutput(output);
 }
 
-// Applies DC voltage from 0..Vcc at pin "OUT" on MCP4725 breakout board
-void DAC::setOutput(uint16_t val) {
-
-  _MCP4725.setVoltage(4095 - val, false);
-}
-
-// ---------------------------------- DAC --------------------------------------
+// --------------------------------- REGULATOR ---------------------------------
 
 
 
 
-// ================================ PID_Ctrl ===================================
+// =================================== Heater ==================================
 
-// -------------------------------------------------------------------------- //
-//                          --< PID-CONTROLLER >--                            //
-// -----------------:-------------------------------------------------------- //
-// SIGNAL OUTPUT:   : u(t) = P*e(t) + I*∫e(t)dt + D*de(t)/dt                  //
-// -----------------:-------------------------------------------------------- //
-// ERROR:           :     e(t)     = T_set - T(t) = ΔT                        //
-// PAST ERR:        :     ∫e(t)dt  = e_past                                   //
-// PREDICTED ERR:   :     de(t)/dt = -dT/dt                                   //
-// -----------------:-------------------------------------------------------- //
-//       ──►        : u(t) = P*ΔT + I*e_past - D*dT/dt                        //
-// -----------------:-------------------------------------------------------- //
-
-PID_Ctrl::PID_Ctrl() {
-
-}
-
-void PID_Ctrl::_update(double value, double value_set) {
-
-  // e(t)
-  _error = value_set - value;
-
-  // dt
-  uint32_t t = micros();
-  _dt        = (uint32_t)(t - _timeLast)/1000000.0;
-  _timeLast  = t;
-
-  // de(t)/dt
-  _errorDiff = (value - _valueLast)/_dt;
-  _valueLast =  value;
-
-  // ∫e(t)dt
-  if (_error  <= 10) {        // only integrate shortly before reaching e(t) = 0
-    _errorInt += _error*_dt;
-    _errorInt  = constrain(_errorInt, 0, 1/_i);
-  }
-}
-
-std::vector<double> PID_Ctrl::getPID() const {
-
-  std::vector<double> v({_p, _i, _d});
-  return v;
-}
-
-double PID_Ctrl::getOutput() const {
-
-  // u(t) = P*ΔT + I*e_past - D*dT/dt
-  return constrain(_p*_error + _i*_errorInt - _d*_errorDiff, 0, 1);
-}
-
-void PID_Ctrl::regulate(double value, double value_set) {
-
-  _update(value, value_set);
-  uint16_t output = (uint16_t)( getOutput()*4095.0 + 0.5 );
-  _dacPtr->setOutput(output);
-}
-
-void PID_Ctrl::autotune() {
-
-  // TODO: Autotune algorithm
-}
-
-// -------------------------------- PID_Ctrl -----------------------------------
-
-
-
-
-// ================================= Heater ====================================
+double Heater::resistance;
+double Heater::temperature;
 
 Heater::Heater() {
 
@@ -175,9 +112,71 @@ Heater::Heater() {
 
   resistance  = HEATER_RES20;
   temperature = 20.0;
+}
 
-  pid.attach(&dac);
-  pid.setPID(PID_P, PID_I, PID_D);
+void Heater::update() {
+
+  Regulator::update();
+
+  // Resistance [Ω]
+  resistance =
+    0.7*resistance +
+    0.3*(voltage/constrain(current, 1, 15000) - _resCable);
+
+  // Resistance [Ω] - if no heater connected
+  if (voltage > 100 && current < 10) { resistance = _res20; }
+
+  // Temperature [°C]
+  temperature =
+    0.7*temperature +
+    0.3*(log(resistance/_res20)/_TCR + 20.0);
+}
+
+// Sets DAC pin "OUT" to DC voltage according to PID-controller
+void Heater::regulate() {
+
+  if (_running) {
+
+    // TODO: Set ideal PID consts for each mode
+    _mode == TEMP_MODE
+      ? Regulator::regulate(temperature, _temperature_set)
+      : Regulator::regulate(power, _power_set);
+    sensor.setPrecision(LOW);
+
+  } else {
+
+    dac.setOutput(0);
+    sensor.setPrecision(HIGH);
+  }
+}
+
+// Make sure heater core is at room temperature before calibration!
+void Heater::calibrate() {
+
+  pid.setPID(1.0, 0.0, 0.0);                  // TODO: Manual tuning
+  sensor.setPrecision(HIGH);
+
+  // Make sure current flow is 10mA +/- 1mA
+  double currentLast = 0.0;
+  while (abs(current - 10.0) > 1.0 && abs(currentLast - 10.0) > 1.0) {
+    currentLast = current;
+    update();
+    Regulator::regulate(current, 10.0);
+    yield();
+  }
+
+  // Calculate resistance using reference current of 10mA
+  for (size_t i = 0; i < 15; i++) {
+    update();
+    Regulator::regulate(current, 10.0);
+    yield();
+  }
+
+  // TODO: Room temp measurement to compensate res for temps != 20°C
+
+  dac.setOutput(0);
+  setRes20(resistance);
+  sensor.setPrecision(LOW);
 }
 
 void Heater::increment(int16_t val) {
@@ -200,302 +199,4 @@ void Heater::increment(int16_t val) {
   }
 }
 
-void Heater::update() {
-
-  // Voltage [mV]
-  voltage =
-    0.5*voltage +
-    0.5*sensor.getVoltage();
-
-  // Current [mA]
-  current =
-    0.5*current +
-    0.5*sensor.getCurrent();
-
-// ------------
-
-  // Resistance [Ω]
-  resistance =
-    0.7*resistance +
-    0.3*(voltage/constrain(current, 1, 15000) - _resCable);
-
-  // Resistance [Ω] - if no heater connected
-  if (voltage > 100 && current < 10) { resistance = _res20; }
-
-  // Power [W]
-  power =
-    0.5*power +
-    0.5*voltage*current/1000000.0;
-
-  // Temperature [°C]
-  temperature =
-    0.7*temperature +
-    0.3*(log(resistance/_res20)/_TCR + 20.0);
-}
-
-// Sets DAC pin "OUT" to DC voltage according to PID-controller
-void Heater::regulate() {
-
-  if (_running) {
-
-    // TODO: Set ideal PID consts for each mode
-    _mode == TEMP_MODE
-      ? pid.regulate(temperature, _temperature_set)
-      : pid.regulate(power, _power_set);
-    sensor.setPrecision(LOW);
-
-  } else {
-
-    dac.setOutput(0);
-    sensor.setPrecision(HIGH);
-  }
-}
-
-// Make sure heater core is at room temperature before calibration!
-void Heater::calibrate() {
-
-  PID_Ctrl pid_calibration;
-
-  pid_calibration.attach(&dac);
-  pid_calibration.setPID(1.0, 0.0, 0.0);                  // TODO: Manual tuning
-
-  sensor.setPrecision(HIGH);
-
-  // Make sure current flow is 10mA +/- 1mA
-  double currentLast = 0.0;
-  while (abs(current - 10.0) > 1.0 && abs(currentLast - 10.0) > 1.0) {
-    currentLast = current;
-    update();
-    pid_calibration.regulate(current, 10.0);
-    yield();
-  }
-
-  // Calculate resistance using reference current of 10mA
-  for (size_t i = 0; i < 15; i++) {
-    update();
-    pid_calibration.regulate(current, 10.0);
-    yield();
-  }
-
-  // TODO: Room temp measurement to compensate res for temps != 20°C
-
-  dac.setOutput(0);
-  setRes20(resistance);
-  sensor.setPrecision(LOW);
-}
-
-// --------------------------------- Heater ------------------------------------
-
-
-
-
-// ================================= Input ====================================
-
-std::vector<Encoder> Encoder::_buffer;
-
-const uint8_t Encoder::_stateMachine[7][4] = {
-
-  { START,    CW_BEGIN,  CCW_BEGIN, START       },
-  { CW_NEXT,  START,     CW_FINAL,  START | CW  },
-  { CW_NEXT,  CW_BEGIN,  START,     START       },
-  { CW_NEXT,  CW_BEGIN,  CW_FINAL,  START       },
-  { CCW_NEXT, START,     CCW_BEGIN, START       },
-  { CCW_NEXT, CCW_FINAL, START,     START | CCW },
-  { CCW_NEXT, CCW_FINAL, CCW_BEGIN, START       }
-};
-
-Encoder::Encoder(uint8_t CLK, uint8_t DT, fptr_t cw, fptr_t ccw) {
-
-  _pin = CLK;
-  pinMode(_pin, INPUT);
-  digitalWrite(_pin, LOW);
-
-  _pin2 = DT;
-  pinMode(_pin2, INPUT);
-  digitalWrite(_pin2, LOW);
-
-  command    = cw;
-  commandCCW = ccw;
-
-  _state = START;
-}
-
-void Encoder::_ISR() {
-
-  uint8_t state = 0;
-
-  for (Encoder enc : _buffer) {
-
-    state = enc.read();
-
-    switch (state) {
-      case CW:  Controls::_commands.push_back(enc.command);    break;
-      case CCW: Controls::_commands.push_back(enc.commandCCW); break;
-      default:  break;
-    }
-  }
-}
-
-uint8_t Encoder::read() {
-
-  // state machine naturally debounces encoder
-  uint8_t stateTemp = (digitalRead(_pin) << 1) | digitalRead(_pin2);
-  _state = _stateMachine[_state & 0xf][stateTemp];
-
-  return _state & 0x30;
-}
-
-// - - - - -
-
-std::vector<Button>  Button::_buffer;
-
-Button::Button(uint8_t pin, fptr_t c) {
-
-  _pin = pin;
-
-  pinMode     (_pin, INPUT);
-  digitalWrite(_pin, LOW);
-
-  command = c;
-
-  _state = digitalRead(_pin);
-}
-
-void Button::_ISR() {
-
-  uint8_t state, size;
-
-  size = _buffer.size();
-
-  for (size_t n = 0; n < size; n++) {
-
-    Button &btn = _buffer[n];
-    state       = btn.read();
-
-    // Ignore bounces (state == 0xFF)
-    if (state != 0xFF) {
-      switch (state) {
-        case DOWN: Controls::_commands.push_back(btn.command); break;
-        default:   break;
-      }
-    }
-  }
-}
-
-uint8_t Button::read() {
-
-  _state = 0xFF;
-
-  // Button debouncing is a combination of (1)hardware and (2)software debouncing
-  // (1) Low-pass filter: R = 10kΩ | C = 10nF | τ = R*C = 0.0001s
-  //    ──► Capacitor (103) parallel to button and pulldown resistor at button(-)
-  // (2) In addition: easy debouncing to ignore remaining jitters
-  if ((uint32_t)(millis() - _lastRead) >= BUTTON_DEBOUNCE_TIME) {
-
-    _lastRead = millis();
-    _state    = digitalRead(_pin);
-  }
-
-  return _state;
-}
-
-// - - - - -
-
-std::vector<Switch>  Switch::_buffer;
-
-Switch::Switch(uint8_t pin, bool *ptr) {
-
-  _ptr = ptr;
-  _pin = pin;
-
-  pinMode     (_pin, INPUT);
-  digitalWrite(_pin, LOW);
-
-  _state = digitalRead(_pin);
-}
-
-uint8_t Switch::read() {
-
-  // easy debouncing (1000/BUTTON_DEBOUNCE_TIME switch state changes per second max.)
-  if ((uint32_t)(millis() - _lastRead) >= BUTTON_DEBOUNCE_TIME) {
-
-    _lastRead = millis();
-    _state    = digitalRead(_pin);
-   *_ptr      = _state;
-  }
-
-  return _state;
-}
-
-// --------------------------------- Input -------------------------------------
-
-
-
-
-// ================================ Controls ===================================
-
-std::vector<fptr_t>  Controls::_commands;
-
-Controls::Controls() {
-
-}
-
-void Controls::add(Encoder enc) {
-
-  Encoder::_buffer.push_back(enc);
-  uint8_t pin  = digitalPinToInterrupt(Encoder::_buffer.back().getPin() );
-  uint8_t pin2 = digitalPinToInterrupt(Encoder::_buffer.back().getPin2());
-  attachInterrupt(pin,  Encoder::_ISR, CHANGE);
-  attachInterrupt(pin2, Encoder::_ISR, CHANGE);
-}
-
-void Controls::add(Button btn) {
-
-  Button::_buffer.push_back(btn);
-  uint8_t pin = digitalPinToInterrupt(Button::_buffer.back().getPin());
-  attachInterrupt(pin, Button::_ISR, CHANGE);
-}
-
-void Controls::add(Switch sw) {
-
-  Switch::_buffer.push_back(sw);
-}
-
-void Controls::update() {
-
-  for (Switch sw  : Switch::_buffer) { sw.read(); }
-  for (fptr_t cmd : _commands)       { cmd();     }
-  _commands.clear();
-}
-
-// -------------------------------- Controls -----------------------------------
-
-
-
-
-// =============================== VAPORIZER ===================================
-
-Scheduler Vaporizer::scheduler;
-
-Vaporizer::Vaporizer() {}
-
-// Needs to be called as late as possible in Setup() to overwrite Wire (I2C) settings
-void Vaporizer::begin(uint8_t scl, uint8_t sda) {
-
-  Wire.begin(sda, scl);                      // Select I2C pins
-  // gui.display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // FIXME: Can I somehow get rid of this line? (What is going into the Wire constructor in Adafruit lib?)
-  Wire.setClock(WIRE_FREQ);                  // Faster I2C transmission (800kHz)
-  analogWriteRange(PWM_RANGE);
-  analogWriteFreq(PWM_FREQ);
-}
-
-void Vaporizer::run(uint8_t tickrate) {
-
-  watch.tick();
-  heater.update();
-  heater.regulate();
-  controls.update();
-  scheduler.forceTickRate(tickrate);
-}
-
-// ------------------------------- VAPORIZER -----------------------------------
+// ----------------------------------- Heater ----------------------------------

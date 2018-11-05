@@ -1,7 +1,7 @@
 #ifndef SCHEDULER_H
 #define SCHEDULER_H
 
-#include <Arduino.h>
+#include "Arduino.h"
 #include <vector>
 
 typedef void(*fptr_t)(void);
@@ -9,42 +9,49 @@ typedef void(*fptr_t)(void);
 
 struct Task {
 
-public:
-  String   name;
-  fptr_t   callback;
-  uint32_t lastCallback, deltaTime;
+  fptr_t callback;
+  bool   toBeDeleted;
+  
+  uint32_t 
+    lastCallback, 
+    deltaTime, 
+    offset, 
+    numCalls, numCallsMax, 
+    birthtime, lifetime;
 
-  Task(String, fptr_t, float);
+  Task(fptr_t);
 };
 
 
 class Scheduler {
 
 private:
-
   std::vector<Task> _tasks;
-
+  
   bool     _running;
-  float    _tickrate;
-  uint32_t _lastTick, _lastWait, _lastWaitUntil;
+  uint32_t _tickrate, _lastTick, _lastWait, _lastWaitUntil;
 
+  static bool _isMarkedToDelete(Task& task) { return task.toBeDeleted; }
+  
 public:
-
   Scheduler(void);
 
-  void add   (String, fptr_t &, float);
-  void add   (fptr_t, float);
-  void remove(String);
+  Scheduler& add      (fptr_t);
+  Scheduler& period   (uint32_t);
+  Scheduler& frequency(float);
+  Scheduler& numCalls (uint32_t);
+  Scheduler& lifetime (uint32_t);
+  Scheduler& offset   (uint32_t);
 
-  void run   (void);
-  void stop  (void) { _running = false; }
-  void clear (void) { _tasks.clear(); }
+  void run  (void);
+  void stop (void) { _running = false; }
+  void clear(void) { _tasks.clear(); }
 
   void wait         (uint32_t);
   void waitUntil    (uint32_t);
   void forceTickRate(float);
 
-  uint32_t getTickRate(void) { return _tickrate; }
+  uint32_t getTickRate(void) const { return _tickrate; }
 };
 
 

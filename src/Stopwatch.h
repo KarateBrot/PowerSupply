@@ -4,8 +4,6 @@
 #include <Arduino.h>
 
 
-
-
 class Stopwatch {
 
 private:
@@ -25,8 +23,6 @@ public:
   void     tick   (void)       { _tick++;      }
   uint32_t getTick(void) const { return _tick; }
 };
-
-
 
 
 #endif // STOPWATCH_H
