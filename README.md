@@ -1,15 +1,10 @@
-# Vaporizer_ESP8266
-Library for operating custom built vaporizer based on ESP8266
+# PowerSupply
+Library for operating custom built power supply for batteries ranging from 5V to 24V based on the ESP8266
 
-## Overview
-This library will be the driver for my vaporizer built mostly using cheap breakout boards
 
-### Features
-* Power: 100W / 10A
+## Features
+* **Input: 5V - 24V (10A max.)**
+* **Output: 1V - 30V (10A max.)**
 * Arduino framework
 * PID-controlled
 * Graphical User Interface
-* Unlimited range of heating elements
-* Underfloor light
-* Will be open source
-* Port to ESP32 coming soon

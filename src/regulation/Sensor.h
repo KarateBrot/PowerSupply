@@ -1,7 +1,7 @@
 #ifndef SENSOR_H
 #define SENSOR_H
 
-#include <Adafruit_INA219.h>                         // Current & voltage sensor
+#include "Adafruit_INA219.h"                         // Current & voltage sensor
 
 
 struct Sensor {};

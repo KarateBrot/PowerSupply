@@ -1,7 +1,7 @@
 #ifndef DAC_H
 #define DAC_H
 
-#include <Adafruit_MCP4725.h>                     // Digital to analog converter
+#include "Adafruit_MCP4725.h"                     // Digital to analog converter
 
 
 struct DAC {

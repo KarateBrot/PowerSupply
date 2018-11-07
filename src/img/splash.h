@@ -11,7 +11,7 @@
 #ifndef SPLASH_H
 #define SPLASH_H
 
-#include <Arduino.h>
+#include "Arduino.h"
 
 
 static const uint8_t PROGMEM IMG_Splash[] = {

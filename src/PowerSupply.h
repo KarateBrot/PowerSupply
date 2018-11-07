@@ -1,38 +1,38 @@
 //############################################################################//
 //                                                                            //
-//     VAPORIZER.H - Library for operating custon built vaporizer based       //
-//                   on ESP8266                                               //
+//     POWERSUPPLY.H - Library for operating custon built power supply based  //
+//                     on the ESP8266                                         //
 //----------------------------------------------------------------------------//
 //                   © 2018, Jan Post                                         //
 //                                                                            //
 //############################################################################//
 
 
-#ifndef VAPORIZER_H
-#define VAPORIZER_H
+#ifndef POWERSUPPLY_H
+#define POWERSUPPLY_H
 
 
 //############################################################################//
-//                                 LIBRARIES                                  //
+//                                  HEADERS                                   //
 //############################################################################//
 //----------------------------------------------------------------------------//
-  #include <Arduino.h>                                                        //
+  #include "Arduino.h"                                                        //
 //----------------------------------------------------------------------------//
   #include <vector>                                                           //
 //----------------------------------------------------------------------------//
-  #include "Stopwatch.h"                                                      //
-  #include "Scheduler.h"                                                      //
-  #include "Sensor.h"                                                         //
-  #include "DAC.h"                                                            //
-  #include "PID.h"                                                            //
-  #include "Controls.h"                                                       //
   #include "img/splash.h"                                                     //
+  #include "timing/Stopwatch.h"                                               //
+  #include "timing/Scheduler.h"                                               //
+  #include "regulation/Sensor.h"                                              //
+  #include "regulation/PID.h"                                                 //
+  #include "regulation/DAC.h"                                                 //
+  #include "controls/Controls.h"                                              //
 //----------------------------------------------------------------------------//
 //############################################################################//
 
 
 //############################################################################//
-//                                 SETTINGS                                   //
+//                                  DEFINES                                   //
 //############################################################################//
 //----------------------------------------------------------------------------//
   #define V_FIRMWARE_VERSION     "0.1-a"                                      //
@@ -67,9 +67,20 @@
 //############################################################################//
 
 
-typedef void(*fptr_t)(void);
-
-enum op_t  { TEMP_MODE, POWER_MODE };
+//############################################################################//
+//                                 TYPEDEFS                                   //
+//############################################################################//
+//----------------------------------------------------------------------------//
+  typedef void(*fptr_t)(void);                                                //
+//----------------------------------------------------------------------------//
+  enum op_t {                                                                 //
+    VOLTAGE_MODE,                                                             //
+    CURRENT_MODE,                                                             //
+    POWER_MODE,                                                               //
+    TEMP_MODE                                                                 //
+  };                                                                          //
+//----------------------------------------------------------------------------//
+//############################################################################//
 
 
 
@@ -78,12 +89,18 @@ enum op_t  { TEMP_MODE, POWER_MODE };
 
 namespace Tools {
 
-  void smoothExp(double &, double, uint32_t, uint32_t); // Exponential moving average
-  bool trigger  (bool &,   double, float,    float);    // Inverted Schmitt Trigger
+  // Exponential smoothing
+  void smoothExp(double&, double, float);
+  void smoothExp(double&, double, uint32_t, uint32_t);
 
-  void digitalWriteFast(uint8_t, bool);  // Set ESP8266 pins HIGH or LOW very fast
+  // Inverted Schmitt Trigger
+  bool trigger(bool&, double, float, float);
 
-  template <typename T, typename U> void trim(T &, U, U);
+  // Set ESP8266 pins HIGH or LOW very fast
+  void digitalWriteFast(uint8_t, bool);
+
+  // Constrains (and modifies) a value according to lower and upper limit
+  template <typename T, typename U> void trim(T&, U, U);
 }
 
 // ----------------------------------- TOOLS -----------------------------------
@@ -91,12 +108,13 @@ namespace Tools {
 
 
 
-// ================================= REGULATOR =================================
+// ================================ POWERSUPPLY ================================
 
-class Regulator {
+class PowerSupply {
 
 protected:
   bool     _running;
+  op_t     _mode;
   uint16_t _voltage_set, _current_set, _power_set;
 
 public:
@@ -106,32 +124,32 @@ public:
   
   static double voltage, current, power;
   
-  Regulator(void);
+  PowerSupply(void);
   
-  static void update  (void);
-  static void regulate(double, double);
+  virtual void update(void);
+  virtual void regulate(double, double);
 
   void on    (void) { _running = true;      }
   void off   (void) { _running = false;     }
   void toggle(void) { _running = !_running; }
 
+  void setMode   (op_t     m) { _mode        = m; }
   void setVoltage(uint16_t v) { _voltage_set = v; }
   void setCurrent(uint16_t c) { _current_set = c; }
   void setPower  (uint16_t p) { _power_set   = p; }
 };
 
-// --------------------------------- REGULATOR ---------------------------------
+// -------------------------------- POWERSUPPLY --------------------------------
 
 
 
 
 // =================================== HEATER ==================================
 
-class Heater : public Regulator {
+class Heater : public PowerSupply {
 
 protected:
   double   _TCR, _res20, _resCable;
-  op_t     _mode = TEMP_MODE;
   uint16_t _temperature_set = 200;
 
 public:
@@ -139,7 +157,7 @@ public:
 
   Heater(void);
   
-  void update   (void); 
+  void update   (void) override; 
   void regulate (void);
   void calibrate(void);
 
@@ -147,7 +165,6 @@ public:
   void setResCable(double res) { _resCable = res; }
   void setTCR     (double tcr) { _TCR      = tcr; }
 
-  void setMode  (op_t     m) { _mode            = m; }
   void setTemp  (uint16_t t) { _temperature_set = t; }
   void increment(int16_t);
 };
@@ -155,4 +172,4 @@ public:
 // ----------------------------------- HEATER ----------------------------------
 
 
-#endif // VAPORIZER_H
+#endif // POWERSUPPLY_H

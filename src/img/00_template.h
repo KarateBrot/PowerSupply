@@ -12,7 +12,7 @@
 #define ANI_template_h
 
 
-#include <Arduino.h>
+#include "Arduino.h"
 
 // FRAMES
 static const uint8_t PROGMEM IMG_template_00[] = {};
