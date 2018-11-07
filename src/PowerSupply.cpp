@@ -72,8 +72,42 @@ double PowerSupply::power;
 
 PowerSupply::PowerSupply() {
 
-  _mode = VOLTAGE_MODE;
+  _voltage_set = 0;
+  _current_set = 0;
+  _power_set   = 0;
+  _mode        = VOLTAGE_MODE;
+  
   pid.setPID(PID_P, PID_I, PID_D);
+}
+
+void PowerSupply::converge(double &value, double value_set) {
+
+  pid.update(value, value_set);
+  uint16_t output = (uint16_t)( pid.getOutput()*4095.0 + 0.5 );
+  dac.setOutput(output);
+}
+
+void PowerSupply::increment(int16_t val) {
+
+  switch (_mode) {
+
+    case VOLTAGE_MODE:
+      _voltage_set += val;
+      Tools::trim(_voltage_set, VOLTAGE_MIN, VOLTAGE_MAX);
+      break;
+
+    case CURRENT_MODE:
+      _current_set += val;
+      Tools::trim(_current_set, CURRENT_MIN, CURRENT_MAX);
+
+    case POWER_MODE:
+      _power_set += val;
+      Tools::trim(_power_set, POWER_MIN, POWER_MAX);
+      break;
+
+    default:
+      break;
+  }
 }
 
 void PowerSupply::update() {
@@ -94,11 +128,35 @@ void PowerSupply::update() {
     0.5*voltage*current/1000000.0;
 }
 
-void PowerSupply::regulate(double value, double value_set) {
+void PowerSupply::regulate() {
 
-  pid.update(value, value_set);
-  uint16_t output = (uint16_t)( pid.getOutput()*4095.0 + 0.5 );
-  dac.setOutput(output);
+  if (_running) {
+
+    switch (_mode) {
+
+      case VOLTAGE_MODE:
+        converge(voltage, _voltage_set);
+        break;
+    
+      case CURRENT_MODE:
+        converge(current, _current_set);
+        break;
+
+      case POWER_MODE:
+        converge(power, _power_set);
+        break;
+
+      default:
+        converge(voltage, _voltage_set);
+        break;
+    }
+    sensor.setPrecision(LOW);
+
+  } else {
+
+    dac.setOutput(0);
+    sensor.setPrecision(HIGH);
+  }
 }
 
 // -------------------------------- POWERSUPPLY --------------------------------
@@ -120,6 +178,48 @@ Heater::Heater() {
   _mode       = TEMP_MODE;
   resistance  = HEATER_RES20;
   temperature = 20.0;
+}
+
+// Make sure heater core is at room temperature before calibration!
+void Heater::calibrate() {
+
+  pid.setPID(1.0, 0.0, 0.0);                  // TODO: Manual tuning
+  sensor.setPrecision(HIGH);
+
+  // Make sure current flow is 10mA +/- 1mA
+  double currentLast = 0.0;
+  while (abs(current - 10.0) > 1.0 && abs(currentLast - 10.0) > 1.0) {
+    currentLast = current;
+    update();
+    PowerSupply::converge(current, 10.0);
+    yield();
+  }
+
+  // Calculate resistance using reference current of 10mA
+  for (size_t i = 0; i < 15; i++) {
+    update();
+    PowerSupply::converge(current, 10.0);
+    yield();
+  }
+
+  // TODO: Room temp measurement to compensate res for temps != 20°C
+
+  dac.setOutput(0);
+  setRes20(resistance);
+  sensor.setPrecision(LOW);
+}
+
+void Heater::increment(int16_t val) {
+
+  if (_mode == TEMP_MODE) {
+
+    _temperature_set += val;
+    Tools::trim(_temperature_set, TEMPERATURE_MIN, TEMPERATURE_MAX);
+
+  } else {
+
+    PowerSupply::increment(val);
+  }
 }
 
 void Heater::update() {
@@ -147,63 +247,14 @@ void Heater::regulate() {
 
     // TODO: Set ideal PID consts for each mode
     _mode == TEMP_MODE
-      ? PowerSupply::regulate(temperature, _temperature_set)
-      : PowerSupply::regulate(power, _power_set);
+      ? PowerSupply::converge(temperature, _temperature_set)
+      : PowerSupply::converge(power, _power_set);
     sensor.setPrecision(LOW);
 
   } else {
 
     dac.setOutput(0);
     sensor.setPrecision(HIGH);
-  }
-}
-
-// Make sure heater core is at room temperature before calibration!
-void Heater::calibrate() {
-
-  pid.setPID(1.0, 0.0, 0.0);                  // TODO: Manual tuning
-  sensor.setPrecision(HIGH);
-
-  // Make sure current flow is 10mA +/- 1mA
-  double currentLast = 0.0;
-  while (abs(current - 10.0) > 1.0 && abs(currentLast - 10.0) > 1.0) {
-    currentLast = current;
-    update();
-    PowerSupply::regulate(current, 10.0);
-    yield();
-  }
-
-  // Calculate resistance using reference current of 10mA
-  for (size_t i = 0; i < 15; i++) {
-    update();
-    PowerSupply::regulate(current, 10.0);
-    yield();
-  }
-
-  // TODO: Room temp measurement to compensate res for temps != 20°C
-
-  dac.setOutput(0);
-  setRes20(resistance);
-  sensor.setPrecision(LOW);
-}
-
-void Heater::increment(int16_t val) {
-
-  switch (_mode) {
-
-    case TEMP_MODE:
-
-      _temperature_set += val;
-      Tools::trim(_temperature_set, HEATER_TEMP_MIN, HEATER_TEMP_MAX);
-      break;
-
-    case POWER_MODE:
-
-      _power_set += val;
-      Tools::trim(_power_set, HEATER_POWER_MIN, HEATER_POWER_MAX);
-      break;
-
-    default: break;
   }
 }
 

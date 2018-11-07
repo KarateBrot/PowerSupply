@@ -3,6 +3,7 @@
 
 
 #include "Arduino.h"
+#include <vector>
 
 typedef void (*fptr_t)(void);
 
