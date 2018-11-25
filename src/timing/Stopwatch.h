@@ -1,17 +1,15 @@
 #ifndef STOPWATCH_H
 #define STOPWATCH_H
 
-#include <Arduino.h>
+#include "Arduino.h"
 
 
 class Stopwatch {
 
 private:
-
   uint32_t _time, _tick;
 
 public:
-
   static uint32_t lifetime;
 
   Stopwatch (void) { _time    = micros();         }

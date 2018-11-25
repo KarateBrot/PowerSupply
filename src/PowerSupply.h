@@ -24,7 +24,7 @@
   #include "regulation/Sensor.h"                                              //
   #include "regulation/PID.h"                                                 //
   #include "regulation/DAC.h"                                                 //
-  #include "controls/Controls.h"                                              //
+  // #include "controls/Controls.h"                                           //
 //----------------------------------------------------------------------------//
 //############################################################################//
 
@@ -49,14 +49,14 @@
   #define PID_D                  0.08                                         //
 //----------------------------------------------------------------------------//
   #define VOLTAGE_MIN            0                                            //
-  #define VOLTAGE_MAX         1000                                            //
-//                                                                            //
+  #define VOLTAGE_MAX        10000                                            //
+//----------------------------------------------------------------------------//
   #define CURRENT_MIN            0                                            //
   #define CURRENT_MAX         5000                                            //                                      
-//                                                                            //
+//----------------------------------------------------------------------------//
   #define POWER_MIN              0            // !<0 because Power is unsignd //
   #define POWER_MAX             40                                            //
-//                                                                            //
+//----------------------------------------------------------------------------//
   #define TEMPERATURE_MIN        0            // !<0 because Temp is unsigned //
   #define TEMPERATURE_MAX      230                                            //
 //----------------------------------------------------------------------------//
@@ -93,13 +93,10 @@ namespace Tools {
   void smoothExp(double&, double, uint32_t, uint32_t);
 
   // Inverted Schmitt Trigger
-  bool trigger(bool&, double, float, float);
-
-  // Set ESP8266 pins HIGH or LOW very fast
-  void digitalWriteFast(uint8_t, bool);
+  bool trigger(bool&, const double&, float, float);
 
   // Constrains (and modifies) a value according to lower and upper limit
-  template <typename T, typename U> void trim(T&, U, U);
+  template<typename T, typename U> void trim(T&, U, U);
 }
 
 // ----------------------------------- TOOLS -----------------------------------
@@ -116,6 +113,8 @@ protected:
   op_t     _mode;
   uint16_t _voltage_set, _current_set, _power_set;
 
+  static void _converge(const double&, const double);
+
 public:
   static Sensor_Load sensor;
   static PID         pid;
@@ -124,8 +123,6 @@ public:
   static double voltage, current, power;
   
   PowerSupply(void);
-
-  static void converge(double&, double);
   
   void on    (void) { _running = true;      }
   void off   (void) { _running = false;     }

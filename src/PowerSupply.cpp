@@ -18,7 +18,7 @@
 // Simple exponential smoothing
 void Tools::smoothExp(double &x, double val, float weight) {
 
-  x = (1-weight)*x + weight*val;
+  x = (1.0-weight)*x + weight*val;
 }
 
 // Advanced exponential smoothing (simulates capacitor)
@@ -29,7 +29,7 @@ void Tools::smoothExp(double &x, double val, uint32_t sampleTime, uint32_t timeC
 }
 
 // Hysteresis (simulates Inverting Schmitt Trigger)
-bool Tools::trigger(bool &trigger, double val, float lim_lower, float lim_upper) {
+bool Tools::trigger(bool &trigger, const double &val, float lim_lower, float lim_upper) {
   
   bool trigger_last = trigger;
 
@@ -37,14 +37,6 @@ bool Tools::trigger(bool &trigger, double val, float lim_lower, float lim_upper)
   if (val <  lim_lower) { trigger = false; }
 
   if (trigger_last != trigger) { return true; } else { return false; }
-}
-
-// Set ESP8266 pins HIGH or LOW very fast
-void Tools::digitalWriteFast(uint8_t pin, bool val) {
-
-  // Register for setting pin HIGH: PERIPHS_GPIO_BASEADDR + 4
-  // Register for setting pin LOW:  PERIPHS_GPIO_BASEADDR + 8
-  WRITE_PERI_REG(PERIPHS_GPIO_BASEADDR + 4*(val + 1), 1 << pin);
 }
 
 // Constrains (and modifies) a value according to lower and upper limit
@@ -80,9 +72,9 @@ PowerSupply::PowerSupply() {
   pid.setPID(PID_P, PID_I, PID_D);
 }
 
-void PowerSupply::converge(double &value, double value_set) {
+void PowerSupply::_converge(const double &value, const double value_set) {
 
-  pid.update(value, value_set);
+  pid.update(value, value_set, micros());
   uint16_t output = (uint16_t)( pid.getOutput()*4095.0 + 0.5 );
   dac.setOutput(output);
 }
@@ -135,19 +127,19 @@ void PowerSupply::regulate() {
     switch (_mode) {
 
       case VOLTAGE_MODE:
-        converge(voltage, _voltage_set);
+        _converge(voltage, _voltage_set);
         break;
     
       case CURRENT_MODE:
-        converge(current, _current_set);
+        _converge(current, _current_set);
         break;
 
       case POWER_MODE:
-        converge(power, _power_set);
+        _converge(power, _power_set);
         break;
 
       default:
-        converge(voltage, _voltage_set);
+        _converge(voltage, _voltage_set);
         break;
     }
     sensor.setPrecision(LOW);
@@ -191,14 +183,14 @@ void Heater::calibrate() {
   while (abs(current - 10.0) > 1.0 && abs(currentLast - 10.0) > 1.0) {
     currentLast = current;
     update();
-    PowerSupply::converge(current, 10.0);
+    _converge(current, 10.0);
     yield();
   }
 
   // Calculate resistance using reference current of 10mA
   for (size_t i = 0; i < 15; i++) {
     update();
-    PowerSupply::converge(current, 10.0);
+    _converge(current, 10.0);
     yield();
   }
 
@@ -247,8 +239,8 @@ void Heater::regulate() {
 
     // TODO: Set ideal PID consts for each mode
     _mode == TEMP_MODE
-      ? PowerSupply::converge(temperature, _temperature_set)
-      : PowerSupply::converge(power, _power_set);
+      ? _converge(temperature, _temperature_set)
+      : _converge(power, _power_set);
     sensor.setPrecision(LOW);
 
   } else {

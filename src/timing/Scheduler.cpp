@@ -31,7 +31,7 @@ Scheduler::Scheduler() {
 
 Scheduler& Scheduler::add(fptr_t f) {
 
-  if (_tasks.size() <= UINT8_MAX) { _tasks.push_back(Task(f)); }
+  if (_tasks.size() <= UINT8_MAX) { _tasks.emplace_back(f); }
 
   return *this;
 }

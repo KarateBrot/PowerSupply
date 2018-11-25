@@ -2,7 +2,10 @@
 #define SCHEDULER_H
 
 #include "Arduino.h"
+#include <algorithm>
 #include <vector>
+
+// #pragma GCC optimize ("O3")
 
 typedef void(*fptr_t)(void);
 

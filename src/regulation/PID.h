@@ -1,7 +1,8 @@
 #ifndef PID_H
 #define PID_H
 
-#include "Arduino.h"
+#include <cstdint>
+#include <vector>
 
 
 class PID {
@@ -12,8 +13,9 @@ protected:
 
 public:
   PID(void);
+  PID(double, double, double);
 
-  void   update(double, double);
+  void   update   (double, double, uint32_t);
   double getOutput(void) const;
   void   autotune (void);
 

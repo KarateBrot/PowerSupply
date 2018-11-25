@@ -1,12 +1,21 @@
 #include "PID.h"
 
 
-PID::PID() {
-
+PID::PID() 
+{
+  
 }
 
 
-void PID::update(double value, double value_set) {
+PID::PID(double p, double i, double d) 
+{
+  _p = p;
+  _i = i;
+  _d = d;
+}
+
+
+void PID::update(double value, double value_set, uint32_t timeCurrent) {
 
 // -------------------------------------------------------------------------- //
 //                          --< PID-CONTROLLER >--                            //
@@ -24,26 +33,35 @@ void PID::update(double value, double value_set) {
   _error = value_set - value;
 
   // dt
-  uint32_t t = micros();
-  _dt        = (uint32_t)(t - _timeLast)/1000000.0;
-  _timeLast  = t;
+  _dt       = (uint32_t)(timeCurrent - _timeLast)/1000000.0;
+  _timeLast = timeCurrent;
 
   // de(t)/dt
   _errorDiff = (value - _valueLast)/_dt;
   _valueLast =  value;
 
   // ∫e(t)dt
-  if (_error  <= 10) {        // only integrate shortly before reaching e(t) = 0
+  if (_error <= 10) {        // only integrate shortly before reaching e(t) = 0
+    
     _errorInt += _error*_dt;
-    _errorInt  = constrain(_errorInt, 0, 1/_i);
+    
+    // Constrain _errorInt
+    if (_errorInt < 0)      { _errorInt = 0;      } else
+    if (_errorInt > 1.0/_i) { _errorInt = 1.0/_i; }
   }
 }
 
 
 double PID::getOutput() const {
 
-  // u(t) = P*ΔT + I*e_past - D*dT/dt
-  return constrain(_p*_error + _i*_errorInt - _d*_errorDiff, 0, 1);
+  // u(t) = P*e(t) + I*∫e(t)dt - D*dT/dt
+  double u = _p*_error + _i*_errorInt - _d*_errorDiff;
+
+  // Constrain output signal
+  if (u < 0.0) { u = 0.0; } else
+  if (u > 1.0) { u = 1.0; }
+
+  return u;
 }
 
 
