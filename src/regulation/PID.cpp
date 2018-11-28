@@ -1,17 +1,14 @@
 #include "PID.h"
 
 
-PID::PID() 
-{
+PID::PID() {
   
 }
 
 
-PID::PID(double p, double i, double d) 
-{
-  _p = p;
-  _i = i;
-  _d = d;
+PID::PID(double p, double i, double d) : 
+
+  _p(p), _i(i), _d(d) {
 }
 
 

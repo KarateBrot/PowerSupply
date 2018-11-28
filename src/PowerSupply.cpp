@@ -16,35 +16,35 @@
 // =================================== TOOLS ===================================
 
 // Simple exponential smoothing
-void Tools::smoothExp(double &x, double val, float weight) {
+void Tools::smoothExp(double &x, const double &val, const float &weight) {
 
   x = (1.0-weight)*x + weight*val;
 }
 
 // Advanced exponential smoothing (simulates capacitor)
-void Tools::smoothExp(double &x, double val, uint32_t sampleTime, uint32_t timeConst) {
+void Tools::smoothExp(double &x, const double &val, const uint32_t &sampleTime, const uint32_t &timeConst) {
   
-  double weight = 1 - exp(-1.0*sampleTime/timeConst);
+  double weight = 1 - exp(-sampleTime/(double)timeConst);
   x = (1-weight)*x + weight*val;
 }
 
 // Hysteresis (simulates Inverting Schmitt Trigger)
-bool Tools::trigger(bool &trigger, const double &val, float lim_lower, float lim_upper) {
+bool Tools::trigger(bool &trigger, const double &val, const float &low, const float &high) {
   
   bool trigger_last = trigger;
 
-  if (val >= lim_upper) { trigger = true;  } else
-  if (val <  lim_lower) { trigger = false; }
+  if (val > high) { trigger = true;  } else
+  if (val < low ) { trigger = false; }
 
   if (trigger_last != trigger) { return true; } else { return false; }
 }
 
 // Constrains (and modifies) a value according to lower and upper limit
 template <typename T, typename U>
-void Tools::trim(T &val, U lim_lower, U lim_upper) {
+void Tools::trim(T &val, const U &low, const U &high) {
 
-  if (val < lim_lower) { val = lim_lower; } else
-  if (val > lim_upper) { val = lim_upper; }
+  if (val > high) { val = high; } else
+  if (val < low ) { val = low;  }
 }
 
 // ----------------------------------- TOOLS -----------------------------------
@@ -55,26 +55,22 @@ void Tools::trim(T &val, U lim_lower, U lim_upper) {
 // ================================ POWERSUPPLY ================================
 
 Sensor_Load PowerSupply::sensor;
-PID         PowerSupply::pid;
 DAC         PowerSupply::dac;
 
 double PowerSupply::voltage;
 double PowerSupply::current;
 double PowerSupply::power;
 
-PowerSupply::PowerSupply() {
+PowerSupply::PowerSupply() : 
 
-  _voltage_set = 0;
-  _current_set = 0;
-  _power_set   = 0;
-  _mode        = VOLTAGE_MODE;
-  
+  _mode(Mode::VOLTAGE) {
+
   pid.setPID(PID_P, PID_I, PID_D);
 }
 
-void PowerSupply::_converge(const double &value, const double value_set) {
+void PowerSupply::_converge(const double &val, const double &val_set) {
 
-  pid.update(value, value_set, micros());
+  pid.update(val, val_set, micros());
   uint16_t output = (uint16_t)( pid.getOutput()*4095.0 + 0.5 );
   dac.setOutput(output);
 }
@@ -83,16 +79,16 @@ void PowerSupply::increment(int16_t val) {
 
   switch (_mode) {
 
-    case VOLTAGE_MODE:
+    case Mode::VOLTAGE:
       _voltage_set += val;
       Tools::trim(_voltage_set, VOLTAGE_MIN, VOLTAGE_MAX);
       break;
 
-    case CURRENT_MODE:
+    case Mode::CURRENT:
       _current_set += val;
       Tools::trim(_current_set, CURRENT_MIN, CURRENT_MAX);
 
-    case POWER_MODE:
+    case Mode::POWER:
       _power_set += val;
       Tools::trim(_power_set, POWER_MIN, POWER_MAX);
       break;
@@ -126,15 +122,15 @@ void PowerSupply::regulate() {
 
     switch (_mode) {
 
-      case VOLTAGE_MODE:
+      case Mode::VOLTAGE:
         _converge(voltage, _voltage_set);
         break;
     
-      case CURRENT_MODE:
+      case Mode::CURRENT:
         _converge(current, _current_set);
         break;
 
-      case POWER_MODE:
+      case Mode::POWER:
         _converge(power, _power_set);
         break;
 
@@ -161,13 +157,13 @@ void PowerSupply::regulate() {
 double Heater::resistance;
 double Heater::temperature;
 
-Heater::Heater() {
+Heater::Heater() :
 
-  setTCR     (HEATER_TCR);
-  setRes20   (HEATER_RES20);
-  setResCable(HEATER_RESCABLE);
+  _TCR     (HEATER_TCR), 
+  _res20   (HEATER_RES20), 
+  _resCable(HEATER_RESCABLE) {
 
-  _mode       = TEMP_MODE;
+  _mode       = Mode::TEMPERATURE;
   resistance  = HEATER_RES20;
   temperature = 20.0;
 }
@@ -203,7 +199,7 @@ void Heater::calibrate() {
 
 void Heater::increment(int16_t val) {
 
-  if (_mode == TEMP_MODE) {
+  if (_mode == Mode::TEMPERATURE) {
 
     _temperature_set += val;
     Tools::trim(_temperature_set, TEMPERATURE_MIN, TEMPERATURE_MAX);
@@ -238,7 +234,7 @@ void Heater::regulate() {
   if (_running) {
 
     // TODO: Set ideal PID consts for each mode
-    _mode == TEMP_MODE
+    _mode == Mode::TEMPERATURE
       ? _converge(temperature, _temperature_set)
       : _converge(power, _power_set);
     sensor.setPrecision(LOW);

@@ -21,8 +21,8 @@
   #include "img/splash.h"                                                     //
   #include "timing/Stopwatch.h"                                               //
   #include "timing/Scheduler.h"                                               //
-  #include "regulation/Sensor.h"                                              //
   #include "regulation/PID.h"                                                 //
+  #include "regulation/Sensor.h"                                              //
   #include "regulation/DAC.h"                                                 //
   // #include "controls/Controls.h"                                           //
 //----------------------------------------------------------------------------//
@@ -72,11 +72,11 @@
 //----------------------------------------------------------------------------//
   typedef void(*fptr_t)(void);                                                //
 //----------------------------------------------------------------------------//
-  enum op_t {                                                                 //
-    VOLTAGE_MODE,                                                             //
-    CURRENT_MODE,                                                             //
-    POWER_MODE,                                                               //
-    TEMP_MODE                                                                 //
+  enum class Mode : uint8_t {                                                 //
+    VOLTAGE,                                                                  //
+    CURRENT,                                                                  //
+    POWER,                                                                    //
+    TEMPERATURE                                                               //
   };                                                                          //
 //----------------------------------------------------------------------------//
 //############################################################################//
@@ -89,14 +89,15 @@
 namespace Tools {
 
   // Exponential smoothing
-  void smoothExp(double&, double, float);
-  void smoothExp(double&, double, uint32_t, uint32_t);
+  void smoothExp(double &x, const double &val, const float &weight);
+  void smoothExp(double &x, const double &val, const uint32_t &sampleTime, const uint32_t &timeConst);
 
   // Inverted Schmitt Trigger
-  bool trigger(bool&, const double&, float, float);
+  bool trigger(bool &trigger, const double &val, const float &low, const float &high);
 
   // Constrains (and modifies) a value according to lower and upper limit
-  template<typename T, typename U> void trim(T&, U, U);
+  template<typename T, typename U> 
+  void trim(T &val, const U &low, const U &high);
 }
 
 // ----------------------------------- TOOLS -----------------------------------
@@ -110,17 +111,17 @@ class PowerSupply {
 
 protected:
   bool     _running;
-  op_t     _mode;
+  Mode     _mode;
   uint16_t _voltage_set, _current_set, _power_set;
 
-  static void _converge(const double&, const double);
+  void _converge(const double &val, const double &val_set);
 
 public:
-  static Sensor_Load sensor;
-  static PID         pid;
-  static DAC         dac;
+  PID pid;
 
-  static double voltage, current, power;
+  static DAC         dac;
+  static Sensor_Load sensor;
+  static double      voltage, current, power;
   
   PowerSupply(void);
   
@@ -128,12 +129,12 @@ public:
   void off   (void) { _running = false;     }
   void toggle(void) { _running = !_running; }
 
-  void setMode   (op_t     m) { _mode        = m; }
+  void setMode   (Mode     m) { _mode        = m; }
   void setVoltage(uint16_t v) { _voltage_set = v; }
   void setCurrent(uint16_t c) { _current_set = c; }
   void setPower  (uint16_t p) { _power_set   = p; }
   
-  virtual void increment(int16_t);
+  virtual void increment(int16_t val);
   virtual void update   (void);
   virtual void regulate (void);
 };
@@ -163,9 +164,9 @@ public:
   void setTCR     (double   tcr) { _TCR             = tcr; }
   void setTemp    (uint16_t t  ) { _temperature_set = t;   }
 
-  void increment(int16_t) override;
-  void update   (void)    override; 
-  void regulate (void)    override;
+  void increment(int16_t val) override;
+  void update   (void)        override; 
+  void regulate (void)        override;
 };
 
 // ----------------------------------- HEATER ----------------------------------

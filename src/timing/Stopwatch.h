@@ -12,7 +12,7 @@ private:
 public:
   static uint32_t lifetime;
 
-  Stopwatch (void) { _time    = micros();         }
+  Stopwatch (void) : _time(micros()) {}
   ~Stopwatch(void) { lifetime = micros() - _time; }
 
   void     reset  (void)       { _time = micros();        }

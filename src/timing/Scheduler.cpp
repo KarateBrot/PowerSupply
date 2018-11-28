@@ -3,19 +3,12 @@
 
 
 
-Task::Task(fptr_t f) {
+Task::Task(fptr_t f) :
 
-  lastCallback = micros();
-  
+  lastCallback(micros()),
+  birthtime(lastCallback) {
+
   callback = f;
-  
-  toBeDeleted = false;
-  deltaTime   = 0;
-  offset      = 0;
-  numCalls    = 0;
-  numCallsMax = 0;
-  birthtime   = lastCallback;
-  lifetime    = 0;
 }
 
 
