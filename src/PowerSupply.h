@@ -16,7 +16,10 @@
 //                                  HEADERS                                   //
 //############################################################################//
 //----------------------------------------------------------------------------//
-  #include "Arduino.h"                                                        //
+  #include <cstdint>                                                          //
+  #include <cmath>                                                            //
+//----------------------------------------------------------------------------//
+  #include "Arduino.h"        // TODO: Make header independent from Arduino.h //
 //----------------------------------------------------------------------------//
   #include "img/splash.h"                                                     //
   #include "timing/Stopwatch.h"                                               //
@@ -72,8 +75,8 @@
 //----------------------------------------------------------------------------//
   typedef void(*fptr_t)(void);                                                //
 //----------------------------------------------------------------------------//
-  template<typename... Args>                                                  //
-  using fptr_args_t = void(*)(Args...);                                       //
+  template<typename T, typename... Args>                                      //
+  using fptr_args_t = T(*)(Args...);                                       //
 //----------------------------------------------------------------------------//
   enum class Mode : uint8_t {                                                 //
     VOLTAGE,                                                                  //
@@ -98,7 +101,11 @@ namespace Tools {
   // Inverted Schmitt Trigger
   bool trigger(bool &trigger, const double &val, const float &low, const float &high);
 
-  // Constrains (and modifies) a value according to lower and upper limit
+  // Confines a value between lower and upper limit
+  template<typename T, typename U> 
+  T limit(const T &val, const U &low, const U &high);
+
+  // Confines (and modifies!) a value according to lower and upper limit
   template<typename T, typename U> 
   void trim(T &val, const U &low, const U &high);
 }

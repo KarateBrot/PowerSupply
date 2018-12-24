@@ -15,7 +15,7 @@ private:
 public:
   Sensor_Load(void);
 
-  void setPrecision(bool);
+  void setPrecisionHigh(bool);
 
   double getCurrent(void) const;
   double getVoltage(void) const;

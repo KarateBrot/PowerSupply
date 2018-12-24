@@ -10,7 +10,7 @@ Sensor_Load::Sensor_Load() {
 }
 
 
-void Sensor_Load::setPrecision(bool b) {
+void Sensor_Load::setPrecisionHigh(bool b) {
 
   b ? _INA219.setCalibration_16V_400mA() : _INA219.setCalibration_32V_2A();
 }

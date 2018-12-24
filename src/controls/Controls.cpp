@@ -1,9 +1,116 @@
 #include "Controls.h"
 
 
-// ================================= Input ====================================
+std::vector<Event>  Controls::_events;
 
-std::vector<Encoder> Encoder::_buffer;
+
+void Controls::update() {
+
+  for (Event e : _events) { 
+    
+    switch (e) {
+
+      case Event::UP:
+        break;
+
+      case Event::DOWN:
+        break;
+
+      case Event::SELECT:
+        break;
+
+      case Event::HOLD:
+        break;
+        
+      default:
+        break;
+    }
+  }
+  _events.clear();
+}
+
+
+std::vector<cptr_t> Button::_buffer;
+
+
+Button::Button(uint8_t pin, Event press, Event longpress) {
+
+  _pins.push_back(pin);
+  
+  _event1 = press;
+  _event2 = longpress;
+
+  pinMode(pin, INPUT_PULLUP);
+  digitalWrite(pin, HIGH);
+
+  attachInterrupt(pin, _isr, CHANGE);
+
+  _buffer.emplace_back(shared_from_this());
+}
+
+
+void Button::_isr() {
+
+  for(cptr_t btn : _buffer)
+  {
+    switch(btn->read()) {
+
+      case RELEASED:
+        //_events.emplace_back(_event1);
+        break;
+
+      case RELEASED_DELAY:
+        //_events.emplace_back(_event2);
+        break;
+
+      default:
+        break;
+    }
+  }
+}
+
+
+uint8_t Button::read() {
+
+  // Button debouncing is combination of (1)hardware and (2)software debouncing
+  // (1) Low-pass filter: R = 10kΩ | C = 10nF | τ = R*C = 0.0001s
+  //     ──► Capacitor (103) parallel to button and pulldown resistor at button(-)
+  // (2) In addition: easy debouncing to ignore remaining jitters
+  uint32_t timer = micros();
+  if ((uint32_t)(timer - _lastRead) > BUTTON_DEBOUNCE_MICROS) {
+    
+    _lastRead  = timer;
+    _lastState = _state;
+    _state     = digitalRead(_pins.back());
+
+    // Check if interrupt change happened, else return 0xff
+    if (_state != _lastState) { 
+      
+      switch (_state) {
+      
+        case PRESSED:
+          _lastPressed = timer;
+          break;
+
+        case RELEASED:
+          if ((uint32_t)(timer - _lastPressed) > BUTTON_DELAY_MICROS) {
+            return RELEASED_DELAY;
+          } 
+          break;
+
+        default:
+          break;
+      }
+      
+      return _state; 
+    }
+  }
+
+  return 0xff;
+}
+
+
+std::vector<cptr_t> Encoder::_buffer;
 
 const uint8_t Encoder::_stateMachine[7][4] = {
 
@@ -16,174 +123,39 @@ const uint8_t Encoder::_stateMachine[7][4] = {
   { CCW_NEXT, CCW_FINAL, CCW_BEGIN, START       }
 };
 
-Encoder::Encoder(uint8_t CLK, uint8_t DT, fptr_t cw, fptr_t ccw) {
 
-  _pin = CLK;
-  pinMode(_pin, INPUT);
-  digitalWrite(_pin, LOW);
+Encoder::Encoder() {
 
-  _pin2 = DT;
-  pinMode(_pin2, INPUT);
-  digitalWrite(_pin2, LOW);
-
-  command    = cw;
-  commandCCW = ccw;
-
-  _state = START;
+  
 }
 
-void Encoder::_ISR() {
 
-  uint8_t state = 0;
+void Encoder::_isr() {
 
-  for (Encoder enc : _buffer) {
+  for(cptr_t enc : _buffer)
+  {
+    switch(enc->read()) {
 
-    state = enc.read();
-
-    switch (state) {
       case CW:
-        Controls::_commands.push_back(enc.command);
+        //_events.emplace_back(_event2);
         break;
+
       case CCW:
-        Controls::_commands.push_back(enc.commandCCW);
+        //_events.emplace_back(_event1);
         break;
+
       default:
         break;
     }
   }
 }
 
+
 uint8_t Encoder::read() {
 
   // state machine naturally debounces encoder
-  uint8_t stateTemp = (digitalRead(_pin) << 1) | digitalRead(_pin2);
+  uint8_t stateTemp = (digitalRead(_pins.front()) << 1) | digitalRead(_pins.back());
   _state = _stateMachine[_state & 0xf][stateTemp];
 
   return _state & 0x30;
 }
-
-// - - - - -
-
-std::vector<Button> Button::_buffer;
-
-Button::Button(uint8_t pin, fptr_t c) {
-
-  _pin = pin;
-
-  pinMode(_pin, INPUT);
-  digitalWrite(_pin, LOW);
-
-  command = c;
-
-  _state = digitalRead(_pin);
-}
-
-void Button::_ISR() {
-
-  uint8_t state, size;
-
-  size = _buffer.size();
-
-  for (size_t n = 0; n < size; n++) {
-
-    Button &btn = _buffer[n];
-    state       = btn.read();
-
-    // Ignore bounces (state == 0xFF)
-    if (state != 0xFF) {
-      switch (state) {
-        case DOWN:
-          Controls::_commands.push_back(btn.command);
-          break;
-        default: 
-          break;
-      }
-    }
-  }
-}
-
-uint8_t Button::read() {
-
-  _state = 0xFF;
-
-  // Button debouncing is a combination of (1)hardware and (2)software debouncing
-  // (1) Low-pass filter: R = 10kΩ | C = 10nF | τ = R*C = 0.0001s
-  //     ──► Capacitor (103) parallel to button and pulldown resistor at button(-)
-  // (2) In addition: easy debouncing to ignore remaining jitters
-  if ((uint32_t)(millis() - _lastRead) >= BUTTON_DEBOUNCE_TIME) {
-
-    _lastRead = millis();
-    _state = digitalRead(_pin);
-  }
-
-  return _state;
-}
-
-// - - - - -
-
-std::vector<Switch> Switch::_buffer;
-
-Switch::Switch(uint8_t pin, bool *ptr) {
-
-  _ptr = ptr;
-  _pin = pin;
-
-  pinMode(_pin, INPUT);
-  digitalWrite(_pin, LOW);
-
-  _state = digitalRead(_pin);
-}
-
-uint8_t Switch::read() {
-
-  // easy debouncing (1000/BUTTON_DEBOUNCE_TIME switch state changes per second max.)
-  if ((uint32_t)(millis() - _lastRead) >= BUTTON_DEBOUNCE_TIME) {
-
-    _lastRead = millis();
-    _state = digitalRead(_pin);
-    *_ptr = _state;
-  }
-
-  return _state;
-}
-
-// --------------------------------- Input -------------------------------------
-
-
-
-
-// ================================ Controls ===================================
-
-std::vector<fptr_t> Controls::_commands;
-
-Controls::Controls() {}
-
-void Controls::add(Encoder enc) {
-
-  Encoder::_buffer.push_back(enc);
-  uint8_t pin  = digitalPinToInterrupt(Encoder::_buffer.back().getPin());
-  uint8_t pin2 = digitalPinToInterrupt(Encoder::_buffer.back().getPin2());
-  attachInterrupt(pin,  Encoder::_ISR, CHANGE);
-  attachInterrupt(pin2, Encoder::_ISR, CHANGE);
-}
-
-void Controls::add(Button btn) {
-
-  Button::_buffer.push_back(btn);
-  uint8_t pin = digitalPinToInterrupt(Button::_buffer.back().getPin());
-  attachInterrupt(pin, Button::_ISR, CHANGE);
-}
-
-void Controls::add(Switch sw) {
-
-  Switch::_buffer.push_back(sw);
-}
-
-void Controls::update() {
-
-  for (Switch sw  : Switch::_buffer) { sw.read(); }
-  for (fptr_t cmd : _commands)       { cmd();     }
-  _commands.clear();
-}
-
-// -------------------------------- Controls -----------------------------------

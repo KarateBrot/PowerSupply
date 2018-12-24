@@ -41,6 +41,17 @@ bool Tools::trigger(bool &trigger, const double &val, const float &low, const fl
 
 // Constrains (and modifies) a value according to lower and upper limit
 template <typename T, typename U>
+T Tools::limit(const T &val, const U &low, const U &high) {
+
+  if (val > high) { return (T)high; } else
+  if (val < low ) { return (T)low;  } else 
+  { 
+    return val; 
+  }
+}
+
+// Constrains (and modifies) a value according to lower and upper limit
+template <typename T, typename U>
 void Tools::trim(T &val, const U &low, const U &high) {
 
   if (val > high) { val = high; } else
@@ -138,12 +149,12 @@ void PowerSupply::regulate() {
         _converge(voltage, _voltage_set);
         break;
     }
-    sensor.setPrecision(LOW);
+    sensor.setPrecisionHigh(false);
 
   } else {
 
     dac.setOutput(0);
-    sensor.setPrecision(HIGH);
+    sensor.setPrecisionHigh(true);
   }
 }
 
@@ -172,29 +183,35 @@ Heater::Heater() :
 void Heater::calibrate() {
 
   pid.setPID(1.0, 0.0, 0.0);                  // TODO: Manual tuning
-  sensor.setPrecision(HIGH);
+  sensor.setPrecisionHigh(true);
 
   // Make sure current flow is 10mA +/- 1mA
   double currentLast = 0.0;
-  while (abs(current - 10.0) > 1.0 && abs(currentLast - 10.0) > 1.0) {
+  while (std::abs(current - 10.0) > 1.0 && std::abs(currentLast - 10.0) > 1.0) {
     currentLast = current;
     update();
     _converge(current, 10.0);
-    yield();
+    
+    #ifdef ESP8266
+      yield();
+    #endif // ESP8266
   }
 
   // Calculate resistance using reference current of 10mA
   for (size_t i = 0; i < 15; i++) {
     update();
     _converge(current, 10.0);
-    yield();
+
+    #ifdef ESP8266
+      yield();
+    #endif // ESP8266
   }
 
   // TODO: Room temp measurement to compensate res for temps != 20°C
 
   dac.setOutput(0);
   setRes20(resistance);
-  sensor.setPrecision(LOW);
+  sensor.setPrecisionHigh(false);
 }
 
 void Heater::increment(int16_t val) {
@@ -217,7 +234,7 @@ void Heater::update() {
   // Resistance [Ω]
   resistance =
     0.7*resistance +
-    0.3*(voltage/constrain(current, 1, 15000) - _resCable);
+    0.3*(voltage/Tools::limit(current, 1, 15000) - _resCable);
 
   // Resistance [Ω] - if no heater connected
   if (voltage > 100 && current < 10) { resistance = _res20; }
@@ -237,12 +254,12 @@ void Heater::regulate() {
     _mode == Mode::TEMPERATURE
       ? _converge(temperature, _temperature_set)
       : _converge(power, _power_set);
-    sensor.setPrecision(LOW);
+    sensor.setPrecisionHigh(false);
 
   } else {
 
     dac.setOutput(0);
-    sensor.setPrecision(HIGH);
+    sensor.setPrecisionHigh(true);
   }
 }
 
