@@ -44,18 +44,17 @@ template <typename T, typename U>
 T Tools::limit(const T &val, const U &low, const U &high) {
 
   if (val > high) { return (T)high; } else
-  if (val < low ) { return (T)low;  } else 
-  { 
-    return val; 
-  }
+  if (val < low ) { return (T)low;  } else
+  return val;
 }
 
 // Constrains (and modifies) a value according to lower and upper limit
 template <typename T, typename U>
-void Tools::trim(T &val, const U &low, const U &high) {
+bool Tools::trim(T &val, const U &low, const U &high) {
 
-  if (val > high) { val = high; } else
-  if (val < low ) { val = low;  }
+  if (val > high) { val = high; return true; } else
+  if (val < low ) { val = low;  return true; } else
+  return false;
 }
 
 // ----------------------------------- TOOLS -----------------------------------
@@ -82,11 +81,11 @@ PowerSupply::PowerSupply() :
 void PowerSupply::_converge(const double &val, const double &val_set) {
 
   pid.update(val, val_set, micros());
-  uint16_t output = (uint16_t)( pid.getOutput()*4095.0 + 0.5 );
+  uint16_t output = (uint16_t)(pid.getOutput()*4095.0 + 0.5);
   dac.setOutput(output);
 }
 
-void PowerSupply::increment(int16_t val) {
+void PowerSupply::increment(const int16_t &val) {
 
   switch (_mode) {
 
@@ -214,7 +213,7 @@ void Heater::calibrate() {
   sensor.setPrecisionHigh(false);
 }
 
-void Heater::increment(int16_t val) {
+void Heater::increment(const int16_t &val) {
 
   if (_mode == Mode::TEMPERATURE) {
 

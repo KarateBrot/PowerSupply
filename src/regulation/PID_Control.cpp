@@ -1,18 +1,18 @@
-#include "PID.h"
+#include "PID_Control.h"
 
 
-PID::PID() {
+PID_Control::PID_Control() {
   
 }
 
 
-PID::PID(double p, double i, double d) : 
+PID_Control::PID_Control(double p, double i, double d) : 
 
   _p(p), _i(i), _d(d) {
 }
 
 
-void PID::update(double value, double value_set, uint32_t timeCurrent) {
+void PID_Control::update(double value, double value_set, uint32_t timeCurrent) {
 
 // -------------------------------------------------------------------------- //
 //                          --< PID-CONTROLLER >--                            //
@@ -49,7 +49,7 @@ void PID::update(double value, double value_set, uint32_t timeCurrent) {
 }
 
 
-double PID::getOutput() const {
+double PID_Control::getOutput() const {
 
   // u(t) = P*e(t) + I*∫e(t)dt - D*dT/dt
   double u = _p*_error + _i*_errorInt - _d*_errorDiff;
@@ -62,7 +62,7 @@ double PID::getOutput() const {
 }
 
 
-void PID::autotune() {
+void PID_Control::autotune() {
 
   // TODO: Autotune algorithm
 }

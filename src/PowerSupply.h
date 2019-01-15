@@ -24,9 +24,10 @@
   #include "img/splash.h"                                                     //
   #include "timing/Stopwatch.h"                                               //
   #include "timing/Scheduler.h"                                               //
-  #include "regulation/PID.h"                                                 //
+  #include "regulation/PID_Control.h"                                                 //
   #include "regulation/Sensor.h"                                              //
   #include "regulation/DAC.h"                                                 //
+  #include "ui/CLI.h"
   // #include "controls/Controls.h"                                           //
 //----------------------------------------------------------------------------//
 //############################################################################//
@@ -75,8 +76,8 @@
 //----------------------------------------------------------------------------//
   typedef void(*fptr_t)(void);                                                //
 //----------------------------------------------------------------------------//
-  template<typename T, typename... Args>                                      //
-  using fptr_args_t = T(*)(Args...);                                       //
+  template<typename T>                                                        //
+  using fptr_args_t = T(*)(void*...);                                         //
 //----------------------------------------------------------------------------//
   enum class Mode : uint8_t {                                                 //
     VOLTAGE,                                                                  //
@@ -107,7 +108,7 @@ namespace Tools {
 
   // Confines (and modifies!) a value according to lower and upper limit
   template<typename T, typename U> 
-  void trim(T &val, const U &low, const U &high);
+  bool trim(T &val, const U &low, const U &high);
 }
 
 // ----------------------------------- TOOLS -----------------------------------
@@ -127,8 +128,8 @@ protected:
   void _converge(const double &val, const double &val_set);
 
 public:
-  PID pid;
-
+  PID_Control        pid;
+  
   static DAC         dac;
   static Sensor_Load sensor;
   static double      voltage, current, power;
@@ -139,12 +140,12 @@ public:
   void off   (void) { _running = false;     }
   void toggle(void) { _running = !_running; }
 
-  void setMode   (Mode     m) { _mode        = m; }
-  void setVoltage(uint16_t v) { _voltage_set = v; }
-  void setCurrent(uint16_t c) { _current_set = c; }
-  void setPower  (uint16_t p) { _power_set   = p; }
+  void setMode   (const Mode     &m) { _mode        = m; }
+  void setVoltage(const uint16_t &v) { _voltage_set = v; }
+  void setCurrent(const uint16_t &c) { _current_set = c; }
+  void setPower  (const uint16_t &p) { _power_set   = p; }
   
-  virtual void increment(int16_t val);
+  virtual void increment(const int16_t &val);
   virtual void update   (void);
   virtual void regulate (void);
 };
@@ -169,14 +170,14 @@ public:
   
   void calibrate(void);
   
-  void setRes20   (double   res) { _res20           = res; }
-  void setResCable(double   res) { _resCable        = res; }
-  void setTCR     (double   tcr) { _TCR             = tcr; }
-  void setTemp    (uint16_t t  ) { _temperature_set = t;   }
+  void setRes20   (const double   &res) { _res20           = res; }
+  void setResCable(const double   &res) { _resCable        = res; }
+  void setTCR     (const double   &tcr) { _TCR             = tcr; }
+  void setTemp    (const uint16_t &t  ) { _temperature_set = t;   }
 
-  void increment(int16_t val) override;
-  void update   (void)        override; 
-  void regulate (void)        override;
+  void increment(const int16_t &val) override;
+  void update   (void)               override; 
+  void regulate (void)               override;
 };
 
 // ----------------------------------- HEATER ----------------------------------
