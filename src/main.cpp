@@ -24,10 +24,30 @@
 #include "PowerSupply.h"
 
 
-void setup()
-{
-  Serial.begin(9600);
-  Serial.println("");
+void showArgs();
+void showMillis();
+void showDelay();
+void alert();
+void randGen();
+void clearScr();
+
+
+CmdList cmds = {
+
+  { "args",   "Show arguments for debugging.",              0, &showArgs   },
+  { "millis", "Return millis().",                           0, &showMillis },
+  { "delay",  "Delay for a given amount. [ms]",             1, &showDelay  },
+  { "alert",  "Trigger alert after time span. [ms]",        1, &alert      },
+  { "rand",   "Random number between limits. [low] [high]", 2, &randGen    },
+  { "clear",  "Clear contents of screen.",                  0, &clearScr   },
+};
+
+CLI cli = CLI("> ", &Serial, cmds);
+
+
+void setup() {
+  Serial.begin(115200);
+  Serial.println();
 
   #ifdef ESP8266
     analogWriteRange(PWM_RANGE);
@@ -39,9 +59,64 @@ void setup()
 }
 
 
-void loop()
-{  
+void loop() {  
+  while (Serial.available()) {
+    cli << Serial.read();
+    yield();
+  }
+}
 
+
+void showDelay() {
+
+  uint32_t tstamp = millis();
+
+  while (abs(cli.getArg(1)) > (uint32_t)(millis() - tstamp)) {
+    delay(100);
+    Serial.write('.');
+  }
+  Serial.println();
+  Serial.print("Delayed for ");
+  Serial.print(millis() - tstamp);
+  Serial.println(" ms");
+}
+
+
+void showMillis() {
+
+  Serial.println(millis());
+}
+
+
+void showArgs() {
+
+  for(int32_t arg : cli.getArgs()) {
+    Serial.println(arg);
+  }
+}
+
+
+void clearScr() {
+
+  Serial.print("\14");
+}
+
+
+void alert() {
+  
+  delay(abs(cli.getArg(1)));
+  Serial.print("\7");
+}
+
+
+void randGen() {
+
+  uint32_t
+    low  = cli.getArg(1), 
+    high = cli.getArg(2);
+
+  srand(millis());
+  Serial.println(map(rand() % 100001, 0, 100000, low, high));
 }
 
 

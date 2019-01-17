@@ -11,8 +11,10 @@
 typedef void(*fptr_t)(void);
 
 struct Command;
-typedef std::vector<Command> CommandList;
-typedef std::vector<int32_t> ArgList;
+typedef std::vector<Command>     CmdList;
+typedef std::vector<std::string> StrList;
+typedef std::vector<int32_t>     ArgList;
+
 
 
 struct Command {
@@ -28,30 +30,31 @@ class CLI {
 
 private:
   std::string _prompt;
-  CommandList _commands;
-  Print      *_print_ptr;
+  CmdList     _commands;
+  Print      *_pr_ptr;
 
   struct Buffer {
-    std::string line, command;
+    std::string line, cmd;
     ArgList     args;
 
-    void clear(void);
+    void clear(void) { line.clear(); cmd.clear(); args.clear(); }
   }
   _buffer;
 
-  void _parse  (std::string);
-  bool _execute(Command);
+  StrList _split  (std::string, const char&);
+  void    _parse  (const std::string&);
+  bool    _execute(const Command&);
 
 public:
   CLI(const std::string&, Print*);
-  CLI(const std::string&, Print*, CommandList);
+  CLI(const std::string&, Print*, CmdList);
   
-  void fetch(char);
+  void fetch(const char&);
   void help (void);
-
-  void operator<<(char c) { fetch(c); }
   
-  CLI& add(const Command &c) { _commands.emplace_back(c); return *this; };
+  CLI& add(const Command &c) { _commands.emplace_back(c); return *this; }
+
+  void operator<<(const char &c) { fetch(c); }
 
   ArgList getArgs(void)    const { return _buffer.args; }
   int32_t getArg (uint8_t) const;
