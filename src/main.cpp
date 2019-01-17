@@ -34,9 +34,9 @@ void clearScr();
 
 CmdList cmds = {
 
-  { "args",   "Show arguments for debugging.",              0, &showArgs   },
+  { "args",   "Show arguments for debugging purposes.",     0, &showArgs   },
   { "millis", "Return millis().",                           0, &showMillis },
-  { "delay",  "Delay for a given amount. [ms]",             1, &showDelay  },
+  { "delay",  "Delay for a specific amount. [ms]"           1, &showDelay  },
   { "alert",  "Trigger alert after time span. [ms]",        1, &alert      },
   { "rand",   "Random number between limits. [low] [high]", 2, &randGen    },
   { "clear",  "Clear contents of screen.",                  0, &clearScr   },
@@ -46,6 +46,7 @@ CLI cli = CLI("> ", &Serial, cmds);
 
 
 void setup() {
+
   Serial.begin(115200);
   Serial.println();
 
@@ -59,7 +60,8 @@ void setup() {
 }
 
 
-void loop() {  
+void loop() {
+
   while (Serial.available()) {
     cli << Serial.read();
     yield();
@@ -69,9 +71,11 @@ void loop() {
 
 void showDelay() {
 
-  uint32_t tstamp = millis();
+  uint32_t 
+    tstamp = millis(),
+    arg    = cli.getArg_i(1);
 
-  while (abs(cli.getArg(1)) > (uint32_t)(millis() - tstamp)) {
+  while (abs(arg) > (uint32_t)(millis() - tstamp)) {
     delay(100);
     Serial.write('.');
   }
@@ -90,30 +94,32 @@ void showMillis() {
 
 void showArgs() {
 
-  for(int32_t arg : cli.getArgs()) {
-    Serial.println(arg);
+  for(std::string arg : cli.getArgs()) {
+    Serial.println(arg.c_str());
   }
 }
 
 
 void clearScr() {
 
-  Serial.print("\14");
+  Serial.print('\14');
 }
 
 
 void alert() {
   
-  delay(abs(cli.getArg(1)));
-  Serial.print("\7");
+  uint32_t arg = cli.getArg_i(1);
+
+  delay(abs(arg));
+  Serial.print('\7');
 }
 
 
 void randGen() {
 
   uint32_t
-    low  = cli.getArg(1), 
-    high = cli.getArg(2);
+    low  = cli.getArg_i(1), 
+    high = cli.getArg_i(2);
 
   srand(millis());
   Serial.println(map(rand() % 100001, 0, 100000, low, high));

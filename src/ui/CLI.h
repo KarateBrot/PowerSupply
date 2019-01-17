@@ -13,7 +13,6 @@ typedef void(*fptr_t)(void);
 struct Command;
 typedef std::vector<Command>     CmdList;
 typedef std::vector<std::string> StrList;
-typedef std::vector<int32_t>     ArgList;
 
 
 
@@ -35,7 +34,7 @@ private:
 
   struct Buffer {
     std::string line, cmd;
-    ArgList     args;
+    StrList     args;
 
     void clear(void) { line.clear(); cmd.clear(); args.clear(); }
   }
@@ -49,15 +48,17 @@ public:
   CLI(const std::string&, Print*);
   CLI(const std::string&, Print*, CmdList);
   
+  CLI& add(const Command &c) { _commands.emplace_back(c); return *this; }
+
   void fetch(const char&);
   void help (void);
   
-  CLI& add(const Command &c) { _commands.emplace_back(c); return *this; }
-
   void operator<<(const char &c) { fetch(c); }
 
-  ArgList getArgs(void)    const { return _buffer.args; }
-  int32_t getArg (uint8_t) const;
+  std::string getArg  (uint8_t)        const;
+  int32_t     getArg_i(const uint8_t&) const;
+  double      getArg_d(const uint8_t&) const;
+  StrList     getArgs (void)           const { return _buffer.args; }
 };
 
 

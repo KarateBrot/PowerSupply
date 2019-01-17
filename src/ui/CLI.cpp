@@ -57,7 +57,7 @@ void CLI::_parse(const std::string &str) {
   }
 
   for (size_t i = 1; i < list.size(); i++) {
-    _buffer.args.emplace_back(atoi(list[i].c_str())); 
+    _buffer.args.emplace_back(list[i]); 
   }
 
   for (Command c : _commands) { 
@@ -104,7 +104,7 @@ void CLI::fetch(const char &c) {
   if ((c == 0x8 || c == 0x7F)) {
     if (!_buffer.line.empty()) {
       _buffer.line.pop_back();
-      _pr_ptr->print("\10");
+      _pr_ptr->print('\10');
     }
     return;
   }
@@ -140,7 +140,7 @@ void CLI::help() {
 }
 
 
-int32_t CLI::getArg(uint8_t n) const {
+std::string CLI::getArg(uint8_t n) const {
 
   uint8_t nArgs = _buffer.args.size();
 
@@ -148,4 +148,16 @@ int32_t CLI::getArg(uint8_t n) const {
   if (n > nArgs) { n = nArgs; }
 
   return _buffer.args[n-1];
+}
+
+
+int32_t CLI::getArg_i(const uint8_t &n) const {
+
+  return atoi(getArg(n).c_str());
+}
+
+
+double CLI::getArg_d(const uint8_t &n) const {
+
+  return atof(getArg(n).c_str());
 }
