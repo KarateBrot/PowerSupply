@@ -102,7 +102,7 @@ void showArgs() {
 
 void clearScr() {
 
-  Serial.print('\14');
+  Serial.print(CHAR_FF);
 }
 
 
@@ -111,7 +111,7 @@ void alert() {
   uint32_t arg = cli.getArg_i(1);
 
   delay(abs(arg));
-  Serial.print('\7');
+  Serial.print(CHAR_BEL);
 }
 
 

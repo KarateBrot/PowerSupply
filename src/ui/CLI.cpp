@@ -94,7 +94,7 @@ void CLI::_execute() {
 
 void CLI::fetch(const char &c) {
 
-  if (c == 0xD) {
+  if (c == CHAR_CR) {
 
     _pr_ptr->println();
 
@@ -104,7 +104,7 @@ void CLI::fetch(const char &c) {
     return;
   }
 
-  if ((c == 0x8 || c == 0x7F)) {
+  if ((c == CHAR_BS || c == CHAR_DEL)) {
 
     if (!_buffer.line.empty()) {
 

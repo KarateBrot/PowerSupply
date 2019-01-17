@@ -4,9 +4,12 @@
 
 
 #include "Arduino.h"
+
 #include <cstdlib>
 #include <string>
 #include <vector>
+
+#include "ascii.h"
 
 typedef void(*fptr_t)(void);
 
