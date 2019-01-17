@@ -36,7 +36,7 @@ CmdList cmds = {
 
   { "args",   "Show arguments for debugging purposes.",     0, &showArgs   },
   { "millis", "Return millis().",                           0, &showMillis },
-  { "delay",  "Delay for a specific amount. [ms]"           1, &showDelay  },
+  { "delay",  "Delay for a specific amount. [ms]",          1, &showDelay  },
   { "alert",  "Trigger alert after time span. [ms]",        1, &alert      },
   { "rand",   "Random number between limits. [low] [high]", 2, &randGen    },
   { "clear",  "Clear contents of screen.",                  0, &clearScr   },
@@ -82,7 +82,7 @@ void showDelay() {
   Serial.println();
   Serial.print("Delayed for ");
   Serial.print(millis() - tstamp);
-  Serial.println(" ms");
+  Serial.println(" ms.");
 }
 
 
@@ -122,7 +122,7 @@ void randGen() {
     high = cli.getArg_i(2);
 
   srand(millis());
-  Serial.println(map(rand() % 100001, 0, 100000, low, high));
+  Serial.println(map(rand()%32767, 0, 32766, low, high));
 }
 
 

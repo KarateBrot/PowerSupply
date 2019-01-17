@@ -39,29 +39,51 @@ StrList CLI::_split(std::string str, const char &delimiter) {
 }
 
 
-void CLI::_parse(const std::string &str) {
+void CLI::_parse() {
 
-  StrList list = _split(str, ' ');
+  StrList list = _split(_buffer.line, ' ');
 
-  if (list.empty()) {
+  if (list.empty()) return;
+
+  _buffer.cmd = list[0];
+  
+  for (size_t i = 1; i < list.size(); i++) {
+    _buffer.args.emplace_back(list[i]); 
+  }
+}
+
+
+void CLI::_execute() {
+
+  if (_buffer.cmd.empty()) {
     _pr_ptr->print(_prompt.c_str()); 
     _buffer.clear();
     return;
   }
 
-  _buffer.cmd = list[0];
-
-  if (_buffer.cmd == "?") { 
-    help();
+  if (_buffer.cmd == "?") {
+    help(); 
     return; 
   }
 
-  for (size_t i = 1; i < list.size(); i++) {
-    _buffer.args.emplace_back(list[i]); 
-  }
-
   for (Command c : _commands) { 
-    if (_execute(c)) return; 
+
+    if (_buffer.cmd == c.name) {
+        
+      if (_buffer.args.size() >= c.nArgs) { c.run(); } else {
+
+        _pr_ptr->print("Command '");
+        _pr_ptr->print(c.name.c_str());
+        _pr_ptr->print("' requires ");
+        _pr_ptr->print(c.nArgs);
+        _pr_ptr->println(c.nArgs == 1 ? " argument." : " arguments.");
+      }
+
+      _pr_ptr->print(_prompt.c_str()); 
+      _buffer.clear();
+
+      return;
+    }
   }
 
   _pr_ptr->println("Unknown command. '?' for available commands.");
@@ -70,42 +92,26 @@ void CLI::_parse(const std::string &str) {
 }
 
 
-bool CLI::_execute(const Command &c) {
-
-  if (_buffer.cmd == c.name) {
-      
-    if (_buffer.args.size() >= c.nArgs) { c.run(); } else {
-
-      _pr_ptr->print("Command '");
-      _pr_ptr->print(c.name.c_str());
-      _pr_ptr->print("' requires ");
-      _pr_ptr->print(c.nArgs);
-      _pr_ptr->println(c.nArgs == 1 ? " argument." : " arguments.");
-    }
-
-    _pr_ptr->print(_prompt.c_str()); 
-    _buffer.clear();
-
-    return 1;
-  }
-
-  return 0;
-}
-
-
 void CLI::fetch(const char &c) {
 
   if (c == 0xD) {
+
     _pr_ptr->println();
-    _parse(_buffer.line);
+
+    _parse();
+    _execute();
+
     return;
   }
 
   if ((c == 0x8 || c == 0x7F)) {
+
     if (!_buffer.line.empty()) {
+
       _buffer.line.pop_back();
       _pr_ptr->print('\10');
     }
+
     return;
   }
 
@@ -118,17 +124,17 @@ void CLI::help() {
 
   _pr_ptr->println("Available commands:");
 
-  uint8_t strMaxLength = 0;
+  uint8_t maxLength = 0;
   for (Command c : _commands) {
-    uint8_t strLength = c.name.size();
-    if (strLength > strMaxLength) { strMaxLength = strLength; }
+    uint8_t length = c.name.size();
+    if (length > maxLength) { maxLength = length; }
   }
 
   for (Command c : _commands) {
 
     _pr_ptr->print(" ");
     _pr_ptr->print(c.name.c_str());
-    for (size_t i = 0; i < (strMaxLength - c.name.size()); i++) {
+    for (size_t i = 0; i < (maxLength - c.name.size()); i++) {
       _pr_ptr->print(" ");
     }
     _pr_ptr->print(" - ");

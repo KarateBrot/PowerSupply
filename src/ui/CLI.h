@@ -41,8 +41,8 @@ private:
   _buffer;
 
   StrList _split  (std::string, const char&);
-  void    _parse  (const std::string&);
-  bool    _execute(const Command&);
+  void    _parse  (void);
+  void    _execute(void);
 
 public:
   CLI(const std::string&, Print*);
