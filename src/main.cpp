@@ -17,6 +17,7 @@
   #define I2C_SDA        4                      // Pin 4
 #endif // ESP32
 
+
 //----------------------------------------------------------------------------//
 
 
@@ -32,6 +33,8 @@ void randGen();
 void clearScr();
 
 
+CLI cli;
+
 CmdList cmds = {
 
   { "args",   "Show arguments for debugging purposes.",     0, &showArgs   },
@@ -42,13 +45,17 @@ CmdList cmds = {
   { "clear",  "Clear contents of screen.",                  0, &clearScr   },
 };
 
-CLI cli = CLI("> ", &Serial, cmds);
+
+//----------------------------------------------------------------------------//
 
 
 void setup() {
 
   Serial.begin(115200);
   Serial.println();
+  Serial.println();
+
+  cli.begin("> ", &Serial, cmds);
 
   #ifdef ESP8266
     analogWriteRange(PWM_RANGE);
@@ -67,6 +74,9 @@ void loop() {
     yield();
   }
 }
+
+
+//----------------------------------------------------------------------------//
 
 
 void showDelay() {

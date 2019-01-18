@@ -18,6 +18,21 @@ CLI::CLI(const std::string &prompt, Print *pf, CmdList l) :
 }
 
 
+void CLI::begin(const std::string &prompt, Print* pf) {
+
+  _prompt = prompt;
+  _pr_ptr = pf;
+
+  _pr_ptr->print(_prompt.c_str());
+}
+
+void CLI::begin(const std::string &prompt, Print* pf, CmdList l) {
+
+  begin(prompt, pf);
+  _commands = l;
+}
+
+
 StrList CLI::_split(std::string str, const char &delimiter) {
 
   StrList list;
@@ -62,7 +77,9 @@ void CLI::_execute() {
   }
 
   if (_buffer.cmd == "?") {
-    help(); 
+    help();
+    _pr_ptr->print(_prompt.c_str());
+    _buffer.clear();
     return; 
   }
 
@@ -140,9 +157,6 @@ void CLI::help() {
     _pr_ptr->print(" - ");
     _pr_ptr->println(c.help.c_str());
   }
-
-  _pr_ptr->print(_prompt.c_str());
-  _buffer.clear();
 }
 
 

@@ -48,13 +48,17 @@ private:
   void    _execute(void);
 
 public:
+  CLI(void) {};
   CLI(const std::string&, Print*);
   CLI(const std::string&, Print*, CmdList);
   
-  CLI& add(const Command &c) { _commands.emplace_back(c); return *this; }
+  void begin(const std::string&, Print*);
+  void begin(const std::string&, Print*, CmdList);
 
   void fetch(const char&);
   void help (void);
+  
+  CLI& add(const Command &c) { _commands.emplace_back(c); return *this; }
   
   void operator<<(const char &c) { fetch(c); }
 
