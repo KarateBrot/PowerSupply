@@ -17,11 +17,14 @@
   #define I2C_SDA        4                      // Pin 4
 #endif // ESP32
 
+#define BUZZ_PIN         D5
+
 
 //----------------------------------------------------------------------------//
 
 
 #include "Arduino.h"
+#include "Wire.h"
 #include "PowerSupply.h"
 
 
@@ -31,18 +34,21 @@ void showDelay();
 void alert();
 void randGen();
 void clearScr();
+void beep();
 
 
 CLI cli;
 
+
 CmdList cmds = {
 
-  { "args",   "Show arguments for debugging purposes.",     0, &showArgs   },
-  { "millis", "Return millis().",                           0, &showMillis },
-  { "delay",  "Delay for a specific amount. [ms]",          1, &showDelay  },
-  { "alert",  "Trigger alert after time span. [ms]",        1, &alert      },
-  { "rand",   "Random number between limits. [low] [high]", 2, &randGen    },
-  { "clear",  "Clear contents of screen.",                  0, &clearScr   },
+  { "args",   "Show arguments for debugging purposes.",     0, showArgs   },
+  { "millis", "Return millis().",                           0, showMillis },
+  { "delay",  "Delay for a specific amount. [ms]",          1, showDelay  },
+  { "alert",  "Trigger alert after time span. [ms]",        1, alert      },
+  { "rand",   "Random number between limits. [low] [high]", 2, randGen    },
+  { "clear",  "Clear contents of screen.",                  0, clearScr   },
+  { "beep",   "Beep with specific frequencies. [freq] ...", 1, beep       },
 };
 
 
@@ -56,11 +62,6 @@ void setup() {
   Serial.println();
 
   cli.begin("> ", &Serial, cmds);
-
-  #ifdef ESP8266
-    analogWriteRange(PWM_RANGE);
-    analogWriteFreq (PWM_FREQ);
-  #endif // ESP8266
 
   Wire.begin(I2C_SDA, I2C_SCL);              // Select I2C pins
   Wire.setClock(WIRE_FREQ);                  // Faster I2C transmission (800kHz)
@@ -104,7 +105,7 @@ void showMillis() {
 
 void showArgs() {
 
-  for(std::string arg : cli.getArgs()) {
+  for(std::string &arg : cli.getArgs()) {
     Serial.println(arg.c_str());
   }
 }
@@ -133,6 +134,18 @@ void randGen() {
 
   srand(millis());
   Serial.println(map(rand()%32767, 0, 32766, low, high));
+}
+
+
+void beep() {
+
+  for (size_t n = 1; n <= cli.getArgs().size(); n++) {
+
+    uint32_t arg = cli.getArg_i(n);
+
+    tone(BUZZ_PIN, arg, 300);
+    delay(400);
+  }
 }
 
 

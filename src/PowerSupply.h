@@ -18,17 +18,19 @@
 //----------------------------------------------------------------------------//
   #include <cstdint>                                                          //
   #include <cmath>                                                            //
+  #include <functional>                                                       //
 //----------------------------------------------------------------------------//
   #include "Arduino.h"        // TODO: Make header independent from Arduino.h //
 //----------------------------------------------------------------------------//
+  #include "tools/Tools.h"                                                    //
   #include "img/splash.h"                                                     //
   #include "timing/Stopwatch.h"                                               //
   #include "timing/Scheduler.h"                                               //
-  #include "regulation/PID_Control.h"                                                 //
+  #include "regulation/PID_Control.h"                                         //
   #include "regulation/Sensor.h"                                              //
   #include "regulation/DAC.h"                                                 //
-  #include "ui/CLI.h"
-  // #include "controls/Controls.h"                                           //
+  #include "ui/CLI.h"                                                         //
+  #include "controls/Controls.h"                                              //
 //----------------------------------------------------------------------------//
 //############################################################################//
 
@@ -56,7 +58,7 @@
   #define VOLTAGE_MAX        10000                                            //
 //----------------------------------------------------------------------------//
   #define CURRENT_MIN            0                                            //
-  #define CURRENT_MAX         5000                                            //                                      
+  #define CURRENT_MAX         5000                                            //
 //----------------------------------------------------------------------------//
   #define POWER_MIN              0            // !<0 because Power is unsignd //
   #define POWER_MAX             40                                            //
@@ -77,7 +79,7 @@
   typedef void(*fptr_t)(void);                                                //
 //----------------------------------------------------------------------------//
   template<typename T>                                                        //
-  using fptr_args_t = T(*)(void*...);                                         //
+  using fptr_args_t = std::function<T(void*)>;                                //
 //----------------------------------------------------------------------------//
   enum class Mode : uint8_t {                                                 //
     VOLTAGE,                                                                  //
@@ -87,31 +89,6 @@
   };                                                                          //
 //----------------------------------------------------------------------------//
 //############################################################################//
-
-
-
-
-// =================================== TOOLS ===================================
-
-namespace Tools {
-
-  // Exponential smoothing
-  void smoothExp(double &x, const double &val, const float &weight);
-  void smoothExp(double &x, const double &val, const uint32_t &sampleTime, const uint32_t &timeConst);
-
-  // Inverted Schmitt Trigger
-  bool trigger(bool &trigger, const double &val, const float &low, const float &high);
-
-  // Confines a value between lower and upper limit
-  template<typename T, typename U> 
-  T limit(const T &val, const U &low, const U &high);
-
-  // Confines (and modifies!) a value according to lower and upper limit
-  template<typename T, typename U> 
-  bool trim(T &val, const U &low, const U &high);
-}
-
-// ----------------------------------- TOOLS -----------------------------------
 
 
 

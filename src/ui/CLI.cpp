@@ -20,10 +20,10 @@ CLI::CLI(const std::string &prompt, Print *pf, CmdList l) :
 
 void CLI::begin(const std::string &prompt, Print* pf) {
 
-  _prompt = prompt;
-  _pr_ptr = pf;
+    _prompt = prompt;
+    _pr_ptr = pf;
 
-  _pr_ptr->print(_prompt.c_str());
+    _pr_ptr->print(_prompt.c_str());
 }
 
 void CLI::begin(const std::string &prompt, Print* pf, CmdList l) {
@@ -83,7 +83,7 @@ void CLI::_execute() {
     return; 
   }
 
-  for (Command c : _commands) { 
+  for (Command &c : _commands) { 
 
     if (_buffer.cmd == c.name) {
         
@@ -121,12 +121,12 @@ void CLI::fetch(const char &c) {
     return;
   }
 
-  if ((c == CHAR_BS || c == CHAR_DEL)) {
+  if (c == CHAR_BS || c == CHAR_DEL) {
 
     if (!_buffer.line.empty()) {
 
       _buffer.line.pop_back();
-      _pr_ptr->print('\10');
+      _pr_ptr->print(CHAR_BS);
     }
 
     return;
@@ -142,12 +142,12 @@ void CLI::help() {
   _pr_ptr->println("Available commands:");
 
   uint8_t maxLength = 0;
-  for (Command c : _commands) {
+  for (Command &c : _commands) {
     uint8_t length = c.name.size();
     if (length > maxLength) { maxLength = length; }
   }
 
-  for (Command c : _commands) {
+  for (Command &c : _commands) {
 
     _pr_ptr->print(" ");
     _pr_ptr->print(c.name.c_str());
@@ -163,6 +163,8 @@ void CLI::help() {
 std::string CLI::getArg(uint8_t n) const {
 
   uint8_t nArgs = _buffer.args.size();
+
+  if (!nArgs) return std::string();
 
   if (n < 1)     { n = 1;     }
   if (n > nArgs) { n = nArgs; }

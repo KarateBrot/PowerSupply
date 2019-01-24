@@ -1,17 +1,14 @@
 #ifndef COMMAND_LINE_INTERFACE_H
 #define COMMAND_LINE_INTERFACE_H
 
-
-
 #include "Arduino.h"
 
 #include <cstdlib>
 #include <string>
 #include <vector>
+#include <functional>
 
 #include "ascii.h"
-
-typedef void(*fptr_t)(void);
 
 struct Command;
 typedef std::vector<Command>     CmdList;
@@ -23,7 +20,8 @@ struct Command {
 
   std::string name, help;
   uint8_t     nArgs;
-  fptr_t      run;
+  
+  std::function<void(void)> run;
 };
 
 

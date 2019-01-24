@@ -2,19 +2,26 @@
 
 
 
-
 Task::Task(fptr_t f) :
 
-  lastCallback(micros()),
+  lastCallback(Scheduler::_timeFn()),
   birthtime(lastCallback) {
 
   callback = f;
 }
 
 
-Scheduler::Scheduler() {
 
-  uint32_t t = micros();
+std::function<uint32_t(void)> Scheduler::_timeFn;
+std::function<void(void)>     Scheduler::_yield;
+
+
+Scheduler::Scheduler(std::function<uint32_t(void)> timeFn, std::function<void(void)> yield) {
+
+  _timeFn = timeFn;
+  _yield  = yield;
+
+  uint32_t t = _timeFn();
 
   _lastTick      = t;
   _lastWait      = t;
@@ -75,7 +82,7 @@ Scheduler& Scheduler::offset(uint32_t val) {
 void Scheduler::run() {
 
   // Initialization
-  uint32_t timer = micros();
+  uint32_t timer = _timeFn();
   uint8_t  size  = _tasks.size();
   
   _lastTick      = timer;
@@ -91,7 +98,7 @@ void Scheduler::run() {
     for (size_t n = 0; n < size; n++) {
 
       Task& task = _tasks[n]; // Reference for better readability
-      timer      = micros();  // Snapshot of current point in time
+      timer      = _timeFn();  // Snapshot of current point in time
       
       // Check if current task is determined to be executed
       uint32_t delta = (uint32_t)(timer - task.lastCallback);
@@ -131,26 +138,26 @@ void Scheduler::run() {
     );
 
     // Calculate tickrate of scheduler
-    timer     = micros();
+    timer     = _timeFn();
     _tickrate = 1000000L/(uint32_t)(timer - _lastTick);
     _lastTick = timer;
 
-    yield();
+    _yield();
   }
 }
 
 
 void Scheduler::wait(uint32_t val) {
 
-  _lastWait = micros();
-  while ((uint32_t)(micros() - _lastWait) < val) { yield(); }
+  _lastWait = _timeFn();
+  while ((uint32_t)(_timeFn() - _lastWait) < val) { _yield(); }
 }
 
 
 void Scheduler::waitUntil(uint32_t val) {
 
-  while ((uint32_t)(micros() - _lastWaitUntil) < val) { yield(); }
-  _lastWaitUntil = micros();
+  while ((uint32_t)(_timeFn() - _lastWaitUntil) < val) { _yield(); }
+  _lastWaitUntil = _timeFn();
 }
 
 

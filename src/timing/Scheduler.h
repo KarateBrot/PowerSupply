@@ -1,13 +1,12 @@
 #ifndef SCHEDULER_H
 #define SCHEDULER_H
 
-#include "Arduino.h"
 #include <algorithm>
+#include <functional>
 #include <vector>
 
-// #pragma GCC optimize ("O3")
-
 typedef void(*fptr_t)(void);
+
 
 
 struct Task {
@@ -26,18 +25,24 @@ struct Task {
 };
 
 
+
 class Scheduler {
+
+friend class Task;
 
 private:
   std::vector<Task> _tasks;
+
+  static std::function<uint32_t(void)> _timeFn;
+  static std::function<void(void)>     _yield;
   
   bool     _running;
   uint32_t _tickrate, _lastTick, _lastWait, _lastWaitUntil;
 
   static bool _isMarkedToDelete(Task& task) { return task.toBeDeleted; }
-  
+
 public:
-  Scheduler(void);
+  Scheduler(std::function<uint32_t(void)>, std::function<void(void)> = NULL);
 
   Scheduler& add      (fptr_t);
   Scheduler& period   (uint32_t);
@@ -56,6 +61,7 @@ public:
 
   uint32_t getTickRate(void) const { return _tickrate; }
 };
+
 
 
 #endif // SCHEDULER_H
