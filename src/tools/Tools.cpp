@@ -1,14 +1,15 @@
-#include "Tools.h"
+#include "tools.h"
+
 
 // Simple exponential smoothing
-void Tools::smoothExp(double &x, const double &val, const float &weight) {
+void tools::smoothExp(double &x, const double &val, const float &weight) {
 
   x = (1.0-weight)*x + weight*val;
 }
 
 
 // Advanced exponential smoothing (simulates capacitor)
-void Tools::smoothExp(double &x, const double &val, const uint32_t &sampleTime, const uint32_t &timeConst) {
+void tools::smoothExp(double &x, const double &val, const uint32_t &sampleTime, const uint32_t &timeConst) {
   
   double weight = 1 - exp(-sampleTime/(double)timeConst);
   x = (1-weight)*x + weight*val;
@@ -16,7 +17,7 @@ void Tools::smoothExp(double &x, const double &val, const uint32_t &sampleTime, 
 
 
 // Hysteresis (simulates Inverting Schmitt Trigger)
-bool Tools::trigger(bool &trigger, const double &val, const float &low, const float &high) {
+bool tools::trigger(bool &trigger, const double &val, const float &low, const float &high) {
   
   bool trigger_last = trigger;
 
@@ -27,21 +28,39 @@ bool Tools::trigger(bool &trigger, const double &val, const float &low, const fl
 }
 
 
-// Constrains (and modifies) a value according to lower and upper limit
-template <typename T, typename U>
-T Tools::limit(const T &val, const U &low, const U &high) {
+// Fast Fourier Transform of (complex) sample input
+FFT_t tools::FFT(const FFT_t &samples) {
 
-  if (val > high) { return (T)high; } else
-  if (val < low ) { return (T)low;  } else
-  return val;
-}
+  uint16_t N = samples.size();
 
+  if (N <= 1) return samples;
 
-// Constrains (and modifies) a value according to lower and upper limit
-template <typename T, typename U>
-bool Tools::trim(T &val, const U &low, const U &high) {
+  uint16_t M = N/2;
 
-  if (val > high) { val = high; return true; } else
-  if (val < low ) { val = low;  return true; } else
-  return false;
+  FFT_t 
+    xEven(M, 0),
+    xOdd(M, 0);
+
+  for (size_t i = 0; i < M; i++) {
+
+    xEven[i] = samples[2*i];
+    xOdd[i]  = samples[2*i + 1];
+  }
+
+  // Recursion too slow. TODO: Use reversed-bit indexing instead
+  FFT_t
+    fEven = FFT(xEven),
+    fOdd  = FFT(xOdd);
+
+  FFT_t bins(N, 0);
+  
+  for (size_t k = 0; k < M; k++) {
+
+    std::complex<double> t = std::polar(1.0, -2*M_PI*k/N) * fOdd[k];
+
+    bins[k]     = fEven[k] + t;
+    bins[k + M] = fEven[k] - t;
+  }
+
+  return bins;
 }

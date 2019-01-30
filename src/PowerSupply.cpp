@@ -40,16 +40,16 @@ void PowerSupply::increment(const int16_t &val) {
 
     case Mode::VOLTAGE:
       _voltage_set += val;
-      Tools::trim(_voltage_set, VOLTAGE_MIN, VOLTAGE_MAX);
+      tools::trim(_voltage_set, VOLTAGE_MIN, VOLTAGE_MAX);
       break;
 
     case Mode::CURRENT:
       _current_set += val;
-      Tools::trim(_current_set, CURRENT_MIN, CURRENT_MAX);
+      tools::trim(_current_set, CURRENT_MIN, CURRENT_MAX);
 
     case Mode::POWER:
       _power_set += val;
-      Tools::trim(_power_set, POWER_MIN, POWER_MAX);
+      tools::trim(_power_set, POWER_MIN, POWER_MAX);
       break;
 
     default:
@@ -159,7 +159,7 @@ void Heater::increment(const int16_t &val) {
   if (_mode == Mode::TEMPERATURE) {
 
     _temperature_set += val;
-    Tools::trim(_temperature_set, TEMPERATURE_MIN, TEMPERATURE_MAX);
+    tools::trim(_temperature_set, TEMPERATURE_MIN, TEMPERATURE_MAX);
 
   } else {
 
@@ -174,7 +174,7 @@ void Heater::update() {
   // Resistance [Ω]
   resistance =
     0.7*resistance +
-    0.3*(voltage/Tools::limit(current, 1, 15000) - _resCable);
+    0.3*(voltage/tools::limit(current, 1, 15000) - _resCable);
 
   // Resistance [Ω] - if no heater connected
   if (voltage > 100 && current < 10) { resistance = _res20; }

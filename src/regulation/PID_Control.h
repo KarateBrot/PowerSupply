@@ -26,7 +26,8 @@ public:
 
   std::vector<double> getPID(void) const { return {_p, _i, _d}; }
 
-  //TODO: Implement functions to quantify control performance (L1/L2-Standard)
+  // TODO: Implement functions to quantify control performance (L1/L2-Standard)
+  // TODO: Generalize update() function to include changes of T_set
 };
 
 

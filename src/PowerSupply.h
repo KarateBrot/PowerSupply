@@ -22,7 +22,7 @@
 //----------------------------------------------------------------------------//
   #include "Arduino.h"        // TODO: Make header independent from Arduino.h //
 //----------------------------------------------------------------------------//
-  #include "tools/Tools.h"                                                    //
+  #include "tools/tools.h"                                                    //
   #include "img/splash.h"                                                     //
   #include "timing/Stopwatch.h"                                               //
   #include "timing/Scheduler.h"                                               //
