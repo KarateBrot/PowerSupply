@@ -7,11 +7,18 @@
 #include <vector>
 #include <complex>
 
-typedef std::vector<std::complex<double>> FFT_t;
+typedef std::complex<double> complex;
+typedef std::vector<complex> FFT_t;
 
 
 
 namespace tools {
+
+  // Check if value is a power of 2
+  bool isPower2(const uint32_t& val);
+  
+  // log2 for integers with complexity O(N)
+  uint8_t log2(uint32_t val);
 
   // Exponential smoothing
   void smoothExp(double &x, const double &val, const float &weight);
@@ -20,8 +27,8 @@ namespace tools {
   // Inverted Schmitt Trigger
   bool trigger(bool &trigger, const double &val, const float &low, const float &high);
 
-  // Fast Fourier Transform of (complex) sample input
-  FFT_t FFT(const FFT_t &samples); // TODO: More functionality
+  // Radix-2 Fast Fourier Transform of (complex) sample input
+  FFT_t FFT(FFT_t samples); // TODO: More functionality
 
   // Confines a value between lower and upper limit
   template <typename T, typename U>
@@ -34,8 +41,8 @@ namespace tools {
   // Confines (and modifies!) a value according to lower and upper limit
   template <typename T, typename U>
   bool trim(T &val, const U &low, const U &high) {
-    if (val > high) { val = high; return true; } else
-    if (val < low ) { val = low;  return true; } else
+    if (val > high) { val = (T)high; return true; } else
+    if (val < low ) { val = (T)low;  return true; } else
     return false;
   }
 

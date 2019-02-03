@@ -1,6 +1,21 @@
 #include "tools.h"
 
 
+// Check if value is a power of 2
+bool tools::isPower2(const uint32_t &val) {
+
+  return val && !(val & (val-1));
+}
+
+// log2 for integers with complexity O(N)
+uint8_t tools::log2(uint32_t val) {
+
+  uint8_t n = 0;
+  while (val >>= 1) n++;
+  return n;
+}
+
+
 // Simple exponential smoothing
 void tools::smoothExp(double &x, const double &val, const float &weight) {
 
@@ -10,7 +25,7 @@ void tools::smoothExp(double &x, const double &val, const float &weight) {
 
 // Advanced exponential smoothing (simulates capacitor)
 void tools::smoothExp(double &x, const double &val, const uint32_t &sampleTime, const uint32_t &timeConst) {
-  
+
   double weight = 1 - exp(-sampleTime/(double)timeConst);
   x = (1-weight)*x + weight*val;
 }
@@ -18,7 +33,7 @@ void tools::smoothExp(double &x, const double &val, const uint32_t &sampleTime, 
 
 // Hysteresis (simulates Inverting Schmitt Trigger)
 bool tools::trigger(bool &trigger, const double &val, const float &low, const float &high) {
-  
+
   bool trigger_last = trigger;
 
   if (val > high) { trigger = true;  } else
@@ -28,39 +43,43 @@ bool tools::trigger(bool &trigger, const double &val, const float &low, const fl
 }
 
 
-// Fast Fourier Transform of (complex) sample input
-FFT_t tools::FFT(const FFT_t &samples) {
+// Radix-2 Fast Fourier Transform of (complex) sample input
+FFT_t tools::FFT(FFT_t samples) {
 
-  uint16_t N = samples.size();
+  const uint16_t N     = samples.size();
+  const uint16_t nBits = tools::log2(N);
 
-  if (N <= 1) return samples;
+  // Reversed-bit indexing
+  for (uint16_t i = 0; i < N; i++) {
 
-  uint16_t M = N/2;
-
-  FFT_t 
-    xEven(M, 0),
-    xOdd(M, 0);
-
-  for (size_t i = 0; i < M; i++) {
-
-    xEven[i] = samples[2*i];
-    xOdd[i]  = samples[2*i + 1];
+    uint16_t rev = reverseBits(i, nBits);
+    if (i < rev) { std::swap(samples[i], samples[rev]); }
   }
 
-  // Recursion too slow. TODO: Use reversed-bit indexing instead
-  FFT_t
-    fEven = FFT(xEven),
-    fOdd  = FFT(xOdd);
+  // Perform FFT (http://www.librow.com/articles/article-10)
+  for (uint16_t step = 1; step < N; step <<= 1)	{
 
-  FFT_t bins(N, 0);
-  
-  for (size_t k = 0; k < M; k++) {
+    const uint32_t jump  = step << 1;
+    const double   delta = M_PI / (double)step;
+    const double   sine  = sin(delta*0.5);
+    const complex  mult  = complex(-2*sine*sine, sin(delta));
 
-    std::complex<double> t = std::polar(1.0, -2*M_PI*k/N) * fOdd[k];
+    complex factor = complex(1);
 
-    bins[k]     = fEven[k] + t;
-    bins[k + M] = fEven[k] - t;
+    for (uint16_t group = 0; group < step; group++) {
+
+      for (uint32_t pair = group; pair < N; pair += jump) {
+
+        const uint32_t match   = pair + step;
+        const complex  product = complex(factor*samples[match]);
+
+        samples[match] = samples[pair] - product;
+        samples[pair] += product;
+      }
+
+      factor = mult*factor + factor;
+    }
   }
 
-  return bins;
+  return samples;
 }
