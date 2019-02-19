@@ -4,11 +4,6 @@
 #include <cstdint>
 #include <climits>
 #include <cmath>
-#include <vector>
-#include <complex>
-
-typedef std::complex<double> complex;
-typedef std::vector<complex> FFT_t;
 
 
 
@@ -26,9 +21,6 @@ namespace tools {
 
   // Inverted Schmitt Trigger
   bool trigger(bool &trigger, const double &val, const float &low, const float &high);
-
-  // Radix-2 Fast Fourier Transform of (complex) sample input
-  FFT_t FFT(FFT_t samples); // TODO: More functionality
 
   // Confines a value between lower and upper limit
   template <typename T, typename U>
@@ -54,6 +46,12 @@ namespace tools {
       temp = (temp << 1) | (val & 1);
     }
     return temp;
+  }
+
+  // Signum function
+  template <typename T>
+  int8_t sgn(T val) {
+    return (int8_t)( (0 < val) - (0 > val) );
   }
 }
 

@@ -27,6 +27,7 @@
   #include "timing/Stopwatch.h"                                               //
   #include "timing/Scheduler.h"                                               //
   #include "regulation/PID_Control.h"                                         //
+  #include "regulation/FFT.h"                                                 //
   #include "regulation/Sensor.h"                                              //
   #include "regulation/DAC.h"                                                 //
   #include "ui/CLI.h"                                                         //
